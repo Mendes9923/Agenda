@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AgendaPro - Sistema de Agendamento</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- SUPABASE SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -29,74 +31,41 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; }
   h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
 
-  /* ─── AUTH ─── */
-  #auth-screen {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    padding: 20px;
+  /* ── SUPABASE CONFIG SCREEN ── */
+  #config-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 20px;
   }
-  .auth-box {
-    background: #fff;
-    border-radius: 20px;
-    padding: 40px;
-    width: 100%;
-    max-width: 420px;
+  .config-box {
+    background: #fff; border-radius: 20px; padding: 40px; width: 100%; max-width: 480px;
     box-shadow: 0 24px 64px rgba(0,0,0,0.3);
   }
-  .auth-logo {
-    font-family: 'Syne', sans-serif;
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--primary);
-    margin-bottom: 8px;
-  }
+  .config-logo { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+  .config-logo span { color: var(--accent); }
+  .config-step { background: var(--bg); border-radius: 10px; padding: 16px; margin: 16px 0; border-left: 4px solid var(--accent); font-size: 13px; line-height: 1.8; }
+  .config-step code { background: #1a1a2e; color: #e94560; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  .config-step a { color: var(--accent); font-weight: 600; }
+
+  /* ── AUTH ── */
+  #auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 20px; }
+  .auth-box { background: #fff; border-radius: 20px; padding: 40px; width: 100%; max-width: 420px; box-shadow: 0 24px 64px rgba(0,0,0,0.3); }
+  .auth-logo { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
   .auth-logo span { color: var(--accent); }
   .auth-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
-  .auth-tab {
-    flex: 1; padding: 10px; text-align: center; cursor: pointer;
-    font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px;
-    color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -2px;
-    transition: all .2s;
-  }
+  .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .2s; }
   .auth-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-  /* ─── FORMS ─── */
+  /* ── FORMS ── */
   .form-group { margin-bottom: 16px; }
   .form-group label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 13px; color: var(--text2); }
-  .form-group input, .form-group select, .form-group textarea {
-    width: 100%; padding: 10px 14px;
-    border: 1.5px solid var(--border); border-radius: 8px;
-    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text);
-    background: var(--bg); transition: border-color .2s;
-    outline: none;
-  }
-  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-    border-color: var(--accent);
-  }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--bg); transition: border-color .2s; outline: none; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .form-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 10px 20px; border-radius: 8px; font-family: 'Syne', sans-serif;
-    font-weight: 600; font-size: 13px; cursor: pointer; border: none;
-    transition: all .2s; text-decoration: none;
-  }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 20px; border-radius: 8px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; border: none; transition: all .2s; text-decoration: none; }
   .btn-primary { background: var(--accent); color: #fff; }
   .btn-primary:hover { background: #c73050; transform: translateY(-1px); }
   .btn-secondary { background: var(--bg); color: var(--text); border: 1.5px solid var(--border); }
@@ -106,81 +75,38 @@
   .btn-warning { background: var(--warning); color: #fff; }
   .btn-full { width: 100%; }
   .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
 
-  /* ─── APP LAYOUT ─── */
+  /* ── APP ── */
   #app { display: none; min-height: 100vh; }
   .app-layout { display: flex; min-height: 100vh; }
-
-  /* ─── SIDEBAR ─── */
-  .sidebar {
-    width: var(--sidebar-w); background: var(--primary);
-    min-height: 100vh; position: fixed; left: 0; top: 0; bottom: 0;
-    display: flex; flex-direction: column; z-index: 100;
-    transition: transform .3s;
-  }
-  .sidebar-logo {
-    padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.08);
-    font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #fff;
-  }
+  .sidebar { width: var(--sidebar-w); background: var(--primary); min-height: 100vh; position: fixed; left: 0; top: 0; bottom: 0; display: flex; flex-direction: column; z-index: 100; transition: transform .3s; }
+  .sidebar-logo { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #fff; }
   .sidebar-logo span { color: var(--accent); }
-  .sidebar-user {
-    padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.08);
-    display: flex; align-items: center; gap: 10px;
-  }
-  .sidebar-avatar {
-    width: 36px; height: 36px; border-radius: 50%; background: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: #fff;
-    flex-shrink: 0;
-  }
+  .sidebar-user { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 10px; }
+  .sidebar-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: #fff; flex-shrink: 0; }
   .sidebar-user-info { flex: 1; min-width: 0; }
   .sidebar-user-name { font-weight: 600; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sidebar-user-plan { font-size: 11px; color: rgba(255,255,255,0.5); }
   .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
   .nav-section { padding: 6px 20px 4px; font-size: 10px; font-weight: 600; letter-spacing: 1px; color: rgba(255,255,255,0.3); text-transform: uppercase; }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 20px; cursor: pointer;
-    font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.65);
-    transition: all .2s; border-left: 3px solid transparent;
-    user-select: none;
-  }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.65); transition: all .2s; border-left: 3px solid transparent; user-select: none; }
   .nav-item:hover { color: #fff; background: rgba(255,255,255,0.06); }
   .nav-item.active { color: #fff; background: rgba(233,69,96,0.15); border-left-color: var(--accent); }
   .nav-item .nav-icon { width: 18px; text-align: center; font-size: 16px; }
   .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.08); }
-
-  /* ─── MAIN ─── */
   .main-content { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
-  .topbar {
-    background: #fff; padding: 14px 28px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 50;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  }
+  .topbar { background: #fff; padding: 14px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
   .topbar-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   .topbar-actions { display: flex; align-items: center; gap: 10px; }
-
   .page-content { padding: 28px; flex: 1; }
 
-  /* ─── CARDS ─── */
-  .card {
-    background: #fff; border-radius: var(--radius);
-    border: 1px solid var(--border); padding: 20px;
-    box-shadow: var(--shadow);
-  }
+  /* ── CARDS ── */
+  .card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; box-shadow: var(--shadow); }
   .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  .stat-card {
-    background: #fff; border-radius: var(--radius);
-    border: 1px solid var(--border); padding: 20px;
-    position: relative; overflow: hidden;
-  }
-  .stat-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  }
+  .stat-card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
   .stat-card.accent::before { background: var(--accent); }
   .stat-card.success::before { background: var(--success); }
   .stat-card.warning::before { background: var(--warning); }
@@ -189,19 +115,13 @@
   .stat-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--text); }
   .stat-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
 
-  /* ─── BADGES ─── */
-  .badge {
-    display: inline-flex; align-items: center; padding: 3px 10px;
-    border-radius: 20px; font-size: 11px; font-weight: 600;
-  }
+  .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
   .badge-success { background: #d1fae5; color: #065f46; }
   .badge-warning { background: #fef3c7; color: #92400e; }
   .badge-danger { background: #fee2e2; color: #991b1b; }
   .badge-info { background: #dbeafe; color: #1e40af; }
   .badge-gray { background: #f3f4f6; color: #374151; }
-  .badge-accent { background: #fce7eb; color: #9b1c3a; }
 
-  /* ─── TABLE ─── */
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th { text-align: left; padding: 10px 14px; background: var(--bg); font-weight: 600; color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
@@ -209,218 +129,173 @@
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #fafafa; }
 
-  /* ─── TABS ─── */
-  .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; gap: 0; }
-  .tab-btn {
-    padding: 10px 20px; cursor: pointer; font-weight: 600; font-size: 13px;
-    color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -2px;
-    transition: all .2s; background: none; border-top: none; border-left: none; border-right: none;
-    font-family: 'DM Sans', sans-serif;
-  }
+  .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+  .tab-btn { padding: 10px 20px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .2s; background: none; border-top: none; border-left: none; border-right: none; font-family: 'DM Sans', sans-serif; }
   .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-  /* ─── MODAL ─── */
-  .modal-backdrop {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-    z-index: 200; display: flex; align-items: center; justify-content: center;
-    padding: 20px;
-  }
-  .modal {
-    background: #fff; border-radius: 16px; width: 100%; max-width: 560px;
-    max-height: 90vh; overflow-y: auto;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.25);
-    animation: modalIn .25s ease;
-  }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal { background: #fff; border-radius: 16px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,0.25); animation: modalIn .25s ease; }
   @keyframes modalIn { from { transform: translateY(-20px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
-  .modal-header {
-    padding: 20px 24px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; background: #fff; z-index: 1;
-  }
+  .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #fff; z-index: 1; }
   .modal-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
   .modal-close { cursor: pointer; font-size: 20px; color: var(--text2); background: none; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
   .modal-close:hover { background: var(--bg); }
   .modal-body { padding: 24px; }
   .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
 
-  /* ─── TOAST ─── */
   #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
-  .toast {
-    background: var(--primary); color: #fff; padding: 12px 18px;
-    border-radius: 10px; font-size: 13px; font-weight: 500;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    animation: toastIn .3s ease; min-width: 240px;
-    display: flex; align-items: center; gap: 8px;
-  }
+  .toast { background: var(--primary); color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.2); animation: toastIn .3s ease; min-width: 240px; display: flex; align-items: center; gap: 8px; }
   .toast.success { background: var(--success); }
   .toast.error { background: var(--danger); }
   .toast.warning { background: var(--warning); }
   @keyframes toastIn { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-  /* ─── CALENDAR ─── */
+  /* ── CALENDAR ── */
   .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
   .cal-header { text-align: center; padding: 8px 4px; font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; }
-  .cal-day {
-    min-height: 80px; padding: 6px; border-radius: 8px;
-    border: 1px solid transparent; cursor: pointer;
-    transition: all .15s; position: relative;
-    background: var(--bg);
-  }
+  .cal-day { min-height: 80px; padding: 6px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; transition: all .15s; background: var(--bg); }
   .cal-day:hover { border-color: var(--accent); background: #fff; }
   .cal-day.today { border-color: var(--accent); background: #fff3f5; }
   .cal-day.other-month { opacity: 0.35; }
   .cal-day-num { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 4px; }
   .cal-day.today .cal-day-num { color: var(--accent); }
-  .cal-event {
-    font-size: 10px; padding: 2px 5px; border-radius: 4px;
-    margin-bottom: 2px; font-weight: 500; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis;
-  }
+  .cal-event { font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-bottom: 2px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cal-event.agendado { background: #dbeafe; color: #1e40af; }
   .cal-event.compareceu { background: #d1fae5; color: #065f46; }
   .cal-event.nao-compareceu { background: #fee2e2; color: #991b1b; }
   .cal-event.cancelado { background: #f3f4f6; color: #374151; }
 
-  /* ─── WEEK VIEW ─── */
-  .week-grid { display: grid; grid-template-columns: 60px repeat(7,1fr); gap: 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-  .week-header { background: var(--bg); padding: 10px 6px; text-align: center; font-size: 11px; font-weight: 600; color: var(--text2); border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
-  .week-time { padding: 4px 6px; font-size: 10px; color: var(--text2); text-align: right; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); background: #fff; }
-  .week-cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-height: 40px; background: #fff; padding: 2px; position: relative; }
-  .week-cell:hover { background: #fafafa; }
-  .week-appt {
-    border-radius: 4px; padding: 2px 5px; font-size: 10px; font-weight: 500;
-    position: absolute; left: 2px; right: 2px; z-index: 1; cursor: pointer;
-  }
-
-  /* ─── TIME SLOTS ─── */
+  /* ── TIME SLOTS ── */
   .time-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
-  .time-slot {
-    padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px;
-    text-align: center; cursor: pointer; font-size: 13px; font-weight: 500;
-    transition: all .15s; background: #fff;
-  }
+  .time-slot { padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 500; transition: all .15s; background: #fff; }
   .time-slot:hover { border-color: var(--accent); color: var(--accent); }
   .time-slot.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
   .time-slot.taken { opacity: 0.35; cursor: not-allowed; background: var(--bg); }
 
-  /* ─── SUBSCRIPTION ─── */
-  .plan-card {
-    border: 2px solid var(--border); border-radius: 16px; padding: 28px;
-    position: relative; transition: all .2s; cursor: pointer;
-  }
+  /* ── SUBSCRIPTION ── */
+  .plan-card { border: 2px solid var(--border); border-radius: 16px; padding: 28px; position: relative; transition: all .2s; }
   .plan-card.highlighted { border-color: var(--accent); }
   .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: 'Syne', sans-serif; white-space: nowrap; }
   .plan-price { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; }
   .plan-price span { font-size: 16px; font-weight: 500; color: var(--text2); }
 
-  /* ─── BOOKING PAGE ─── */
+  /* ── BOOKING ── */
   #booking-screen { display: none; }
   .booking-header { background: var(--primary); color: #fff; padding: 28px; text-align: center; }
   .booking-content { max-width: 560px; margin: 0 auto; padding: 28px 20px; }
 
-  /* ─── ADMIN ─── */
+  /* ── ADMIN ── */
   .admin-stat { background: linear-gradient(135deg, var(--primary) 0%, var(--teal) 100%); color: #fff; border-radius: var(--radius); padding: 20px; }
   .admin-stat .stat-value { color: #fff; }
   .admin-stat .stat-label { color: rgba(255,255,255,0.7); }
 
-  /* ─── MISC ─── */
+  /* ── MISC ── */
   .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
   .empty-state { text-align: center; padding: 48px 20px; color: var(--text2); }
   .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
   .empty-state h3 { font-family: 'Syne', sans-serif; margin-bottom: 8px; }
-
-  .avatar-circle {
-    width: 36px; height: 36px; border-radius: 50%; background: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0;
-  }
-
-  .chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 12px; background: var(--bg);
-    border: 1px solid var(--border); border-radius: 20px;
-    font-size: 12px; font-weight: 500; cursor: pointer;
-    transition: all .15s;
-  }
+  .avatar-circle { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s; }
   .chip:hover { border-color: var(--accent); color: var(--accent); }
   .chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
-
-  .upload-area {
-    border: 2px dashed var(--border); border-radius: 10px;
-    padding: 32px; text-align: center; cursor: pointer;
-    transition: all .2s;
-  }
+  .upload-area { border: 2px dashed var(--border); border-radius: 10px; padding: 32px; text-align: center; cursor: pointer; transition: all .2s; }
   .upload-area:hover { border-color: var(--accent); background: #fff3f5; }
+  .link-box { background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .link-box code { font-size: 13px; color: var(--accent); font-weight: 600; }
+  .setup-steps { display: flex; gap: 0; margin-bottom: 28px; }
+  .setup-step { flex: 1; text-align: center; padding: 12px; border-bottom: 3px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text2); transition: all .2s; }
+  .setup-step.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .setup-step.done { color: var(--success); border-bottom-color: var(--success); }
+
+  /* ── LOADING ── */
+  .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.85); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   .sidebar-toggle { display: none; }
-
   @media (max-width: 768px) {
     .sidebar { transform: translateX(-100%); }
     .sidebar.open { transform: none; }
     .main-content { margin-left: 0; }
     .sidebar-toggle { display: block; }
     .stat-grid { grid-template-columns: 1fr 1fr; }
-    .form-row, .form-row3 { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
   }
 
-  .setup-steps { display: flex; gap: 0; margin-bottom: 28px; }
-  .setup-step {
-    flex: 1; text-align: center; padding: 12px;
-    border-bottom: 3px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text2);
-    transition: all .2s;
-  }
-  .setup-step.active { color: var(--accent); border-bottom-color: var(--accent); }
-  .setup-step.done { color: var(--success); border-bottom-color: var(--success); }
-
-  .link-box {
-    background: var(--bg); border: 1.5px solid var(--border);
-    border-radius: 10px; padding: 14px 16px;
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  }
-  .link-box code { font-size: 13px; color: var(--accent); font-weight: 600; }
-
-  .notification-dot {
-    width: 8px; height: 8px; background: var(--accent); border-radius: 50%;
-    display: inline-block; margin-left: 4px;
-  }
-
-  /* hide pages */
   .page { display: none; }
   .page.active { display: block; }
 </style>
 </head>
 <body>
 
-<!-- TOAST CONTAINER -->
 <div id="toast-container"></div>
 
-<!-- AUTH SCREEN -->
-<div id="auth-screen">
+<!-- ══════════════════════════════════════
+     TELA 0: CONFIGURAÇÃO DO SUPABASE
+══════════════════════════════════════ -->
+<div id="config-screen">
+  <div class="config-box">
+    <div class="config-logo">Agenda<span>Pro</span></div>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:20px">Conecte seu banco de dados Supabase</p>
+
+    <div class="config-step">
+      <strong>📋 Passo 1 — Crie sua conta</strong><br>
+      Acesse <a href="https://supabase.com" target="_blank">supabase.com</a> e crie um projeto gratuito.
+    </div>
+
+    <div class="config-step">
+      <strong>📋 Passo 2 — Crie as tabelas</strong><br>
+      No painel do Supabase, vá em <strong>SQL Editor</strong> e execute o script SQL disponível abaixo clicando em "📄 Ver Script SQL".
+    </div>
+
+    <div class="config-step">
+      <strong>📋 Passo 3 — Copie as credenciais</strong><br>
+      Vá em <strong>Project Settings → API</strong> e copie:<br>
+      • <code>Project URL</code><br>
+      • <code>anon public key</code>
+    </div>
+
+    <div class="form-group" style="margin-top:20px">
+      <label>Project URL</label>
+      <input type="text" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+    </div>
+    <div class="form-group">
+      <label>Anon Key (public)</label>
+      <input type="text" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="saveSupabaseConfig()" id="btn-connect">
+      🔌 Conectar ao Supabase
+    </button>
+
+    <hr class="divider">
+
+    <button class="btn btn-secondary btn-full" onclick="showSQLScript()">
+      📄 Ver Script SQL para criar tabelas
+    </button>
+
+    <p style="text-align:center;margin-top:12px;font-size:11px;color:var(--text2)">
+      As credenciais são salvas apenas no seu navegador (localStorage)
+    </p>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div id="auth-screen" style="display:none">
   <div class="auth-box">
     <div class="auth-logo">Agenda<span>Pro</span></div>
-    <p style="color:var(--text2);font-size:13px;margin-bottom:20px;">Sistema de Agendamento Multiárea</p>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:20px">Sistema de Agendamento</p>
     <div class="auth-tabs">
       <div class="auth-tab active" onclick="switchAuthTab('login')">Entrar</div>
       <div class="auth-tab" onclick="switchAuthTab('register')">Criar Conta</div>
     </div>
-
-    <!-- LOGIN -->
     <div id="login-form">
-      <div class="form-group">
-        <label>E-mail</label>
-        <input type="email" id="login-email" placeholder="seu@email.com" value="demo@agendapro.com">
-      </div>
-      <div class="form-group">
-        <label>Senha</label>
-        <input type="password" id="login-pwd" placeholder="••••••••" value="123456">
-      </div>
-      <button class="btn btn-primary btn-full" onclick="doLogin()">Entrar</button>
+      <div class="form-group"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
+      <div class="form-group"><label>Senha</label><input type="password" id="login-pwd" placeholder="••••••••"></div>
+      <button class="btn btn-primary btn-full" id="btn-login" onclick="doLogin()">Entrar</button>
       <hr class="divider">
-      <button class="btn btn-secondary btn-full" onclick="loginAdmin()">🛡️ Entrar como Admin</button>
-      <p style="text-align:center;margin-top:12px;font-size:12px;color:var(--text2);">Demo: demo@agendapro.com / 123456</p>
+      <button class="btn btn-secondary btn-full btn-sm" onclick="reconfigSupabase()">⚙️ Reconfigurar Supabase</button>
     </div>
-
-    <!-- REGISTER -->
     <div id="register-form" style="display:none">
       <div class="form-row">
         <div class="form-group"><label>Nome Completo</label><input type="text" id="reg-name" placeholder="João Silva"></div>
@@ -438,38 +313,28 @@
           <option>Mecânica Automotiva</option><option>Advocacia</option><option>Outro</option>
         </select>
       </div>
-      <button class="btn btn-primary btn-full" onclick="doRegister()">Criar Conta Grátis</button>
-      <p style="text-align:center;margin-top:12px;font-size:11px;color:var(--text2);">7 dias grátis, sem cartão de crédito</p>
+      <button class="btn btn-primary btn-full" id="btn-register" onclick="doRegister()">Criar Conta Grátis</button>
+      <p style="text-align:center;margin-top:12px;font-size:11px;color:var(--text2)">7 dias grátis, sem cartão de crédito</p>
     </div>
   </div>
 </div>
 
-<!-- BOOKING SCREEN (link público) -->
+<!-- BOOKING PUBLIC PAGE -->
 <div id="booking-screen">
   <div class="booking-header">
-    <div id="booking-logo-img" style="margin-bottom:10px;font-size:36px;display:none"></div>
     <h2 id="booking-biz-name" style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800">AgendaPro</h2>
     <p id="booking-biz-desc" style="opacity:0.75;margin-top:6px"></p>
     <div id="booking-biz-info" style="margin-top:10px;font-size:13px;opacity:0.65"></div>
   </div>
   <div class="booking-content">
     <div id="booking-step-1">
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-title">📋 Escolha o Profissional</div>
-        <div id="booking-professionals"></div>
-      </div>
-      <div class="card" style="margin-bottom:16px;display:none" id="booking-services-card">
-        <div class="card-title">✂️ Escolha o Serviço</div>
-        <div id="booking-services"></div>
-      </div>
+      <div class="card" style="margin-bottom:16px"><div class="card-title">📋 Escolha o Profissional</div><div id="booking-professionals"></div></div>
+      <div class="card" style="margin-bottom:16px;display:none" id="booking-services-card"><div class="card-title">✂️ Escolha o Serviço</div><div id="booking-services"></div></div>
       <div class="card" style="margin-bottom:16px;display:none" id="booking-date-card">
         <div class="card-title">📅 Escolha a Data</div>
         <input type="date" id="booking-date" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px">
       </div>
-      <div class="card" style="margin-bottom:16px;display:none" id="booking-slots-card">
-        <div class="card-title">🕐 Horários Disponíveis</div>
-        <div class="time-slots" id="booking-time-slots"></div>
-      </div>
+      <div class="card" style="margin-bottom:16px;display:none" id="booking-slots-card"><div class="card-title">🕐 Horários Disponíveis</div><div class="time-slots" id="booking-time-slots"></div></div>
       <div class="card" style="display:none" id="booking-client-card">
         <div class="card-title">👤 Seus Dados</div>
         <div class="form-group"><label>Nome Completo</label><input type="text" id="bk-client-name" placeholder="Seu nome"></div>
@@ -495,14 +360,13 @@
 <!-- MAIN APP -->
 <div id="app">
   <div class="app-layout">
-    <!-- SIDEBAR -->
     <nav class="sidebar" id="sidebar">
       <div class="sidebar-logo">Agenda<span>Pro</span></div>
       <div class="sidebar-user">
-        <div class="sidebar-avatar" id="sidebar-avatar">JS</div>
+        <div class="sidebar-avatar" id="sidebar-avatar">AP</div>
         <div class="sidebar-user-info">
-          <div class="sidebar-user-name" id="sidebar-name">João Silva</div>
-          <div class="sidebar-user-plan" id="sidebar-plan">✨ Pro Ativo</div>
+          <div class="sidebar-user-name" id="sidebar-name">Usuário</div>
+          <div class="sidebar-user-plan" id="sidebar-plan">⏳ Carregando...</div>
         </div>
       </div>
       <nav class="sidebar-nav" id="sidebar-nav"></nav>
@@ -510,8 +374,6 @@
         <button class="btn btn-secondary btn-full btn-sm" onclick="doLogout()">↩ Sair</button>
       </div>
     </nav>
-
-    <!-- MAIN -->
     <div class="main-content">
       <div class="topbar">
         <div style="display:flex;align-items:center;gap:12px">
@@ -520,12 +382,10 @@
         </div>
         <div class="topbar-actions">
           <button class="btn btn-primary btn-sm" id="topbar-cta" onclick="openModal('new-appointment')">+ Novo Agendamento</button>
-          <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;cursor:pointer" id="topbar-avatar">JS</div>
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;cursor:pointer" id="topbar-avatar">AP</div>
         </div>
       </div>
       <div class="page-content">
-
-        <!-- PAGES -->
         <div id="page-setup" class="page active"></div>
         <div id="page-dashboard" class="page"></div>
         <div id="page-agenda" class="page"></div>
@@ -534,88 +394,221 @@
         <div id="page-config" class="page"></div>
         <div id="page-assinatura" class="page"></div>
         <div id="page-admin" class="page"></div>
-
       </div>
     </div>
   </div>
 </div>
 
-<!-- MODALS -->
 <div id="modal-container"></div>
 
 <script>
-// ═══════════════════════════════════════════════
-// DATA LAYER (Storage API)
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  SUPABASE CONFIG
+// ═══════════════════════════════════════════════════════════════
+
+let supabase = null;
+
+function getSupabaseConfig() {
+  return {
+    url: localStorage.getItem('sb_url') || '',
+    key: localStorage.getItem('sb_key') || ''
+  };
+}
+
+function initSupabase(url, key) {
+  supabase = window.supabase.createClient(url, key);
+}
+
+async function saveSupabaseConfig() {
+  const url = document.getElementById('sb-url').value.trim();
+  const key = document.getElementById('sb-key').value.trim();
+  if (!url || !key) { toast('Preencha URL e Key do Supabase', 'error'); return; }
+  if (!url.startsWith('https://')) { toast('URL inválida. Deve começar com https://', 'error'); return; }
+
+  const btn = document.getElementById('btn-connect');
+  btn.disabled = true; btn.textContent = '⏳ Conectando...';
+
+  try {
+    initSupabase(url, key);
+    // Test connection
+    const { error } = await supabase.from('users').select('id').limit(1);
+    if (error && error.code !== 'PGRST116' && error.message?.includes('does not exist')) {
+      throw new Error('Tabelas não encontradas. Execute o script SQL primeiro.');
+    }
+    localStorage.setItem('sb_url', url);
+    localStorage.setItem('sb_key', key);
+    toast('✅ Conectado com sucesso!');
+    document.getElementById('config-screen').style.display = 'none';
+    document.getElementById('auth-screen').style.display = 'flex';
+  } catch(e) {
+    toast('Erro: ' + (e.message || 'Verifique as credenciais'), 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '🔌 Conectar ao Supabase';
+  }
+}
+
+function reconfigSupabase() {
+  localStorage.removeItem('sb_url');
+  localStorage.removeItem('sb_key');
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('config-screen').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DATABASE LAYER — Supabase
+// ═══════════════════════════════════════════════════════════════
 
 const DB = {
-  async get(key) {
-    try { const r = await window.storage.get(key); return r ? JSON.parse(r.value) : null; }
-    catch(e) { return null; }
+  // ── USERS ──
+  async getUser(userId) {
+    const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
+    if (error) return null;
+    return data;
   },
-  async set(key, val) {
-    try { await window.storage.set(key, JSON.stringify(val)); return true; }
-    catch(e) { return false; }
+  async saveUser(user) {
+    const { data, error } = await supabase.from('users').upsert(user).select().single();
+    if (error) throw error;
+    return data;
   },
-  async del(key) {
-    try { await window.storage.delete(key); return true; }
-    catch(e) { return false; }
+
+  // ── APPOINTMENTS ──
+  async getAppointments(userId) {
+    const { data, error } = await supabase.from('appointments').select('*').eq('user_id', userId);
+    if (error) return [];
+    return data || [];
   },
-  async list(prefix) {
-    try { const r = await window.storage.list(prefix); return r ? r.keys : []; }
-    catch(e) { return []; }
+  async saveAppointment(appt) {
+    const { data, error } = await supabase.from('appointments').upsert(appt).select().single();
+    if (error) throw error;
+    return data;
+  },
+  async updateAppointment(id, updates) {
+    const { error } = await supabase.from('appointments').update(updates).eq('id', id);
+    if (error) throw error;
+  },
+  async deleteAppointment(id) {
+    const { error } = await supabase.from('appointments').update({status:'cancelado'}).eq('id', id);
+    if (error) throw error;
+  },
+
+  // ── CLIENTS ──
+  async getClients(userId) {
+    const { data, error } = await supabase.from('clients').select('*').eq('user_id', userId);
+    if (error) return [];
+    return data || [];
+  },
+  async saveClient(client) {
+    const { data, error } = await supabase.from('clients').upsert(client).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  // ── PROFESSIONALS ──
+  async getProfessionals(userId) {
+    const { data, error } = await supabase.from('professionals').select('*').eq('user_id', userId);
+    if (error) return [];
+    return data || [];
+  },
+  async saveProfessional(prof) {
+    const { data, error } = await supabase.from('professionals').upsert(prof).select().single();
+    if (error) throw error;
+    return data;
+  },
+  async updateProfessional(id, updates) {
+    const { error } = await supabase.from('professionals').update(updates).eq('id', id);
+    if (error) throw error;
+  },
+
+  // ── SERVICES ──
+  async getServices(userId) {
+    const { data, error } = await supabase.from('services').select('*').eq('user_id', userId);
+    if (error) return [];
+    return data || [];
+  },
+  async saveService(svc) {
+    const { data, error } = await supabase.from('services').upsert(svc).select().single();
+    if (error) throw error;
+    return data;
+  },
+  async deleteService(id) {
+    const { error } = await supabase.from('services').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  // ── FOLGAS ──
+  async getFolgas(userId) {
+    const { data, error } = await supabase.from('folgas').select('date').eq('user_id', userId);
+    if (error) return [];
+    return (data || []).map(f => f.date);
+  },
+  async addFolga(userId, date) {
+    const { error } = await supabase.from('folgas').upsert({ user_id: userId, date });
+    if (error) throw error;
+  },
+  async removeFolga(userId, date) {
+    const { error } = await supabase.from('folgas').delete().eq('user_id', userId).eq('date', date);
+    if (error) throw error;
+  },
+
+  // ── ALL USERS (admin) ──
+  async getAllUsers() {
+    const { data, error } = await supabase.from('users').select('*');
+    if (error) return [];
+    return data || [];
+  },
+  async updateUserSubscription(userId, subscription) {
+    const { error } = await supabase.from('users').update({ subscription }).eq('id', userId);
+    if (error) throw error;
   }
 };
 
-// ═══════════════════════════════════════════════
-// APP STATE
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════════
+
+function uid() { return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2); }
+
+function toast(msg, type='success') {
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${{success:'✓',error:'✗',warning:'⚠'}[type]||'ℹ'}</span><span>${msg}</span>`;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function initials(name='') { return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'AP'; }
+function formatDate(d) { if(!d)return''; return new Date(d+'T12:00:00').toLocaleDateString('pt-BR'); }
+function formatCurrency(v) { return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+
+function showLoading(msg='Carregando...') {
+  let el = document.getElementById('loading-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loading-overlay';
+    el.className = 'loading-overlay';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<div class="spinner"></div><p style="font-family:'Syne',sans-serif;font-weight:600;color:var(--text2)">${msg}</p>`;
+  el.style.display = 'flex';
+}
+
+function hideLoading() {
+  const el = document.getElementById('loading-overlay');
+  if (el) el.style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════════════════
 
 let currentUser = null;
 let isAdmin = false;
 let currentPage = 'setup';
 let bookingState = {};
 
-// ═══════════════════════════════════════════════
-// UTILS
-// ═══════════════════════════════════════════════
-
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
-
-function toast(msg, type='success') {
-  const c = document.getElementById('toast-container');
-  const el = document.createElement('div');
-  const icons = {success:'✓', error:'✗', warning:'⚠'};
-  el.className = `toast ${type}`;
-  el.innerHTML = `<span>${icons[type]||'ℹ'}</span><span>${msg}</span>`;
-  c.appendChild(el);
-  setTimeout(() => el.remove(), 3500);
-}
-
-function initials(name='') { return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || 'AP'; }
-
-function formatDate(d) {
-  if (!d) return '';
-  const dt = new Date(d+'T12:00:00');
-  return dt.toLocaleDateString('pt-BR');
-}
-
-function formatCurrency(v) {
-  return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-}
-
-function fmtDateTime(dt) {
-  if(!dt) return '';
-  const d = new Date(dt);
-  return d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-}
-
-// ═══════════════════════════════════════════════
-// AUTH
-// ═══════════════════════════════════════════════
-
-async function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&tab==='login')||(i===1&&tab==='register')));
   document.getElementById('login-form').style.display = tab==='login'?'block':'none';
   document.getElementById('register-form').style.display = tab==='register'?'block':'none';
 }
@@ -625,71 +618,30 @@ async function doLogin() {
   const pwd = document.getElementById('login-pwd').value;
   if (!email||!pwd) { toast('Preencha todos os campos','error'); return; }
 
-  const users = await DB.get('users') || {};
-  const uid_found = Object.keys(users).find(id => users[id].email===email && users[id].pwd===pwd);
-  if (!uid_found) {
-    // create demo user if first time
-    if (email==='demo@agendapro.com' && pwd==='123456') {
-      await createDemoUser();
-      const users2 = await DB.get('users') || {};
-      const uid2 = Object.keys(users2).find(id => users2[id].email===email);
-      if (uid2) { currentUser = {...users2[uid2], id: uid2}; isAdmin=false; await initApp(); return; }
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = '⏳ Entrando...';
+
+  try {
+    // Admin shortcut
+    if (email==='admin@agendapro.com' && pwd==='admin123') {
+      isAdmin = true;
+      currentUser = { id:'admin', name:'Administrador', email:'admin@agendapro.com' };
+      await initApp(); return;
     }
-    toast('Email ou senha incorretos','error'); return;
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pwd });
+    if (error) throw error;
+
+    const userData = await DB.getUser(data.user.id);
+    if (!userData) throw new Error('Usuário não encontrado no banco');
+    currentUser = { ...userData, auth_id: data.user.id };
+    isAdmin = false;
+    await initApp();
+  } catch(e) {
+    toast(e.message || 'Credenciais inválidas', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
   }
-  currentUser = {...users[uid_found], id: uid_found};
-  isAdmin = false;
-  await initApp();
-}
-
-async function createDemoUser() {
-  const users = await DB.get('users') || {};
-  const id = 'demo_user_001';
-  if (users[id]) return;
-  users[id] = {
-    email:'demo@agendapro.com', pwd:'123456',
-    name:'João Silva', phone:'(44) 99123-4567',
-    area:'Barbearia', created: new Date().toISOString(),
-    subscription: { status:'active', plan:'monthly', expires: new Date(Date.now()+30*86400000).toISOString() },
-    setup_done: true,
-    business: {
-      name:'Barbearia do João', desc:'Cortes modernos e clássicos para todos os estilos',
-      area:'Barbearia', address:'Rua das Flores, 123', number:'123', neighborhood:'Centro',
-      city:'Maringá', uf:'PR', phone:'(44) 99123-4567', email:'joao@barbearia.com',
-      slug:'joaosilva', working_hours:{start:'08:00',end:'18:00',interval:30},
-      days:[1,2,3,4,5,6]
-    }
-  };
-  await DB.set('users', users);
-
-  // demo professionals
-  const profs = await DB.get(`profs_${id}`) || {};
-  profs['prof_001'] = { id:'prof_001', name:'João Silva', specialty:'Barbeiro Sênior', phone:'(44) 99123-4567', email:'joao@barbearia.com', active:true, color:'#e94560' };
-  profs['prof_002'] = { id:'prof_002', name:'Carlos Mendes', specialty:'Barbeiro', phone:'(44) 99765-4321', email:'carlos@barbearia.com', active:true, color:'#3b82f6' };
-  await DB.set(`profs_${id}`, profs);
-
-  // demo services
-  const svcs = await DB.get(`services_${id}`) || {};
-  svcs['svc_001'] = { id:'svc_001', name:'Corte Masculino', duration:30, price:35, active:true };
-  svcs['svc_002'] = { id:'svc_002', name:'Barba', duration:20, price:25, active:true };
-  svcs['svc_003'] = { id:'svc_003', name:'Corte + Barba', duration:50, price:55, active:true };
-  svcs['svc_004'] = { id:'svc_004', name:'Hidratação', duration:40, price:45, active:true };
-  await DB.set(`services_${id}`, svcs);
-
-  // demo clients
-  const clients = await DB.get(`clients_${id}`) || {};
-  clients['cli_001'] = { id:'cli_001', name:'Pedro Alves', phone:'(44) 98765-4321', email:'pedro@email.com', created: new Date().toISOString(), visits:5 };
-  clients['cli_002'] = { id:'cli_002', name:'Rafael Costa', phone:'(44) 97654-3210', email:'rafael@email.com', created: new Date().toISOString(), visits:3 };
-  clients['cli_003'] = { id:'cli_003', name:'Lucas Ferreira', phone:'(44) 96543-2109', email:'lucas@email.com', created: new Date().toISOString(), visits:8 };
-  await DB.set(`clients_${id}`, clients);
-
-  // demo appointments
-  const appts = await DB.get(`appointments_${id}`) || {};
-  const today = new Date().toISOString().split('T')[0];
-  appts['apt_001'] = { id:'apt_001', client_id:'cli_001', client_name:'Pedro Alves', prof_id:'prof_001', prof_name:'João Silva', service_id:'svc_001', service_name:'Corte Masculino', date:today, time:'09:00', duration:30, price:35, status:'compareceu', notes:'' };
-  appts['apt_002'] = { id:'apt_002', client_id:'cli_002', client_name:'Rafael Costa', prof_id:'prof_001', prof_name:'João Silva', service_id:'svc_003', service_name:'Corte + Barba', date:today, time:'10:00', duration:50, price:55, status:'agendado', notes:'' };
-  appts['apt_003'] = { id:'apt_003', client_id:'cli_003', client_name:'Lucas Ferreira', prof_id:'prof_002', prof_name:'Carlos Mendes', service_id:'svc_002', service_name:'Barba', date:today, time:'11:00', duration:20, price:25, status:'agendado', notes:'' };
-  await DB.set(`appointments_${id}`, appts);
 }
 
 async function doRegister() {
@@ -701,40 +653,49 @@ async function doRegister() {
   if (!name||!email||!pwd||!area) { toast('Preencha todos os campos','error'); return; }
   if (pwd.length < 6) { toast('Senha mínimo 6 caracteres','error'); return; }
 
-  const users = await DB.get('users') || {};
-  const exists = Object.values(users).some(u => u.email===email);
-  if (exists) { toast('E-mail já cadastrado','error'); return; }
+  const btn = document.getElementById('btn-register');
+  btn.disabled = true; btn.textContent = '⏳ Criando conta...';
 
-  const id = uid();
-  users[id] = {
-    email, pwd, name, phone, area, created: new Date().toISOString(),
-    setup_done: false,
-    subscription: { status:'trial', plan:'trial', expires: new Date(Date.now()+7*86400000).toISOString() }
-  };
-  await DB.set('users', users);
-  currentUser = {...users[id], id};
-  isAdmin = false;
-  await initApp();
-}
+  try {
+    // 1. Create auth user
+    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password: pwd });
+    if (authError) throw authError;
 
-async function loginAdmin() {
-  isAdmin = true;
-  currentUser = { id:'admin', name:'Administrador', email:'admin@agendapro.com', plan:'master' };
-  await initApp();
+    // 2. Create user profile
+    const userId = authData.user.id;
+    const userData = {
+      id: userId,
+      name, phone, email, area,
+      created_at: new Date().toISOString(),
+      setup_done: false,
+      subscription: { status:'trial', plan:'trial', expires: new Date(Date.now()+7*86400000).toISOString() }
+    };
+    await DB.saveUser(userData);
+    currentUser = { ...userData, auth_id: userId };
+    isAdmin = false;
+    await initApp();
+  } catch(e) {
+    toast(e.message || 'Erro ao criar conta', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Criar Conta Grátis';
+  }
 }
 
 async function doLogout() {
+  showLoading('Saindo...');
+  await supabase.auth.signOut();
   currentUser = null; isAdmin = false;
+  hideLoading();
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('booking-screen').style.display = 'none';
 }
 
-// ═══════════════════════════════════════════════
-// APP INIT
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  APP INIT
+// ═══════════════════════════════════════════════════════════════
 
 async function initApp() {
+  showLoading('Carregando...');
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('booking-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
@@ -746,84 +707,65 @@ async function initApp() {
 
   if (isAdmin) {
     document.getElementById('sidebar-plan').textContent = '🛡️ Administrador';
-    document.getElementById('topbar-cta').style.display='none';
+    document.getElementById('topbar-cta').style.display = 'none';
     buildAdminNav();
-    navigateTo('admin');
+    hideLoading();
+    await navigateTo('admin');
   } else {
     const sub = currentUser.subscription || {};
-    const planLabel = sub.status==='active' ? '✨ Pro Ativo' : sub.status==='trial' ? '⏳ Trial Grátis' : '⚠️ Expirado';
-    document.getElementById('sidebar-plan').textContent = planLabel;
+    document.getElementById('sidebar-plan').textContent =
+      sub.status==='active' ? '✨ Pro Ativo' :
+      sub.status==='trial' ? '⏳ Trial Grátis' : '⚠️ Expirado';
     buildUserNav();
-    if (!currentUser.setup_done) navigateTo('setup');
-    else navigateTo('dashboard');
+    hideLoading();
+    await navigateTo(currentUser.setup_done ? 'dashboard' : 'setup');
   }
 }
 
 function buildUserNav() {
-  const nav = document.getElementById('sidebar-nav');
   const items = [
-    { page:'dashboard', icon:'📊', label:'Dashboard' },
-    { page:'agenda', icon:'📅', label:'Agenda' },
-    { page:'clientes', icon:'👥', label:'Clientes' },
-    { page:'profissionais', icon:'👔', label:'Profissionais' },
-    { page:'config', icon:'⚙️', label:'Configurações' },
-    { page:'assinatura', icon:'💳', label:'Assinatura' },
+    {page:'dashboard',icon:'📊',label:'Dashboard'},
+    {page:'agenda',icon:'📅',label:'Agenda'},
+    {page:'clientes',icon:'👥',label:'Clientes'},
+    {page:'profissionais',icon:'👔',label:'Profissionais'},
+    {page:'config',icon:'⚙️',label:'Configurações'},
+    {page:'assinatura',icon:'💳',label:'Assinatura'},
   ];
-  nav.innerHTML = `<div class="nav-section">Menu</div>` + items.map(i=>
-    `<div class="nav-item" id="nav-${i.page}" onclick="navigateTo('${i.page}')"><span class="nav-icon">${i.icon}</span>${i.label}</div>`
-  ).join('');
+  document.getElementById('sidebar-nav').innerHTML = `<div class="nav-section">Menu</div>`+items.map(i=>`<div class="nav-item" id="nav-${i.page}" onclick="navigateTo('${i.page}')"><span class="nav-icon">${i.icon}</span>${i.label}</div>`).join('');
 }
 
 function buildAdminNav() {
-  const nav = document.getElementById('sidebar-nav');
-  nav.innerHTML = `<div class="nav-section">Administração</div>
-    <div class="nav-item" id="nav-admin" onclick="navigateTo('admin')"><span class="nav-icon">🛡️</span>Painel Admin</div>`;
+  document.getElementById('sidebar-nav').innerHTML = `<div class="nav-section">Administração</div><div class="nav-item" id="nav-admin" onclick="navigateTo('admin')"><span class="nav-icon">🛡️</span>Painel Admin</div>`;
 }
-
-// ═══════════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════════
 
 async function navigateTo(page) {
   currentPage = page;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const pg = document.getElementById(`page-${page}`);
-  if (pg) pg.classList.add('active');
-  const nav = document.getElementById(`nav-${page}`);
-  if (nav) nav.classList.add('active');
-
+  document.getElementById(`page-${page}`)?.classList.add('active');
+  document.getElementById(`nav-${page}`)?.classList.add('active');
   const titles = {setup:'⚙️ Primeiras Configurações',dashboard:'📊 Dashboard',agenda:'📅 Agenda',clientes:'👥 Clientes',profissionais:'👔 Profissionais',config:'⚙️ Configurações',assinatura:'💳 Assinatura',admin:'🛡️ Painel Admin'};
   document.getElementById('page-title').textContent = titles[page]||page;
-
-  const renders = {
-    setup: renderSetup, dashboard: renderDashboard,
-    agenda: renderAgenda, clientes: renderClientes,
-    profissionais: renderProfissionais, config: renderConfig,
-    assinatura: renderAssinatura, admin: renderAdmin
-  };
+  const renders = {setup:renderSetup,dashboard:renderDashboard,agenda:renderAgenda,clientes:renderClientes,profissionais:renderProfissionais,config:renderConfig,assinatura:renderAssinatura,admin:renderAdmin};
   if (renders[page]) await renders[page]();
 }
 
-// ═══════════════════════════════════════════════
-// SETUP PAGE
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  SETUP
+// ═══════════════════════════════════════════════════════════════
 
 let setupStep = 1;
+let selectedDays = [1,2,3,4,5,6];
 
 async function renderSetup() {
-  const pg = document.getElementById('page-setup');
-  pg.innerHTML = `
+  document.getElementById('page-setup').innerHTML = `
   <div style="max-width:640px;margin:0 auto">
     <div class="card" style="margin-bottom:20px;padding:28px">
       <h2 style="font-family:'Syne',sans-serif;margin-bottom:6px">Bem-vindo ao AgendaPro! 🎉</h2>
       <p style="color:var(--text2)">Configure seu negócio para começar a receber agendamentos</p>
     </div>
-    <div class="setup-steps" id="setup-steps">
-      <div class="setup-step active" id="step-tab-1">1. Negócio</div>
-      <div class="setup-step" id="step-tab-2">2. Endereço</div>
-      <div class="setup-step" id="step-tab-3">3. Horários</div>
-      <div class="setup-step" id="step-tab-4">4. Link</div>
+    <div class="setup-steps">
+      ${[1,2,3,4].map(i=>`<div class="setup-step" id="step-tab-${i}">${i}. ${['Negócio','Endereço','Horários','Link'][i-1]}</div>`).join('')}
     </div>
     <div id="setup-content"></div>
   </div>`;
@@ -832,30 +774,20 @@ async function renderSetup() {
 
 function renderSetupStep(step) {
   setupStep = step;
-  for(let i=1;i<=4;i++) {
-    const el = document.getElementById(`step-tab-${i}`);
-    if(el) { el.className = 'setup-step' + (i===step?' active':i<step?' done':''); }
-  }
+  for(let i=1;i<=4;i++) { const el=document.getElementById(`step-tab-${i}`); if(el) el.className='setup-step'+(i===step?' active':i<step?' done':''); }
   const c = document.getElementById('setup-content');
-  const biz = (currentUser&&currentUser.business)||{};
+  const biz = currentUser.business || {};
 
   if (step===1) {
     c.innerHTML = `<div class="card">
       <div class="card-title">🏢 Informações do Negócio</div>
       <div class="form-group"><label>Nome do Negócio</label><input id="s-biz-name" value="${biz.name||''}" placeholder="Ex: Barbearia do João"></div>
       <div class="form-group"><label>Área de Atuação</label>
-        <select id="s-biz-area">
-          ${['Barbearia','Salão de Beleza','Estética','Odontologia','Medicina','Fisioterapia','Psicologia','Personal Trainer','Nutrição','Mecânica Automotiva','Advocacia','Outro'].map(a=>`<option ${(biz.area||currentUser.area)===a?'selected':''}>${a}</option>`).join('')}
-        </select></div>
-      <div class="form-group"><label>Descrição</label><textarea id="s-biz-desc" rows="3" placeholder="Descreva seu negócio...">${biz.desc||''}</textarea></div>
+        <select id="s-biz-area">${['Barbearia','Salão de Beleza','Estética','Odontologia','Medicina','Fisioterapia','Psicologia','Personal Trainer','Nutrição','Mecânica Automotiva','Advocacia','Outro'].map(a=>`<option ${(biz.area||currentUser.area)===a?'selected':''}>${a}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Descrição</label><textarea id="s-biz-desc" rows="3">${biz.desc||''}</textarea></div>
       <div class="form-row">
-        <div class="form-group"><label>Telefone</label><input id="s-biz-phone" value="${biz.phone||currentUser.phone||''}" placeholder="(44) 99999-9999"></div>
-        <div class="form-group"><label>E-mail de Contato</label><input id="s-biz-email" value="${biz.email||currentUser.email||''}" placeholder="contato@negocio.com"></div>
-      </div>
-      <div class="upload-area" onclick="toast('Upload de logo em produção','warning')">
-        <div style="font-size:32px;margin-bottom:8px">🖼️</div>
-        <p style="font-weight:600">Clique para enviar o logotipo</p>
-        <p style="font-size:12px;color:var(--text2);margin-top:4px">PNG, JPG ou SVG — máx 2MB</p>
+        <div class="form-group"><label>Telefone</label><input id="s-biz-phone" value="${biz.phone||currentUser.phone||''}"></div>
+        <div class="form-group"><label>E-mail de Contato</label><input id="s-biz-email" value="${biz.email||currentUser.email||''}"></div>
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:20px">
         <button class="btn btn-primary" onclick="saveSetupStep(1)">Próximo →</button>
@@ -865,20 +797,15 @@ function renderSetupStep(step) {
     c.innerHTML = `<div class="card">
       <div class="card-title">📍 Endereço</div>
       <div class="form-row">
-        <div class="form-group" style="grid-column:span 1"><label>Rua / Av.</label><input id="s-addr" value="${biz.address||''}" placeholder="Rua das Flores"></div>
+        <div class="form-group"><label>Rua / Av.</label><input id="s-addr" value="${biz.address||''}" placeholder="Rua das Flores"></div>
         <div class="form-group"><label>Número</label><input id="s-num" value="${biz.number||''}" placeholder="123"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Bairro</label><input id="s-bairro" value="${biz.neighborhood||''}" placeholder="Centro"></div>
-        <div class="form-group"><label>Complemento</label><input id="s-compl" value="${biz.complement||''}" placeholder="Sala 01"></div>
-      </div>
-      <div class="form-row">
         <div class="form-group"><label>Cidade</label><input id="s-city" value="${biz.city||''}" placeholder="Maringá"></div>
-        <div class="form-group"><label>UF</label>
-          <select id="s-uf">
-            ${['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(u=>`<option ${biz.uf===u?'selected':''}>${u}</option>`).join('')}
-          </select></div>
       </div>
+      <div class="form-group"><label>UF</label>
+        <select id="s-uf">${['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(u=>`<option ${biz.uf===u?'selected':''}>${u}</option>`).join('')}</select></div>
       <div style="display:flex;justify-content:space-between;margin-top:20px">
         <button class="btn btn-secondary" onclick="renderSetupStep(1)">← Voltar</button>
         <button class="btn btn-primary" onclick="saveSetupStep(2)">Próximo →</button>
@@ -887,23 +814,19 @@ function renderSetupStep(step) {
   } else if (step===3) {
     const wh = biz.working_hours||{start:'08:00',end:'18:00',interval:30};
     const days = biz.days||[1,2,3,4,5,6];
-    const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    selectedDays = [...days];
     c.innerHTML = `<div class="card">
       <div class="card-title">🕐 Horários de Atendimento</div>
       <div class="form-row">
-        <div class="form-group"><label>Horário de Início</label><input type="time" id="s-start" value="${wh.start}"></div>
-        <div class="form-group"><label>Horário de Término</label><input type="time" id="s-end" value="${wh.end}"></div>
+        <div class="form-group"><label>Início</label><input type="time" id="s-start" value="${wh.start}"></div>
+        <div class="form-group"><label>Término</label><input type="time" id="s-end" value="${wh.end}"></div>
       </div>
-      <div class="form-group"><label>Intervalo entre agendamentos (min)</label>
-        <select id="s-interval">
-          ${[15,20,30,45,60].map(v=>`<option value="${v}" ${wh.interval==v?'selected':''}>${v} min</option>`).join('')}
-        </select></div>
-      <div class="form-group">
-        <label>Dias de Atendimento</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px" id="days-select">
-          ${dayNames.map((d,i)=>`<div class="chip ${days.includes(i)?'selected':''}" onclick="toggleDay(${i})" id="day-${i}">${d}</div>`).join('')}
-        </div>
-      </div>
+      <div class="form-group"><label>Intervalo (min)</label>
+        <select id="s-interval">${[15,20,30,45,60].map(v=>`<option value="${v}" ${wh.interval==v?'selected':''}>${v} min</option>`).join('')}</select></div>
+      <div class="form-group"><label>Dias de Atendimento</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          ${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>`<div class="chip ${days.includes(i)?'selected':''}" onclick="toggleDay(${i},this)">${d}</div>`).join('')}
+        </div></div>
       <div style="display:flex;justify-content:space-between;margin-top:20px">
         <button class="btn btn-secondary" onclick="renderSetupStep(2)">← Voltar</button>
         <button class="btn btn-primary" onclick="saveSetupStep(3)">Próximo →</button>
@@ -913,51 +836,42 @@ function renderSetupStep(step) {
     const slug = biz.slug||(currentUser.name||'').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
     c.innerHTML = `<div class="card">
       <div class="card-title">🔗 Seu Link de Agendamento</div>
-      <p style="color:var(--text2);margin-bottom:16px">Este é o link que você compartilha com seus clientes</p>
-      <div class="form-group"><label>Nome no Link (slug)</label><input id="s-slug" value="${slug}" placeholder="joaosilva"></div>
+      <div class="form-group"><label>Slug (nome no link)</label><input id="s-slug" value="${slug}" oninput="document.getElementById('slug-preview').textContent='agendapro.app/'+this.value"></div>
       <div class="link-box" style="margin-bottom:20px">
         <code id="slug-preview">agendapro.app/${slug}</code>
         <button class="btn btn-sm btn-secondary" onclick="copyLink()">📋 Copiar</button>
       </div>
-      <p style="font-size:12px;color:var(--text2)">Dica: use seu nome ou nome do negócio, sem espaços ou caracteres especiais</p>
-      <script>document.getElementById('s-slug').oninput=function(){document.getElementById('slug-preview').textContent='agendapro.app/'+this.value;}<\/script>
       <div style="display:flex;justify-content:space-between;margin-top:20px">
         <button class="btn btn-secondary" onclick="renderSetupStep(3)">← Voltar</button>
-        <button class="btn btn-primary btn-success" onclick="saveSetupStep(4)">✅ Concluir Configuração</button>
+        <button class="btn btn-primary btn-success" onclick="saveSetupStep(4)">✅ Concluir</button>
       </div>
     </div>`;
   }
 }
 
-let selectedDays = [1,2,3,4,5,6];
-function toggleDay(i) {
-  const el = document.getElementById(`day-${i}`);
-  if (selectedDays.includes(i)) { selectedDays = selectedDays.filter(d=>d!==i); el.classList.remove('selected'); }
-  else { selectedDays.push(i); el.classList.add('selected'); }
+function toggleDay(i, el) {
+  el.classList.toggle('selected');
+  if (selectedDays.includes(i)) selectedDays = selectedDays.filter(d=>d!==i);
+  else selectedDays.push(i);
 }
 
 async function saveSetupStep(step) {
-  const biz = currentUser.business||{};
+  const biz = currentUser.business || {};
   if (step===1) {
     biz.name = document.getElementById('s-biz-name').value.trim();
     biz.area = document.getElementById('s-biz-area').value;
     biz.desc = document.getElementById('s-biz-desc').value.trim();
     biz.phone = document.getElementById('s-biz-phone').value.trim();
     biz.email = document.getElementById('s-biz-email').value.trim();
-    if (!biz.name||!biz.area) { toast('Preencha o nome e área','error'); return; }
+    if (!biz.name) { toast('Informe o nome do negócio','error'); return; }
   } else if (step===2) {
     biz.address = document.getElementById('s-addr').value.trim();
     biz.number = document.getElementById('s-num').value.trim();
     biz.neighborhood = document.getElementById('s-bairro').value.trim();
-    biz.complement = document.getElementById('s-compl').value.trim();
     biz.city = document.getElementById('s-city').value.trim();
     biz.uf = document.getElementById('s-uf').value;
   } else if (step===3) {
-    biz.working_hours = {
-      start: document.getElementById('s-start').value,
-      end: document.getElementById('s-end').value,
-      interval: parseInt(document.getElementById('s-interval').value)
-    };
+    biz.working_hours = { start:document.getElementById('s-start').value, end:document.getElementById('s-end').value, interval:parseInt(document.getElementById('s-interval').value) };
     biz.days = [...selectedDays];
   } else if (step===4) {
     biz.slug = document.getElementById('s-slug').value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
@@ -965,54 +879,50 @@ async function saveSetupStep(step) {
     currentUser.setup_done = true;
   }
   currentUser.business = biz;
-
-  const users = await DB.get('users')||{};
-  users[currentUser.id] = {...currentUser};
-  await DB.set('users', users);
-
-  if (step < 4) renderSetupStep(step+1);
-  else { toast('Configuração concluída! Bem-vindo!'); navigateTo('dashboard'); }
+  try {
+    await DB.saveUser({ id: currentUser.id, business: biz, setup_done: currentUser.setup_done });
+    if (step < 4) renderSetupStep(step+1);
+    else { toast('Configuração concluída! Bem-vindo!'); await navigateTo('dashboard'); }
+  } catch(e) { toast('Erro ao salvar: '+e.message,'error'); }
 }
 
 function copyLink() {
   const slug = currentUser.business?.slug||'';
-  navigator.clipboard.writeText(`agendapro.app/${slug}`).then(()=>toast('Link copiado!')).catch(()=>toast('Link: agendapro.app/'+slug));
+  navigator.clipboard.writeText(`agendapro.app/${slug}`).then(()=>toast('Link copiado!')).catch(()=>{});
 }
 
-// ═══════════════════════════════════════════════
-// DASHBOARD
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════════
 
 async function renderDashboard() {
   const pg = document.getElementById('page-dashboard');
-  const appts = await DB.get(`appointments_${currentUser.id}`) || {};
+  pg.innerHTML = `<div class="empty-state"><div class="spinner" style="margin:0 auto"></div><p>Carregando...</p></div>`;
+
+  const appts = await DB.getAppointments(currentUser.id);
   const today = new Date().toISOString().split('T')[0];
-  const todayAppts = Object.values(appts).filter(a=>a.date===today);
-  const totalMonth = Object.values(appts).filter(a=>a.date?.startsWith(new Date().toISOString().slice(0,7)) && a.status==='compareceu');
+  const todayAppts = appts.filter(a=>a.date===today);
+  const monthStr = new Date().toISOString().slice(0,7);
+  const totalMonth = appts.filter(a=>a.date?.startsWith(monthStr) && a.status==='compareceu');
   const revenue = totalMonth.reduce((s,a)=>s+(a.price||0),0);
   const biz = currentUser.business||{};
-  const slug = biz.slug||'meu-negocio';
 
   pg.innerHTML = `
   <div class="stat-grid">
     <div class="stat-card accent"><div class="stat-label">Hoje</div><div class="stat-value">${todayAppts.length}</div><div class="stat-sub">agendamentos</div></div>
-    <div class="stat-card success"><div class="stat-label">Faturamento Mês</div><div class="stat-value">${formatCurrency(revenue)}</div><div class="stat-sub">atendimentos realizados</div></div>
-    <div class="stat-card warning"><div class="stat-label">Confirmados Hoje</div><div class="stat-value">${todayAppts.filter(a=>a.status==='agendado').length}</div><div class="stat-sub">aguardando</div></div>
+    <div class="stat-card success"><div class="stat-label">Faturamento Mês</div><div class="stat-value">${formatCurrency(revenue)}</div><div class="stat-sub">realizados</div></div>
+    <div class="stat-card warning"><div class="stat-label">Aguardando Hoje</div><div class="stat-value">${todayAppts.filter(a=>a.status==='agendado').length}</div><div class="stat-sub">confirmados</div></div>
     <div class="stat-card info"><div class="stat-label">Total do Mês</div><div class="stat-value">${totalMonth.length}</div><div class="stat-sub">atendimentos</div></div>
   </div>
-
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
     <div class="card">
-      <div class="card-title">📅 Agenda de Hoje — ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}</div>
-      ${todayAppts.length===0 ? '<div class="empty-state"><div class="empty-icon">📭</div><h3>Sem agendamentos</h3><p>Nenhum agendamento para hoje</p></div>' :
+      <div class="card-title">📅 Agenda de Hoje</div>
+      ${todayAppts.length===0?'<div class="empty-state"><div class="empty-icon">📭</div><h3>Sem agendamentos</h3></div>':
       `<div class="table-wrap"><table>
-        <thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Prof.</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Status</th><th></th></tr></thead>
         <tbody>${todayAppts.sort((a,b)=>a.time.localeCompare(b.time)).map(a=>`
         <tr>
-          <td><strong>${a.time}</strong></td>
-          <td>${a.client_name}</td>
-          <td>${a.service_name}</td>
-          <td>${a.prof_name?.split(' ')[0]||'-'}</td>
+          <td><strong>${a.time}</strong></td><td>${a.client_name}</td><td>${a.service_name}</td>
           <td>${statusBadge(a.status)}</td>
           <td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}')">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}')">✗</button>`:''}</td>
         </tr>`).join('')}</tbody>
@@ -1023,7 +933,6 @@ async function renderDashboard() {
       <canvas id="revenue-chart" height="200"></canvas>
     </div>
   </div>
-
   <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
     <div class="card">
       <div class="card-title">🏆 Serviços Mais Agendados</div>
@@ -1032,44 +941,33 @@ async function renderDashboard() {
     <div class="card">
       <div class="card-title">🔗 Seu Link</div>
       <div class="link-box" style="margin-bottom:12px">
-        <code style="font-size:12px;word-break:break-all">agendapro.app/${slug}</code>
+        <code style="font-size:12px;word-break:break-all">agendapro.app/${biz.slug||'seu-negocio'}</code>
         <button class="btn btn-sm btn-secondary" onclick="copyLink()">📋</button>
       </div>
       <button class="btn btn-primary btn-full btn-sm" onclick="previewBooking()">👁️ Visualizar Página</button>
-      <hr class="divider">
-      <p style="font-size:12px;color:var(--text2);text-align:center">Compartilhe este link com seus clientes para receber agendamentos online</p>
     </div>
   </div>`;
 
-  // Revenue chart
+  // Charts
   const last7 = [];
   for(let i=6;i>=0;i--) {
     const d = new Date(Date.now()-i*86400000).toISOString().split('T')[0];
-    const rev = Object.values(appts).filter(a=>a.date===d&&a.status==='compareceu').reduce((s,a)=>s+(a.price||0),0);
-    last7.push({d: new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}), rev});
+    const rev = appts.filter(a=>a.date===d&&a.status==='compareceu').reduce((s,a)=>s+(a.price||0),0);
+    last7.push({d:new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}),rev});
   }
   setTimeout(()=>{
     const ctx1 = document.getElementById('revenue-chart');
-    if (ctx1) new Chart(ctx1, {
-      type:'bar',
-      data:{ labels:last7.map(x=>x.d), datasets:[{data:last7.map(x=>x.rev),backgroundColor:'#e9456022',borderColor:'#e94560',borderWidth:2,borderRadius:6}]},
-      options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{callback:v=>'R$'+v}}} }
-    });
-    // Services chart
+    if (ctx1) new Chart(ctx1,{type:'bar',data:{labels:last7.map(x=>x.d),datasets:[{data:last7.map(x=>x.rev),backgroundColor:'#e9456022',borderColor:'#e94560',borderWidth:2,borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'R$'+v}}}}});
     const svcCount = {};
-    Object.values(appts).forEach(a=>{ if(a.service_name) svcCount[a.service_name]=(svcCount[a.service_name]||0)+1; });
+    appts.forEach(a=>{if(a.service_name)svcCount[a.service_name]=(svcCount[a.service_name]||0)+1;});
     const ctx2 = document.getElementById('services-chart');
-    if (ctx2 && Object.keys(svcCount).length > 0) new Chart(ctx2, {
-      type:'doughnut',
-      data:{ labels:Object.keys(svcCount), datasets:[{data:Object.values(svcCount),backgroundColor:['#e94560','#3b82f6','#10b981','#f59e0b','#8b5cf6']}]},
-      options:{ plugins:{legend:{position:'bottom'}} }
-    });
-  }, 100);
+    if (ctx2&&Object.keys(svcCount).length>0) new Chart(ctx2,{type:'doughnut',data:{labels:Object.keys(svcCount),datasets:[{data:Object.values(svcCount),backgroundColor:['#e94560','#3b82f6','#10b981','#f59e0b','#8b5cf6']}]},options:{plugins:{legend:{position:'bottom'}}}});
+  },100);
 }
 
 function statusBadge(s) {
-  const map = { agendado:'badge-info', compareceu:'badge-success', 'nao-compareceu':'badge-danger', cancelado:'badge-gray' };
-  const labels = { agendado:'Agendado', compareceu:'Compareceu', 'nao-compareceu':'Não compareceu', cancelado:'Cancelado' };
+  const map={agendado:'badge-info',compareceu:'badge-success','nao-compareceu':'badge-danger',cancelado:'badge-gray'};
+  const labels={agendado:'Agendado',compareceu:'Compareceu','nao-compareceu':'Não compareceu',cancelado:'Cancelado'};
   return `<span class="badge ${map[s]||'badge-gray'}">${labels[s]||s}</span>`;
 }
 
@@ -1077,23 +975,23 @@ async function markPresent(id) { await updateApptStatus(id,'compareceu'); }
 async function markAbsent(id) { await updateApptStatus(id,'nao-compareceu'); }
 
 async function updateApptStatus(id, status) {
-  const appts = await DB.get(`appointments_${currentUser.id}`)||{};
-  if (appts[id]) { appts[id].status = status; await DB.set(`appointments_${currentUser.id}`, appts); }
-  const labels = {compareceu:'✅ Marcado como presente',  'nao-compareceu':'❌ Marcado como não compareceu', cancelado:'Cancelado'};
-  toast(labels[status]||'Status atualizado');
-  await renderDashboard();
+  try {
+    await DB.updateAppointment(id, { status });
+    toast(status==='compareceu'?'✅ Marcado como presente':'❌ Não compareceu');
+    if (currentPage==='dashboard') await renderDashboard();
+    else if (currentPage==='agenda') await renderAgendaView();
+  } catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
-// ═══════════════════════════════════════════════
-// AGENDA
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  AGENDA
+// ═══════════════════════════════════════════════════════════════
 
 let agendaView = 'month';
 let agendaDate = new Date();
 
 async function renderAgenda() {
-  const pg = document.getElementById('page-agenda');
-  pg.innerHTML = `
+  document.getElementById('page-agenda').innerHTML = `
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
     <div style="display:flex;gap:8px;align-items:center">
       <button class="btn btn-secondary btn-sm" onclick="changeMonth(-1)">‹</button>
@@ -1103,7 +1001,6 @@ async function renderAgenda() {
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-sm ${agendaView==='month'?'btn-primary':''}" onclick="setAgendaView('month')">Mês</button>
-      <button class="btn btn-secondary btn-sm ${agendaView==='week'?'btn-primary':''}" onclick="setAgendaView('week')">Semana</button>
       <button class="btn btn-secondary btn-sm ${agendaView==='list'?'btn-primary':''}" onclick="setAgendaView('list')">Lista</button>
       <button class="btn btn-primary btn-sm" onclick="openModal('new-appointment')">+ Agendar</button>
     </div>
@@ -1113,102 +1010,84 @@ async function renderAgenda() {
 }
 
 async function setAgendaView(v) { agendaView=v; await renderAgenda(); }
-async function changeMonth(d) { agendaDate = new Date(agendaDate.getFullYear(), agendaDate.getMonth()+d, 1); await renderAgendaView(); }
+async function changeMonth(d) { agendaDate=new Date(agendaDate.getFullYear(),agendaDate.getMonth()+d,1); await renderAgendaView(); }
 async function goToday() { agendaDate=new Date(); await renderAgendaView(); }
 
 async function renderAgendaView() {
   const lbl = document.getElementById('agenda-month-label');
   if (lbl) lbl.textContent = agendaDate.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-  const appts = await DB.get(`appointments_${currentUser.id}`) || {};
+  const appts = await DB.getAppointments(currentUser.id);
   const content = document.getElementById('agenda-view-content');
   if (!content) return;
 
   if (agendaView==='month') {
-    const year = agendaDate.getFullYear(), month = agendaDate.getMonth();
-    const firstDay = new Date(year,month,1).getDay();
-    const daysInMonth = new Date(year,month+1,0).getDate();
-    const today = new Date().toISOString().split('T')[0];
-    const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-    let html = `<div class="calendar-grid">${dayNames.map(d=>`<div class="cal-header">${d}</div>`).join('')}`;
-    let cell = 0;
-    for(let i=0;i<firstDay;i++) {
-      const prevD = new Date(year,month,1-firstDay+i);
-      html += `<div class="cal-day other-month"><div class="cal-day-num">${prevD.getDate()}</div></div>`;
-      cell++;
-    }
-    for(let d=1;d<=daysInMonth;d++) {
-      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const dayAppts = Object.values(appts).filter(a=>a.date===dateStr).sort((a,b)=>a.time.localeCompare(b.time));
-      const isToday = dateStr===today;
-      html += `<div class="cal-day${isToday?' today':''}" onclick="openDayView('${dateStr}')">
+    const year=agendaDate.getFullYear(), month=agendaDate.getMonth();
+    const firstDay=new Date(year,month,1).getDay();
+    const daysInMonth=new Date(year,month+1,0).getDate();
+    const today=new Date().toISOString().split('T')[0];
+    let html=`<div class="calendar-grid">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d=>`<div class="cal-header">${d}</div>`).join('')}`;
+    let cell=0;
+    for(let i=0;i<firstDay;i++){html+=`<div class="cal-day other-month"><div class="cal-day-num">${new Date(year,month,1-firstDay+i).getDate()}</div></div>`;cell++;}
+    for(let d=1;d<=daysInMonth;d++){
+      const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const da=appts.filter(a=>a.date===ds).sort((a,b)=>a.time.localeCompare(b.time));
+      html+=`<div class="cal-day${ds===today?' today':''}" onclick="openDayView('${ds}')">
         <div class="cal-day-num">${d}</div>
-        ${dayAppts.slice(0,3).map(a=>`<div class="cal-event ${a.status}">${a.time} ${a.client_name?.split(' ')[0]||''}</div>`).join('')}
-        ${dayAppts.length>3?`<div style="font-size:10px;color:var(--text2);padding:2px 4px">+${dayAppts.length-3} mais</div>`:''}
-      </div>`;
-      cell++;
+        ${da.slice(0,3).map(a=>`<div class="cal-event ${a.status}">${a.time} ${a.client_name?.split(' ')[0]||''}</div>`).join('')}
+        ${da.length>3?`<div style="font-size:10px;color:var(--text2);padding:2px 4px">+${da.length-3}</div>`:''}
+      </div>`;cell++;
     }
-    while(cell%7!==0) { html += `<div class="cal-day other-month"></div>`; cell++; }
-    html += '</div>';
-    content.innerHTML = html;
-  } else if (agendaView==='list') {
-    const all = Object.values(appts).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
-    const filtered = all.filter(a=>a.date>=new Date().toISOString().split('T')[0]);
-    content.innerHTML = filtered.length===0 ? `<div class="empty-state"><div class="empty-icon">📭</div><h3>Nenhum agendamento</h3></div>` :
+    while(cell%7!==0){html+=`<div class="cal-day other-month"></div>`;cell++;}
+    content.innerHTML=html+'</div>';
+  } else {
+    const all=appts.filter(a=>a.date>=new Date().toISOString().split('T')[0]).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+    content.innerHTML=all.length===0?`<div class="empty-state"><div class="empty-icon">📭</div><h3>Nenhum agendamento</h3></div>`:
     `<div class="table-wrap"><table>
       <thead><tr><th>Data</th><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
-      <tbody>${filtered.map(a=>`<tr>
-        <td>${formatDate(a.date)}</td><td><strong>${a.time}</strong></td>
-        <td>${a.client_name}</td><td>${a.service_name}</td><td>${a.prof_name||'-'}</td>
-        <td>${formatCurrency(a.price)}</td><td>${statusBadge(a.status)}</td>
-        <td>
-          ${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}')">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}')">✗</button>`:''}
-          <button class="btn btn-sm btn-secondary" onclick="deleteAppt('${a.id}')">🗑</button>
-        </td>
+      <tbody>${all.map(a=>`<tr>
+        <td>${formatDate(a.date)}</td><td><strong>${a.time}</strong></td><td>${a.client_name}</td>
+        <td>${a.service_name}</td><td>${a.prof_name||'-'}</td><td>${formatCurrency(a.price)}</td>
+        <td>${statusBadge(a.status)}</td>
+        <td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}')">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}')">✗</button>`:''}
+        <button class="btn btn-sm btn-secondary" onclick="deleteAppt('${a.id}')">🗑</button></td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   }
 }
 
 async function openDayView(dateStr) {
-  const appts = await DB.get(`appointments_${currentUser.id}`)||{};
-  const dayAppts = Object.values(appts).filter(a=>a.date===dateStr).sort((a,b)=>a.time.localeCompare(b.time));
-  const dt = new Date(dateStr+'T12:00:00');
-  const dateLabel = dt.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  showModal('Agenda — '+dateLabel,
-    `${dayAppts.length===0?'<div class="empty-state"><div class="empty-icon">🕐</div><h3>Sem agendamentos</h3></div>':
-    `<div class="table-wrap"><table>
-      <thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Prof.</th><th>Status</th><th></th></tr></thead>
-      <tbody>${dayAppts.map(a=>`<tr>
-        <td><strong>${a.time}</strong></td><td>${a.client_name}</td><td>${a.service_name}</td>
-        <td>${a.prof_name?.split(' ')[0]||'-'}</td><td>${statusBadge(a.status)}</td>
-        <td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}');closeModal()">✓</button>
-          <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}');closeModal()">✗</button>`:''}</td>
-      </tr>`).join('')}</tbody>
-    </table></div>`}`,
+  const appts = await DB.getAppointments(currentUser.id);
+  const da = appts.filter(a=>a.date===dateStr).sort((a,b)=>a.time.localeCompare(b.time));
+  const label = new Date(dateStr+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  showModal('Agenda — '+label,
+    da.length===0?'<div class="empty-state"><div class="empty-icon">🕐</div><h3>Sem agendamentos</h3></div>':
+    `<div class="table-wrap"><table><thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Status</th><th></th></tr></thead><tbody>${da.map(a=>`<tr>
+      <td><strong>${a.time}</strong></td><td>${a.client_name}</td><td>${a.service_name}</td><td>${statusBadge(a.status)}</td>
+      <td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}');closeModal()">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}');closeModal()">✗</button>`:''}</td>
+    </tr>`).join('')}</tbody></table></div>`,
     `<button class="btn btn-primary" onclick="closeModal();openModal('new-appointment','${dateStr}')">+ Agendar neste dia</button>`
   );
 }
 
 async function deleteAppt(id) {
   if (!confirm('Cancelar este agendamento?')) return;
-  const appts = await DB.get(`appointments_${currentUser.id}`)||{};
-  if (appts[id]) { appts[id].status='cancelado'; await DB.set(`appointments_${currentUser.id}`,appts); }
-  toast('Agendamento cancelado');
-  await renderAgendaView();
+  try { await DB.deleteAppointment(id); toast('Agendamento cancelado'); await renderAgendaView(); }
+  catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
-// ═══════════════════════════════════════════════
-// CLIENTES
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  CLIENTES
+// ═══════════════════════════════════════════════════════════════
 
 async function renderClientes() {
   const pg = document.getElementById('page-clientes');
-  const clients = await DB.get(`clients_${currentUser.id}`) || {};
-  const appts = await DB.get(`appointments_${currentUser.id}`) || {};
+  pg.innerHTML = `<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>`;
+  const clients = await DB.getClients(currentUser.id);
+  const appts = await DB.getAppointments(currentUser.id);
 
-  const enriched = Object.values(clients).map(c => {
-    const cAppts = Object.values(appts).filter(a=>a.client_id===c.id);
-    return {...c, visits: cAppts.filter(a=>a.status==='compareceu').length, total_spent: cAppts.filter(a=>a.status==='compareceu').reduce((s,a)=>s+(a.price||0),0), last_visit: cAppts.map(a=>a.date).sort().pop()};
+  const enriched = clients.map(c => {
+    const ca = appts.filter(a=>a.client_id===c.id);
+    return {...c, total_visits:ca.filter(a=>a.status==='compareceu').length, total_spent:ca.filter(a=>a.status==='compareceu').reduce((s,a)=>s+(a.price||0),0), last_visit:ca.map(a=>a.date).sort().pop()};
   });
 
   pg.innerHTML = `
@@ -1217,68 +1096,58 @@ async function renderClientes() {
     <button class="btn btn-primary btn-sm" onclick="openModal('new-client')">+ Novo Cliente</button>
   </div>
   <div class="card">
-    <div class="table-wrap">
-      <table id="clients-table">
-        <thead><tr><th>Cliente</th><th>Telefone</th><th>E-mail</th><th>Visitas</th><th>Última Visita</th><th>Total Gasto</th><th>Ações</th></tr></thead>
-        <tbody id="clients-tbody">
-          ${enriched.length===0?`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👥</div><h3>Nenhum cliente</h3></div></td></tr>`
-          :enriched.map(c=>`<tr data-name="${c.name.toLowerCase()}" data-phone="${c.phone||''}" data-email="${(c.email||'').toLowerCase()}">
-            <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar-circle">${initials(c.name)}</div><strong>${c.name}</strong></div></td>
-            <td>${c.phone||'-'}</td><td>${c.email||'-'}</td>
-            <td><span class="badge badge-info">${c.visits}</span></td>
-            <td>${formatDate(c.last_visit)||'-'}</td>
-            <td>${formatCurrency(c.total_spent)}</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="viewClientHistory('${c.id}')">📋</button>
-              <button class="btn btn-sm btn-primary" onclick="openModal('new-appointment',null,'${c.id}')">+ Agendar</button>
-            </td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Cliente</th><th>Telefone</th><th>E-mail</th><th>Visitas</th><th>Última Visita</th><th>Total Gasto</th><th>Ações</th></tr></thead>
+      <tbody id="clients-tbody">
+        ${enriched.length===0?`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👥</div><h3>Nenhum cliente</h3></div></td></tr>`
+        :enriched.map(c=>`<tr data-search="${(c.name+c.phone+c.email).toLowerCase()}">
+          <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar-circle">${initials(c.name)}</div><strong>${c.name}</strong></div></td>
+          <td>${c.phone||'-'}</td><td>${c.email||'-'}</td>
+          <td><span class="badge badge-info">${c.total_visits}</span></td>
+          <td>${formatDate(c.last_visit)||'-'}</td><td>${formatCurrency(c.total_spent)}</td>
+          <td>
+            <button class="btn btn-sm btn-secondary" onclick="viewClientHistory('${c.id}')">📋</button>
+            <button class="btn btn-sm btn-primary" onclick="openModal('new-appointment',null,'${c.id}')">+ Agendar</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
   </div>`;
 }
 
 function filterClients() {
   const q = document.getElementById('client-search').value.toLowerCase();
-  document.querySelectorAll('#clients-tbody tr[data-name]').forEach(tr => {
-    const name = tr.dataset.name||'', phone = tr.dataset.phone||'', email = tr.dataset.email||'';
-    tr.style.display = (name+phone+email).includes(q) ? '' : 'none';
-  });
+  document.querySelectorAll('#clients-tbody tr[data-search]').forEach(tr=>{ tr.style.display=tr.dataset.search.includes(q)?'':'none'; });
 }
 
 async function viewClientHistory(id) {
-  const clients = await DB.get(`clients_${currentUser.id}`)||{};
-  const appts = await DB.get(`appointments_${currentUser.id}`)||{};
-  const c = clients[id]; if(!c) return;
-  const cAppts = Object.values(appts).filter(a=>a.client_id===id).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time));
+  const clients = await DB.getClients(currentUser.id);
+  const appts = await DB.getAppointments(currentUser.id);
+  const c = clients.find(x=>x.id===id); if(!c)return;
+  const ca = appts.filter(a=>a.client_id===id).sort((a,b)=>b.date.localeCompare(a.date));
   showModal(`📋 Histórico — ${c.name}`,
-    `<p style="margin-bottom:12px;color:var(--text2)">📞 ${c.phone||'-'} &nbsp;&nbsp; ✉️ ${c.email||'-'}</p>
-    ${cAppts.length===0?'<div class="empty-state"><p>Sem histórico</p></div>':
-    `<div class="table-wrap"><table>
-      <thead><tr><th>Data</th><th>Hora</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th></tr></thead>
-      <tbody>${cAppts.map(a=>`<tr><td>${formatDate(a.date)}</td><td>${a.time}</td><td>${a.service_name}</td><td>${a.prof_name||'-'}</td><td>${formatCurrency(a.price)}</td><td>${statusBadge(a.status)}</td></tr>`).join('')}</tbody>
-    </table></div>`}`
+    `<p style="margin-bottom:12px;color:var(--text2)">📞 ${c.phone||'-'} &nbsp; ✉️ ${c.email||'-'}</p>
+    ${ca.length===0?'<div class="empty-state"><p>Sem histórico</p></div>':
+    `<div class="table-wrap"><table><thead><tr><th>Data</th><th>Hora</th><th>Serviço</th><th>Valor</th><th>Status</th></tr></thead><tbody>
+    ${ca.map(a=>`<tr><td>${formatDate(a.date)}</td><td>${a.time}</td><td>${a.service_name}</td><td>${formatCurrency(a.price)}</td><td>${statusBadge(a.status)}</td></tr>`).join('')}
+    </tbody></table></div>`}`
   );
 }
 
-// ═══════════════════════════════════════════════
-// PROFISSIONAIS
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  PROFISSIONAIS
+// ═══════════════════════════════════════════════════════════════
 
 async function renderProfissionais() {
   const pg = document.getElementById('page-profissionais');
-  const profs = await DB.get(`profs_${currentUser.id}`) || {};
-
+  const profs = await DB.getProfessionals(currentUser.id);
   pg.innerHTML = `
-  <div style="display:flex;justify-content:space-between;margin-bottom:20px">
-    <div></div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
     <button class="btn btn-primary" onclick="openModal('new-prof')">+ Novo Profissional</button>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px">
-    ${Object.values(profs).length===0?`<div class="card"><div class="empty-state"><div class="empty-icon">👔</div><h3>Nenhum profissional</h3></div></div>`:
-    Object.values(profs).map(p=>`
-    <div class="card" style="border-left:4px solid ${p.color||'var(--accent)'}">
+    ${profs.length===0?`<div class="card"><div class="empty-state"><div class="empty-icon">👔</div><h3>Nenhum profissional</h3></div></div>`:
+    profs.map(p=>`<div class="card" style="border-left:4px solid ${p.color||'var(--accent)'}">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
         <div class="avatar-circle" style="background:${p.color||'var(--accent)'}">${initials(p.name)}</div>
         <div>
@@ -1300,21 +1169,18 @@ async function renderProfissionais() {
 }
 
 async function toggleProf(id, active) {
-  const profs = await DB.get(`profs_${currentUser.id}`)||{};
-  if(profs[id]) { profs[id].active=active; await DB.set(`profs_${currentUser.id}`,profs); }
-  toast(active?'Profissional ativado':'Profissional desativado');
-  await renderProfissionais();
+  try { await DB.updateProfessional(id, {active}); toast(active?'Ativado':'Desativado'); await renderProfissionais(); }
+  catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
-// ═══════════════════════════════════════════════
-// CONFIGURAÇÕES
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  CONFIGURAÇÕES
+// ═══════════════════════════════════════════════════════════════
 
 let configTab = 'servicos';
 
 async function renderConfig() {
-  const pg = document.getElementById('page-config');
-  pg.innerHTML = `
+  document.getElementById('page-config').innerHTML = `
   <div class="tabs">
     <button class="tab-btn ${configTab==='servicos'?'active':''}" onclick="setConfigTab('servicos')">✂️ Serviços</button>
     <button class="tab-btn ${configTab==='horarios'?'active':''}" onclick="setConfigTab('horarios')">🕐 Horários</button>
@@ -1330,46 +1196,37 @@ async function setConfigTab(tab) { configTab=tab; await renderConfig(); }
 async function renderConfigTab() {
   const c = document.getElementById('config-tab-content');
   if (!c) return;
+
   if (configTab==='servicos') {
-    const svcs = await DB.get(`services_${currentUser.id}`)||{};
+    const svcs = await DB.getServices(currentUser.id);
     c.innerHTML = `
     <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
       <button class="btn btn-primary btn-sm" onclick="openModal('new-service')">+ Novo Serviço</button>
     </div>
-    <div class="card">
-      <div class="table-wrap">
-      <table>
-        <thead><tr><th>Serviço</th><th>Duração</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
-        <tbody>${Object.values(svcs).length===0?`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✂️</div><h3>Nenhum serviço</h3></div></td></tr>`
-        :Object.values(svcs).map(s=>`<tr>
-          <td><strong>${s.name}</strong></td>
-          <td>${s.duration} min</td>
-          <td>${formatCurrency(s.price)}</td>
-          <td><span class="badge ${s.active?'badge-success':'badge-gray'}">${s.active?'Ativo':'Inativo'}</span></td>
-          <td>
-            <button class="btn btn-sm btn-secondary" onclick="editService('${s.id}')">✏️</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteService('${s.id}')">🗑</button>
-          </td>
-        </tr>`).join('')}</tbody>
-      </table>
-      </div>
-    </div>`;
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>Serviço</th><th>Duração</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+      <tbody>${svcs.length===0?`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✂️</div><h3>Nenhum serviço</h3></div></td></tr>`
+      :svcs.map(s=>`<tr>
+        <td><strong>${s.name}</strong></td><td>${s.duration} min</td><td>${formatCurrency(s.price)}</td>
+        <td><span class="badge ${s.active?'badge-success':'badge-gray'}">${s.active?'Ativo':'Inativo'}</span></td>
+        <td><button class="btn btn-sm btn-secondary" onclick="editService('${s.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteService('${s.id}')">🗑</button></td>
+      </tr>`).join('')}</tbody>
+    </table></div></div>`;
   } else if (configTab==='horarios') {
     const biz = currentUser.business||{};
     const wh = biz.working_hours||{start:'08:00',end:'18:00',interval:30};
     const days = biz.days||[1,2,3,4,5,6];
-    const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
     c.innerHTML = `<div class="card" style="max-width:480px">
       <div class="card-title">⏰ Horário de Funcionamento</div>
       <div class="form-row">
         <div class="form-group"><label>Abertura</label><input type="time" id="cfg-start" value="${wh.start}"></div>
         <div class="form-group"><label>Fechamento</label><input type="time" id="cfg-end" value="${wh.end}"></div>
       </div>
-      <div class="form-group"><label>Intervalo entre slots (min)</label>
+      <div class="form-group"><label>Intervalo (min)</label>
         <select id="cfg-interval">${[15,20,30,45,60].map(v=>`<option ${wh.interval==v?'selected':''}>${v}</option>`).join('')}</select></div>
       <div class="form-group"><label>Dias de Atendimento</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-          ${dayNames.map((d,i)=>`<div class="chip ${days.includes(i)?'selected':''}" onclick="toggleDay2(${i},this)" id="cfgday-${i}">${d}</div>`).join('')}
+          ${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>`<div class="chip ${days.includes(i)?'selected':''}" onclick="this.classList.toggle('selected')" id="cfgday-${i}">${d}</div>`).join('')}
         </div></div>
       <button class="btn btn-primary" onclick="saveHorarios()">💾 Salvar</button>
     </div>`;
@@ -1378,8 +1235,6 @@ async function renderConfigTab() {
     c.innerHTML = `<div class="card" style="max-width:560px">
       <div class="card-title">🏢 Informações do Negócio</div>
       <div class="form-group"><label>Nome</label><input id="cfg-biz-name" value="${biz.name||''}"></div>
-      <div class="form-group"><label>Área</label>
-        <select id="cfg-biz-area">${['Barbearia','Salão de Beleza','Estética','Odontologia','Medicina','Fisioterapia','Psicologia','Personal Trainer','Nutrição','Mecânica Automotiva','Advocacia','Outro'].map(a=>`<option ${biz.area===a?'selected':''}>${a}</option>`).join('')}</select></div>
       <div class="form-group"><label>Descrição</label><textarea id="cfg-biz-desc" rows="3">${biz.desc||''}</textarea></div>
       <div class="form-row">
         <div class="form-group"><label>Telefone</label><input id="cfg-biz-phone" value="${biz.phone||''}"></div>
@@ -1389,14 +1244,14 @@ async function renderConfigTab() {
       <button class="btn btn-primary" onclick="saveNegocio()">💾 Salvar</button>
     </div>`;
   } else if (configTab==='folgas') {
-    const folgas = await DB.get(`folgas_${currentUser.id}`)||[];
+    const folgas = await DB.getFolgas(currentUser.id);
     c.innerHTML = `<div class="card" style="max-width:480px">
       <div class="card-title">📵 Dias de Folga</div>
       <div style="display:flex;gap:10px;margin-bottom:16px">
         <input type="date" id="new-folga-date" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px">
         <button class="btn btn-primary" onclick="addFolga()">+ Adicionar</button>
       </div>
-      <div style="display:flex;flex-direction:column;gap:8px" id="folgas-list">
+      <div style="display:flex;flex-direction:column;gap:8px">
         ${folgas.length===0?'<p style="color:var(--text2);text-align:center">Nenhuma folga cadastrada</p>'
         :folgas.sort().map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:8px">
           <span>${formatDate(f)}</span>
@@ -1407,10 +1262,6 @@ async function renderConfigTab() {
   }
 }
 
-function toggleDay2(i, el) {
-  el.classList.toggle('selected');
-}
-
 async function saveHorarios() {
   const biz = currentUser.business||{};
   const days = [];
@@ -1418,203 +1269,143 @@ async function saveHorarios() {
   biz.working_hours = { start:document.getElementById('cfg-start').value, end:document.getElementById('cfg-end').value, interval:parseInt(document.getElementById('cfg-interval').value) };
   biz.days = days;
   currentUser.business = biz;
-  const users = await DB.get('users')||{};
-  users[currentUser.id] = {...currentUser};
-  await DB.set('users', users);
-  toast('Horários salvos!');
+  try { await DB.saveUser({id:currentUser.id, business:biz}); toast('Horários salvos!'); }
+  catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
 async function saveNegocio() {
   const biz = currentUser.business||{};
   biz.name = document.getElementById('cfg-biz-name').value.trim();
-  biz.area = document.getElementById('cfg-biz-area').value;
   biz.desc = document.getElementById('cfg-biz-desc').value.trim();
   biz.phone = document.getElementById('cfg-biz-phone').value.trim();
   biz.email = document.getElementById('cfg-biz-email').value.trim();
   biz.slug = document.getElementById('cfg-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
   currentUser.business = biz;
-  const users = await DB.get('users')||{};
-  users[currentUser.id] = {...currentUser};
-  await DB.set('users', users);
-  toast('Configurações salvas!');
+  try { await DB.saveUser({id:currentUser.id, business:biz}); toast('Configurações salvas!'); }
+  catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
 async function addFolga() {
   const d = document.getElementById('new-folga-date').value;
   if (!d) { toast('Selecione uma data','error'); return; }
-  const folgas = await DB.get(`folgas_${currentUser.id}`)||[];
-  if (!folgas.includes(d)) { folgas.push(d); await DB.set(`folgas_${currentUser.id}`,folgas); }
-  toast('Folga adicionada');
-  await renderConfigTab();
+  try { await DB.addFolga(currentUser.id, d); toast('Folga adicionada'); await renderConfigTab(); }
+  catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
 async function removeFolga(d) {
-  const folgas = await DB.get(`folgas_${currentUser.id}`)||[];
-  await DB.set(`folgas_${currentUser.id}`, folgas.filter(f=>f!==d));
-  toast('Folga removida');
-  await renderConfigTab();
+  try { await DB.removeFolga(currentUser.id, d); toast('Folga removida'); await renderConfigTab(); }
+  catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
 async function deleteService(id) {
   if (!confirm('Excluir este serviço?')) return;
-  const svcs = await DB.get(`services_${currentUser.id}`)||{};
-  delete svcs[id];
-  await DB.set(`services_${currentUser.id}`, svcs);
-  toast('Serviço excluído');
-  await renderConfigTab();
+  try { await DB.deleteService(id); toast('Serviço excluído'); await renderConfigTab(); }
+  catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
-// ═══════════════════════════════════════════════
-// ASSINATURA
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  ASSINATURA
+// ═══════════════════════════════════════════════════════════════
 
 async function renderAssinatura() {
   const pg = document.getElementById('page-assinatura');
   const sub = currentUser.subscription||{};
   const expires = sub.expires ? new Date(sub.expires) : null;
   const daysLeft = expires ? Math.ceil((expires-Date.now())/86400000) : 0;
-  const statusMap = { active:{label:'Ativo',badge:'badge-success'}, trial:{label:'Trial Gratuito',badge:'badge-warning'}, expired:{label:'Expirado',badge:'badge-danger'} };
-  const st = statusMap[sub.status]||statusMap.expired;
+  const st = {active:{label:'Ativo',badge:'badge-success'},trial:{label:'Trial Gratuito',badge:'badge-warning'},expired:{label:'Expirado',badge:'badge-danger'}}[sub.status]||{label:'Expirado',badge:'badge-danger'};
 
   pg.innerHTML = `
   <div style="max-width:700px;margin:0 auto">
     <div class="card" style="margin-bottom:20px">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <div>
-          <div style="font-size:13px;color:var(--text2);margin-bottom:4px">Status da Assinatura</div>
-          <span class="badge ${st.badge}" style="font-size:14px;padding:6px 16px">${st.label}</span>
-        </div>
-        <div>
-          <div style="font-size:13px;color:var(--text2);margin-bottom:4px">Plano</div>
-          <strong style="font-family:'Syne',sans-serif;font-size:16px">${sub.plan==='annual'?'Anual':'Mensal'}</strong>
-        </div>
-        <div>
-          <div style="font-size:13px;color:var(--text2);margin-bottom:4px">Expira em</div>
-          <strong>${expires?expires.toLocaleDateString('pt-BR'):'-'}</strong>
-          ${daysLeft>0?`<span class="badge badge-info" style="margin-left:8px">${daysLeft} dias</span>`:''}
-        </div>
+        <div><div style="font-size:13px;color:var(--text2);margin-bottom:4px">Status</div><span class="badge ${st.badge}" style="font-size:14px;padding:6px 16px">${st.label}</span></div>
+        <div><div style="font-size:13px;color:var(--text2);margin-bottom:4px">Plano</div><strong style="font-family:'Syne',sans-serif;font-size:16px">${sub.plan==='annual'?'Anual':'Mensal'}</strong></div>
+        <div><div style="font-size:13px;color:var(--text2);margin-bottom:4px">Expira em</div><strong>${expires?expires.toLocaleDateString('pt-BR'):'-'}</strong>${daysLeft>0?`<span class="badge badge-info" style="margin-left:8px">${daysLeft} dias</span>`:''}</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-      <div class="plan-card ${sub.plan!=='annual'?'highlighted':''}">
-        ${sub.plan!=='annual'?'<div class="plan-badge">Mais Popular</div>':''}
+      <div class="plan-card highlighted">
+        <div class="plan-badge">Mais Popular</div>
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px">Mensal</div>
         <div class="plan-price">R$&nbsp;49<span>,90/mês</span></div>
         <ul style="margin:16px 0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:13px">
-          <li>✅ Agendamentos ilimitados</li>
-          <li>✅ Múltiplos profissionais</li>
-          <li>✅ Link de agendamento</li>
-          <li>✅ Notificações por e-mail</li>
-          <li>✅ Relatórios básicos</li>
+          <li>✅ Agendamentos ilimitados</li><li>✅ Múltiplos profissionais</li>
+          <li>✅ Link de agendamento</li><li>✅ Relatórios básicos</li>
         </ul>
         <a href="https://buy.stripe.com/3cI8wI9TbfhJ2Jn5Oge3e00" target="_blank" class="btn btn-primary btn-full">💳 Assinar Mensal</a>
       </div>
-      <div class="plan-card ${sub.plan==='annual'?'highlighted':''}">
-        ${sub.plan==='annual'?'<div class="plan-badge">Seu Plano</div>':'<div class="plan-badge" style="background:var(--accent2)">2 Meses Grátis</div>'}
+      <div class="plan-card">
+        <div class="plan-badge" style="background:var(--accent2)">2 Meses Grátis</div>
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px">Anual</div>
         <div class="plan-price">R$&nbsp;499<span>/ano</span></div>
         <div style="font-size:12px;color:var(--success);margin-bottom:8px;font-weight:600">Economia de R$&nbsp;99,80</div>
         <ul style="margin:16px 0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:13px">
-          <li>✅ Tudo do plano Mensal</li>
-          <li>✅ 2 meses grátis</li>
-          <li>✅ Suporte prioritário</li>
-          <li>✅ Relatórios avançados</li>
-          <li>✅ Integrações futuras</li>
+          <li>✅ Tudo do Mensal</li><li>✅ 2 meses grátis</li>
+          <li>✅ Suporte prioritário</li><li>✅ Relatórios avançados</li>
         </ul>
         <a href="https://buy.stripe.com/eVqcMYd5nd9Bdo16Ske3e01" target="_blank" class="btn btn-primary btn-full" style="background:var(--accent2)">💳 Assinar Anual</a>
       </div>
     </div>
-    <div class="card" style="text-align:center;background:var(--bg)">
-      <div style="font-size:24px;margin-bottom:8px">🔒</div>
-      <strong style="font-family:'Syne',sans-serif">Pagamento Seguro via Stripe</strong>
-      <p style="font-size:12px;color:var(--text2);margin-top:6px">Seus dados de pagamento são protegidos pela Stripe. Cancele a qualquer momento.</p>
-    </div>
   </div>`;
 }
 
-// ═══════════════════════════════════════════════
-// ADMIN PANEL
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  ADMIN
+// ═══════════════════════════════════════════════════════════════
 
 async function renderAdmin() {
   const pg = document.getElementById('page-admin');
-  const users = await DB.get('users')||{};
-  const allUsers = Object.entries(users).map(([id,u])=>({...u,id}));
-  const active = allUsers.filter(u=>u.subscription?.status==='active');
-  const trial = allUsers.filter(u=>u.subscription?.status==='trial');
-  const expired = allUsers.filter(u=>u.subscription?.status==='expired');
-  const revenue = active.filter(u=>u.subscription?.plan==='monthly').length*49.90 + active.filter(u=>u.subscription?.plan==='annual').length*(499/12);
+  pg.innerHTML = `<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>`;
+  const users = await DB.getAllUsers();
+  const active=users.filter(u=>u.subscription?.status==='active');
+  const trial=users.filter(u=>u.subscription?.status==='trial');
+  const revenue=active.filter(u=>u.subscription?.plan==='monthly').length*49.90+active.filter(u=>u.subscription?.plan==='annual').length*(499/12);
 
   pg.innerHTML = `
   <div class="stat-grid" style="margin-bottom:20px">
-    <div class="admin-stat"><div class="stat-label">Total de Assinantes</div><div class="stat-value">${allUsers.length}</div></div>
+    <div class="admin-stat"><div class="stat-label">Total Usuários</div><div class="stat-value">${users.length}</div></div>
     <div class="admin-stat"><div class="stat-label">Ativos</div><div class="stat-value">${active.length}</div></div>
     <div class="admin-stat"><div class="stat-label">Em Trial</div><div class="stat-value">${trial.length}</div></div>
-    <div class="admin-stat"><div class="stat-label">Receita Mensal Est.</div><div class="stat-value">${formatCurrency(revenue)}</div></div>
+    <div class="admin-stat"><div class="stat-label">Receita Est.</div><div class="stat-value">${formatCurrency(revenue)}</div></div>
   </div>
   <div class="card">
-    <div class="card-title">👥 Todos os Assinantes</div>
-    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-      <button class="btn btn-sm btn-secondary" onclick="filterAdminUsers('all')">Todos (${allUsers.length})</button>
-      <button class="btn btn-sm btn-success" onclick="filterAdminUsers('active')">Ativos (${active.length})</button>
-      <button class="btn btn-sm btn-warning" onclick="filterAdminUsers('trial')">Trial (${trial.length})</button>
-      <button class="btn btn-sm btn-danger" onclick="filterAdminUsers('expired')">Expirados (${expired.length})</button>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Usuário</th><th>E-mail</th><th>Área</th><th>Plano</th><th>Status</th><th>Expira</th><th>Ações</th></tr></thead>
-        <tbody id="admin-users-tbody">
-          ${allUsers.map(u=>`<tr data-status="${u.subscription?.status||'expired'}">
-            <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-circle" style="width:28px;height:28px;font-size:11px">${initials(u.name)}</div><strong>${u.name}</strong></div></td>
-            <td>${u.email}</td>
-            <td>${u.area||'-'}</td>
-            <td>${u.subscription?.plan==='annual'?'Anual':'Mensal'}</td>
-            <td>${statusBadge(u.subscription?.status||'expired')}</td>
-            <td>${u.subscription?.expires?new Date(u.subscription.expires).toLocaleDateString('pt-BR'):'-'}</td>
-            <td>
-              <button class="btn btn-sm btn-success" onclick="adminRenew('${u.id}',30)">+30d</button>
-              <button class="btn btn-sm btn-danger" onclick="adminCancel('${u.id}')">Cancelar</button>
-            </td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>
+    <div class="card-title">👥 Usuários</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Nome</th><th>E-mail</th><th>Área</th><th>Plano</th><th>Status</th><th>Expira</th><th>Ações</th></tr></thead>
+      <tbody>${users.map(u=>`<tr>
+        <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-circle" style="width:28px;height:28px;font-size:11px">${initials(u.name)}</div><strong>${u.name}</strong></div></td>
+        <td>${u.email}</td><td>${u.area||'-'}</td>
+        <td>${u.subscription?.plan==='annual'?'Anual':'Mensal'}</td>
+        <td>${statusBadge(u.subscription?.status||'expired')}</td>
+        <td>${u.subscription?.expires?new Date(u.subscription.expires).toLocaleDateString('pt-BR'):'-'}</td>
+        <td>
+          <button class="btn btn-sm btn-success" onclick="adminRenew('${u.id}',30)">+30d</button>
+          <button class="btn btn-sm btn-danger" onclick="adminCancel('${u.id}')">Cancelar</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table></div>
   </div>`;
 }
 
-function filterAdminUsers(status) {
-  document.querySelectorAll('#admin-users-tbody tr').forEach(tr => {
-    tr.style.display = status==='all'||tr.dataset.status===status ? '' : 'none';
-  });
-}
-
 async function adminRenew(uid, days) {
-  const users = await DB.get('users')||{};
-  if (!users[uid]) return;
-  const expires = new Date(Date.now()+days*86400000).toISOString();
-  users[uid].subscription = {...(users[uid].subscription||{}), status:'active', expires};
-  await DB.set('users', users);
-  toast(`Licença renovada por ${days} dias`);
-  await renderAdmin();
+  const sub = { status:'active', plan:'monthly', expires:new Date(Date.now()+days*86400000).toISOString() };
+  try { await DB.updateUserSubscription(uid, sub); toast(`Renovado por ${days} dias`); await renderAdmin(); }
+  catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
 async function adminCancel(uid) {
-  if (!confirm('Cancelar assinatura deste usuário?')) return;
-  const users = await DB.get('users')||{};
-  if (!users[uid]) return;
-  users[uid].subscription = {...(users[uid].subscription||{}), status:'expired'};
-  await DB.set('users', users);
-  toast('Assinatura cancelada','warning');
-  await renderAdmin();
+  if (!confirm('Cancelar assinatura?')) return;
+  try { await DB.updateUserSubscription(uid, {status:'expired'}); toast('Cancelado','warning'); await renderAdmin(); }
+  catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
-// ═══════════════════════════════════════════════
-// MODALS
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════════════════════════════
 
 function showModal(title, body, footer='') {
-  const c = document.getElementById('modal-container');
-  c.innerHTML = `<div class="modal-backdrop" onclick="event.target===this&&closeModal()">
+  document.getElementById('modal-container').innerHTML = `
+  <div class="modal-backdrop" onclick="event.target===this&&closeModal()">
     <div class="modal">
       <div class="modal-header">
         <div class="modal-title">${title}</div>
@@ -1636,9 +1427,9 @@ async function openModal(type, dateStr=null, clientId=null) {
 }
 
 async function showNewApptModal(dateStr=null, clientId=null) {
-  const profs = await DB.get(`profs_${currentUser.id}`)||{};
-  const svcs = await DB.get(`services_${currentUser.id}`)||{};
-  const clients = await DB.get(`clients_${currentUser.id}`)||{};
+  const profs = await DB.getProfessionals(currentUser.id);
+  const svcs = await DB.getServices(currentUser.id);
+  const clients = await DB.getClients(currentUser.id);
   const today = dateStr||new Date().toISOString().split('T')[0];
 
   showModal('📅 Novo Agendamento',
@@ -1647,22 +1438,20 @@ async function showNewApptModal(dateStr=null, clientId=null) {
       <div class="form-group"><label>Profissional</label>
         <select id="na-prof" onchange="updateSlots()">
           <option value="">Selecione...</option>
-          ${Object.values(profs).filter(p=>p.active).map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}
+          ${profs.filter(p=>p.active).map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}
         </select></div>
       <div class="form-group"><label>Serviço</label>
         <select id="na-svc">
           <option value="">Selecione...</option>
-          ${Object.values(svcs).filter(s=>s.active).map(s=>`<option value="${s.id}">${s.name} — ${formatCurrency(s.price)}</option>`).join('')}
+          ${svcs.filter(s=>s.active).map(s=>`<option value="${s.id}">${s.name} — ${formatCurrency(s.price)}</option>`).join('')}
         </select></div>
     </div>
-    <div class="form-group"><label>Horário</label>
-      <div class="time-slots" id="na-slots"></div>
-    </div>
+    <div class="form-group"><label>Horário</label><div class="time-slots" id="na-slots"></div></div>
     <div class="form-group"><label>Cliente</label>
-      <select id="na-client">
-        <option value="">Selecione ou busque...</option>
+      <select id="na-client" onchange="document.getElementById('na-new-client').style.display=this.value==='__new'?'block':'none'">
+        <option value="">Selecione...</option>
         <option value="__new">+ Novo cliente</option>
-        ${Object.values(clients).map(c=>`<option value="${c.id}" ${clientId===c.id?'selected':''}>${c.name}</option>`).join('')}
+        ${clients.map(c=>`<option value="${c.id}" ${clientId===c.id?'selected':''}>${c.name}</option>`).join('')}
       </select></div>
     <div id="na-new-client" style="display:none">
       <div class="form-row">
@@ -1671,10 +1460,7 @@ async function showNewApptModal(dateStr=null, clientId=null) {
       </div>
       <div class="form-group"><label>E-mail</label><input id="na-nc-email" placeholder="email@cliente.com"></div>
     </div>
-    <div class="form-group"><label>Observações</label><textarea id="na-notes" rows="2" placeholder="Alguma observação?"></textarea></div>
-    <script>
-      document.getElementById('na-client').onchange=function(){document.getElementById('na-new-client').style.display=this.value==='__new'?'block':'none';}
-    <\/script>`,
+    <div class="form-group"><label>Observações</label><textarea id="na-notes" rows="2"></textarea></div>`,
     `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
      <button class="btn btn-primary" onclick="saveNewAppt()">✅ Agendar</button>`
   );
@@ -1682,90 +1468,71 @@ async function showNewApptModal(dateStr=null, clientId=null) {
 }
 
 async function updateSlots() {
-  const dateEl = document.getElementById('na-date');
-  const profEl = document.getElementById('na-prof');
-  if (!dateEl||!profEl) return;
-  const date = dateEl.value;
-  const profId = profEl.value;
-  const slotsEl = document.getElementById('na-slots');
-  if (!slotsEl) return;
+  const dateEl=document.getElementById('na-date');
+  const profEl=document.getElementById('na-prof');
+  const slotsEl=document.getElementById('na-slots');
+  if (!dateEl||!profEl||!slotsEl) return;
+  const date=dateEl.value, profId=profEl.value;
   if (!date||!profId) { slotsEl.innerHTML='<p style="color:var(--text2);font-size:13px">Selecione data e profissional</p>'; return; }
 
-  const biz = currentUser.business||{};
-  const wh = biz.working_hours||{start:'08:00',end:'18:00',interval:30};
-  const appts = await DB.get(`appointments_${currentUser.id}`)||{};
-  const takenTimes = new Set(Object.values(appts).filter(a=>a.date===date&&a.prof_id===profId&&a.status!=='cancelado').map(a=>a.time));
+  const biz=currentUser.business||{};
+  const wh=biz.working_hours||{start:'08:00',end:'18:00',interval:30};
+  const appts=await DB.getAppointments(currentUser.id);
+  const takenTimes=new Set(appts.filter(a=>a.date===date&&a.prof_id===profId&&a.status!=='cancelado').map(a=>a.time));
 
-  const slots = [];
-  let [sh,sm] = wh.start.split(':').map(Number);
-  let [eh,em] = wh.end.split(':').map(Number);
-  let cur = sh*60+sm;
-  const end = eh*60+em;
-  while(cur+wh.interval<=end) {
-    const hh = String(Math.floor(cur/60)).padStart(2,'0');
-    const mm = String(cur%60).padStart(2,'0');
-    slots.push(`${hh}:${mm}`);
+  const slots=[];
+  let cur=parseInt(wh.start.split(':')[0])*60+parseInt(wh.start.split(':')[1]);
+  const end=parseInt(wh.end.split(':')[0])*60+parseInt(wh.end.split(':')[1]);
+  while(cur+wh.interval<=end){
+    slots.push(`${String(Math.floor(cur/60)).padStart(2,'0')}:${String(cur%60).padStart(2,'0')}`);
     cur+=wh.interval;
   }
-
-  slotsEl.innerHTML = slots.map(s=>`<div class="time-slot${takenTimes.has(s)?' taken':''}" onclick="selectSlot('${s}',this)">${s}</div>`).join('');
+  slotsEl.innerHTML=slots.map(s=>`<div class="time-slot${takenTimes.has(s)?' taken':''}" onclick="selectSlot('${s}',this)">${s}</div>`).join('');
 }
 
-let selectedSlot = null;
-function selectSlot(time, el) {
-  if (el.classList.contains('taken')) return;
-  document.querySelectorAll('.time-slot.selected').forEach(e=>e.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedSlot = time;
-}
+let selectedSlot=null;
+function selectSlot(time,el){ if(el.classList.contains('taken'))return; document.querySelectorAll('.time-slot.selected').forEach(e=>e.classList.remove('selected')); el.classList.add('selected'); selectedSlot=time; }
 
 async function saveNewAppt() {
-  const date = document.getElementById('na-date')?.value;
-  const profId = document.getElementById('na-prof')?.value;
-  const svcId = document.getElementById('na-svc')?.value;
-  const clientSel = document.getElementById('na-client')?.value;
-  const notes = document.getElementById('na-notes')?.value||'';
-
+  const date=document.getElementById('na-date')?.value;
+  const profId=document.getElementById('na-prof')?.value;
+  const svcId=document.getElementById('na-svc')?.value;
+  const clientSel=document.getElementById('na-client')?.value;
+  const notes=document.getElementById('na-notes')?.value||'';
   if (!date||!profId||!svcId||!selectedSlot) { toast('Preencha todos os campos e selecione um horário','error'); return; }
 
-  const profs = await DB.get(`profs_${currentUser.id}`)||{};
-  const svcs = await DB.get(`services_${currentUser.id}`)||{};
-  let clients = await DB.get(`clients_${currentUser.id}`)||{};
+  const profs=await DB.getProfessionals(currentUser.id);
+  const svcs=await DB.getServices(currentUser.id);
+  const prof=profs.find(p=>p.id===profId);
+  const svc=svcs.find(s=>s.id===svcId);
 
-  let clientId = clientSel;
-  let clientName = '';
-
+  let clientId=clientSel, clientName='';
   if (clientSel==='__new') {
-    const name = document.getElementById('na-nc-name')?.value.trim();
-    const phone = document.getElementById('na-nc-phone')?.value.trim();
-    const email = document.getElementById('na-nc-email')?.value.trim();
+    const name=document.getElementById('na-nc-name')?.value.trim();
+    const phone=document.getElementById('na-nc-phone')?.value.trim();
+    const email=document.getElementById('na-nc-email')?.value.trim();
     if (!name) { toast('Informe o nome do cliente','error'); return; }
-    clientId = uid();
-    clients[clientId] = { id:clientId, name, phone, email, created:new Date().toISOString(), visits:0 };
-    await DB.set(`clients_${currentUser.id}`, clients);
-    clientName = name;
-  } else if (clientSel) {
-    clientName = clients[clientSel]?.name||'';
+    try {
+      const nc = await DB.saveClient({ id:uid(), user_id:currentUser.id, name, phone, email, created_at:new Date().toISOString() });
+      clientId=nc.id; clientName=name;
+    } catch(e) { toast('Erro ao criar cliente: '+e.message,'error'); return; }
+  } else {
+    const clients=await DB.getClients(currentUser.id);
+    clientName=clients.find(c=>c.id===clientSel)?.name||'';
   }
-
   if (!clientId) { toast('Selecione um cliente','error'); return; }
 
-  const prof = profs[profId];
-  const svc = svcs[svcId];
-  const id = uid();
-  const appts = await DB.get(`appointments_${currentUser.id}`)||{};
-  appts[id] = {
-    id, client_id:clientId, client_name:clientName||clients[clientId]?.name||'',
-    prof_id:profId, prof_name:prof?.name||'', service_id:svcId, service_name:svc?.name||'',
-    date, time:selectedSlot, duration:svc?.duration||30, price:svc?.price||0,
-    status:'agendado', notes, created:new Date().toISOString()
-  };
-  await DB.set(`appointments_${currentUser.id}`, appts);
-  selectedSlot = null;
-  closeModal();
-  toast('✅ Agendamento realizado!');
-  if (currentPage==='dashboard') await renderDashboard();
-  else if (currentPage==='agenda') await renderAgendaView();
+  try {
+    await DB.saveAppointment({
+      id:uid(), user_id:currentUser.id, client_id:clientId, client_name:clientName,
+      prof_id:profId, prof_name:prof?.name||'', service_id:svcId, service_name:svc?.name||'',
+      date, time:selectedSlot, duration:svc?.duration||30, price:svc?.price||0,
+      status:'agendado', notes, created_at:new Date().toISOString()
+    });
+    selectedSlot=null; closeModal(); toast('✅ Agendamento realizado!');
+    if (currentPage==='dashboard') await renderDashboard();
+    else if (currentPage==='agenda') await renderAgendaView();
+  } catch(e) { toast('Erro ao agendar: '+e.message,'error'); }
 }
 
 function showNewClientModal() {
@@ -1774,33 +1541,28 @@ function showNewClientModal() {
       <div class="form-group"><label>Nome</label><input id="nc-name" placeholder="Nome completo"></div>
       <div class="form-group"><label>Telefone</label><input id="nc-phone" placeholder="(44) 99999-9999"></div>
     </div>
-    <div class="form-group"><label>E-mail</label><input id="nc-email" placeholder="email@cliente.com"></div>
-    <div class="form-group"><label>Observações</label><textarea id="nc-obs" rows="2" placeholder="Observações sobre o cliente..."></textarea></div>`,
+    <div class="form-group"><label>E-mail</label><input id="nc-email" placeholder="email@cliente.com"></div>`,
     `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
      <button class="btn btn-primary" onclick="saveNewClient()">💾 Salvar</button>`
   );
 }
 
 async function saveNewClient() {
-  const name = document.getElementById('nc-name')?.value.trim();
-  const phone = document.getElementById('nc-phone')?.value.trim();
-  const email = document.getElementById('nc-email')?.value.trim();
+  const name=document.getElementById('nc-name')?.value.trim();
+  const phone=document.getElementById('nc-phone')?.value.trim();
+  const email=document.getElementById('nc-email')?.value.trim();
   if (!name) { toast('Informe o nome','error'); return; }
-  const clients = await DB.get(`clients_${currentUser.id}`)||{};
-  const id = uid();
-  clients[id] = { id, name, phone, email, created:new Date().toISOString(), visits:0 };
-  await DB.set(`clients_${currentUser.id}`, clients);
-  closeModal();
-  toast('Cliente adicionado!');
-  await renderClientes();
+  try {
+    await DB.saveClient({id:uid(),user_id:currentUser.id,name,phone,email,created_at:new Date().toISOString()});
+    closeModal(); toast('Cliente adicionado!'); await renderClientes();
+  } catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
-function showNewServiceModal(existingId=null) {
+function showNewServiceModal() {
   showModal('✂️ Novo Serviço',
     `<div class="form-group"><label>Nome do Serviço</label><input id="svc-name" placeholder="Ex: Corte Masculino"></div>
     <div class="form-row">
-      <div class="form-group"><label>Duração (min)</label>
-        <select id="svc-dur">${[15,20,30,45,60,90,120].map(v=>`<option value="${v}">${v} min</option>`).join('')}</select></div>
+      <div class="form-group"><label>Duração (min)</label><select id="svc-dur">${[15,20,30,45,60,90,120].map(v=>`<option value="${v}">${v} min</option>`).join('')}</select></div>
       <div class="form-group"><label>Valor (R$)</label><input type="number" id="svc-price" placeholder="0.00" step="0.01"></div>
     </div>`,
     `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
@@ -1809,27 +1571,21 @@ function showNewServiceModal(existingId=null) {
 }
 
 async function saveNewService() {
-  const name = document.getElementById('svc-name')?.value.trim();
-  const dur = parseInt(document.getElementById('svc-dur')?.value||'30');
-  const price = parseFloat(document.getElementById('svc-price')?.value||'0');
-  if (!name) { toast('Informe o nome do serviço','error'); return; }
-  const svcs = await DB.get(`services_${currentUser.id}`)||{};
-  const id = uid();
-  svcs[id] = { id, name, duration:dur, price, active:true };
-  await DB.set(`services_${currentUser.id}`, svcs);
-  closeModal();
-  toast('Serviço adicionado!');
-  await renderConfigTab();
+  const name=document.getElementById('svc-name')?.value.trim();
+  if (!name) { toast('Informe o nome','error'); return; }
+  try {
+    await DB.saveService({id:uid(),user_id:currentUser.id,name,duration:parseInt(document.getElementById('svc-dur').value),price:parseFloat(document.getElementById('svc-price').value||'0'),active:true});
+    closeModal(); toast('Serviço adicionado!'); await renderConfigTab();
+  } catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
 async function editService(id) {
-  const svcs = await DB.get(`services_${currentUser.id}`)||{};
-  const s = svcs[id]; if(!s) return;
+  const svcs=await DB.getServices(currentUser.id);
+  const s=svcs.find(x=>x.id===id); if(!s)return;
   showModal('✏️ Editar Serviço',
     `<div class="form-group"><label>Nome</label><input id="esvc-name" value="${s.name}"></div>
     <div class="form-row">
-      <div class="form-group"><label>Duração</label>
-        <select id="esvc-dur">${[15,20,30,45,60,90,120].map(v=>`<option value="${v}" ${s.duration==v?'selected':''}>${v} min</option>`).join('')}</select></div>
+      <div class="form-group"><label>Duração</label><select id="esvc-dur">${[15,20,30,45,60,90,120].map(v=>`<option value="${v}" ${s.duration==v?'selected':''}>${v} min</option>`).join('')}</select></div>
       <div class="form-group"><label>Valor</label><input type="number" id="esvc-price" value="${s.price}" step="0.01"></div>
     </div>`,
     `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
@@ -1838,14 +1594,14 @@ async function editService(id) {
 }
 
 async function updateService(id) {
-  const svcs = await DB.get(`services_${currentUser.id}`)||{};
-  svcs[id] = {...svcs[id], name:document.getElementById('esvc-name').value.trim(), duration:parseInt(document.getElementById('esvc-dur').value), price:parseFloat(document.getElementById('esvc-price').value)};
-  await DB.set(`services_${currentUser.id}`, svcs);
-  closeModal(); toast('Serviço atualizado'); await renderConfigTab();
+  try {
+    await DB.saveService({id,user_id:currentUser.id,name:document.getElementById('esvc-name').value.trim(),duration:parseInt(document.getElementById('esvc-dur').value),price:parseFloat(document.getElementById('esvc-price').value),active:true});
+    closeModal(); toast('Atualizado'); await renderConfigTab();
+  } catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
 function showNewProfModal() {
-  const colors = ['#e94560','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4'];
+  const colors=['#e94560','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4'];
   showModal('👔 Novo Profissional',
     `<div class="form-row">
       <div class="form-group"><label>Nome</label><input id="np-name" placeholder="Nome completo"></div>
@@ -1857,7 +1613,7 @@ function showNewProfModal() {
     </div>
     <div class="form-group"><label>Cor</label>
       <div style="display:flex;gap:8px;margin-top:6px" id="prof-colors">
-        ${colors.map((col,i)=>`<div style="width:28px;height:28px;background:${col};border-radius:50%;cursor:pointer;border:3px solid ${i===0?'var(--text)':'transparent'}" onclick="selectProfColor('${col}',this)"></div>`).join('')}
+        ${colors.map((col,i)=>`<div style="width:28px;height:28px;background:${col};border-radius:50%;cursor:pointer;border:3px solid ${i===0?'#1a1a2e':'transparent'}" onclick="selectProfColor('${col}',this)"></div>`).join('')}
       </div>
       <input type="hidden" id="np-color" value="${colors[0]}">
     </div>`,
@@ -1866,30 +1622,20 @@ function showNewProfModal() {
   );
 }
 
-function selectProfColor(col, el) {
-  document.getElementById('np-color').value = col;
-  document.querySelectorAll('#prof-colors div').forEach(d=>d.style.border='3px solid transparent');
-  el.style.border = '3px solid var(--text)';
-}
+function selectProfColor(col,el){ document.getElementById('np-color').value=col; document.querySelectorAll('#prof-colors div').forEach(d=>d.style.border='3px solid transparent'); el.style.border='3px solid #1a1a2e'; }
 
 async function saveNewProf() {
-  const name = document.getElementById('np-name')?.value.trim();
+  const name=document.getElementById('np-name')?.value.trim();
   if (!name) { toast('Informe o nome','error'); return; }
-  const profs = await DB.get(`profs_${currentUser.id}`)||{};
-  const id = uid();
-  profs[id] = {
-    id, name, specialty:document.getElementById('np-spec')?.value.trim()||'',
-    phone:document.getElementById('np-phone')?.value.trim()||'',
-    email:document.getElementById('np-email')?.value.trim()||'',
-    color:document.getElementById('np-color')?.value||'#e94560', active:true
-  };
-  await DB.set(`profs_${currentUser.id}`, profs);
-  closeModal(); toast('Profissional adicionado!'); await renderProfissionais();
+  try {
+    await DB.saveProfessional({id:uid(),user_id:currentUser.id,name,specialty:document.getElementById('np-spec').value.trim(),phone:document.getElementById('np-phone').value.trim(),email:document.getElementById('np-email').value.trim(),color:document.getElementById('np-color').value,active:true});
+    closeModal(); toast('Profissional adicionado!'); await renderProfissionais();
+  } catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
 async function editProf(id) {
-  const profs = await DB.get(`profs_${currentUser.id}`)||{};
-  const p = profs[id]; if(!p) return;
+  const profs=await DB.getProfessionals(currentUser.id);
+  const p=profs.find(x=>x.id===id); if(!p)return;
   showModal('✏️ Editar Profissional',
     `<div class="form-row">
       <div class="form-group"><label>Nome</label><input id="ep-name" value="${p.name}"></div>
@@ -1905,207 +1651,323 @@ async function editProf(id) {
 }
 
 async function updateProf(id) {
-  const profs = await DB.get(`profs_${currentUser.id}`)||{};
-  profs[id] = {...profs[id], name:document.getElementById('ep-name').value.trim(), specialty:document.getElementById('ep-spec').value.trim(), phone:document.getElementById('ep-phone').value.trim(), email:document.getElementById('ep-email').value.trim()};
-  await DB.set(`profs_${currentUser.id}`, profs);
-  closeModal(); toast('Profissional atualizado'); await renderProfissionais();
+  try {
+    await DB.updateProfessional(id,{name:document.getElementById('ep-name').value.trim(),specialty:document.getElementById('ep-spec').value.trim(),phone:document.getElementById('ep-phone').value.trim(),email:document.getElementById('ep-email').value.trim()});
+    closeModal(); toast('Atualizado'); await renderProfissionais();
+  } catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
-// ═══════════════════════════════════════════════
-// BOOKING PAGE (link público)
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  BOOKING PAGE
+// ═══════════════════════════════════════════════════════════════
 
 async function previewBooking() {
-  const slug = currentUser.business?.slug||'demo';
   await loadBookingPage(currentUser.id);
 }
 
 async function loadBookingPage(userId) {
-  const users = await DB.get('users')||{};
-  const user = users[userId]; if(!user) { toast('Negócio não encontrado','error'); return; }
-  const biz = user.business||{};
-  const profs = await DB.get(`profs_${userId}`)||{};
-  const svcs = await DB.get(`services_${userId}`)||{};
+  const userData = await DB.getUser(userId); if(!userData)return;
+  const biz=userData.business||{};
+  const profs=await DB.getProfessionals(userId);
+  const svcs=await DB.getServices(userId);
 
   document.getElementById('app').style.display='none';
   document.getElementById('auth-screen').style.display='none';
-  const bs = document.getElementById('booking-screen');
+  const bs=document.getElementById('booking-screen');
   bs.style.display='block';
 
-  document.getElementById('booking-biz-name').textContent = biz.name||'Agendamento';
-  document.getElementById('booking-biz-desc').textContent = biz.desc||'';
-  document.getElementById('booking-biz-info').textContent = [biz.city,biz.uf,biz.phone].filter(Boolean).join(' · ');
+  document.getElementById('booking-biz-name').textContent=biz.name||'Agendamento';
+  document.getElementById('booking-biz-desc').textContent=biz.desc||'';
+  document.getElementById('booking-biz-info').textContent=[biz.city,biz.uf,biz.phone].filter(Boolean).join(' · ');
 
-  bookingState = { userId, biz, profs, svcs, prof:null, service:null, date:null, time:null };
+  bookingState={userId,biz,profs:profs.reduce((o,p)=>({...o,[p.id]:p}),{}),svcs:svcs.reduce((o,s)=>({...o,[s.id]:s}),{}),prof:null,service:null,date:null,time:null};
 
-  const bp = document.getElementById('booking-professionals');
-  const activeProfs = Object.values(profs).filter(p=>p.active);
-  bp.innerHTML = activeProfs.length===0?'<p style="color:var(--text2)">Nenhum profissional disponível</p>':
+  const activeProfs=profs.filter(p=>p.active);
+  document.getElementById('booking-professionals').innerHTML=activeProfs.length===0?'<p>Nenhum profissional disponível</p>':
     `<div style="display:flex;flex-direction:column;gap:10px">
-      ${activeProfs.map(p=>`<div class="chip" onclick="selectBookingProf('${p.id}',this)" style="padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:10px">
-        <div class="avatar-circle" style="background:${p.color||'var(--accent)'}">${initials(p.name)}</div>
-        <div><div style="font-weight:600">${p.name}</div><div style="font-size:12px;color:var(--text2)">${p.specialty||''}</div></div>
-      </div>`).join('')}
-    </div>`;
+    ${activeProfs.map(p=>`<div class="chip" onclick="selectBookingProf('${p.id}',this)" style="padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:10px">
+      <div class="avatar-circle" style="background:${p.color||'var(--accent)'}">${initials(p.name)}</div>
+      <div><div style="font-weight:600">${p.name}</div><div style="font-size:12px;color:var(--text2)">${p.specialty||''}</div></div>
+    </div>`).join('')}</div>`;
 
   document.getElementById('booking-step-1').style.display='block';
   document.getElementById('booking-success').style.display='none';
 }
 
-async function selectBookingProf(profId, el) {
+async function selectBookingProf(profId,el) {
   document.querySelectorAll('#booking-professionals .chip').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
-  bookingState.prof = bookingState.profs[profId];
-  bookingState.service = null; bookingState.date=null; bookingState.time=null;
-
-  const svcsCard = document.getElementById('booking-services-card');
-  svcsCard.style.display='block';
-  const svcsCont = document.getElementById('booking-services');
-  const activeSvcs = Object.values(bookingState.svcs).filter(s=>s.active);
-  svcsCont.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+  bookingState.prof=bookingState.profs[profId];
+  bookingState.service=null; bookingState.date=null; bookingState.time=null;
+  const activeSvcs=Object.values(bookingState.svcs).filter(s=>s.active);
+  document.getElementById('booking-services-card').style.display='block';
+  document.getElementById('booking-services').innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">
     ${activeSvcs.map(s=>`<div class="chip" onclick="selectBookingService('${s.id}',this)" style="padding:12px 16px;border-radius:10px;justify-content:space-between">
       <div><div style="font-weight:600">${s.name}</div><div style="font-size:12px;color:var(--text2)">${s.duration} min</div></div>
       <strong style="color:var(--accent)">${formatCurrency(s.price)}</strong>
-    </div>`).join('')}
-  </div>`;
+    </div>`).join('')}</div>`;
   document.getElementById('booking-date-card').style.display='none';
   document.getElementById('booking-slots-card').style.display='none';
   document.getElementById('booking-client-card').style.display='none';
 }
 
-async function selectBookingService(svcId, el) {
+async function selectBookingService(svcId,el) {
   document.querySelectorAll('#booking-services .chip').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
-  bookingState.service = bookingState.svcs[svcId];
-  const dc = document.getElementById('booking-date-card');
-  dc.style.display='block';
-  const di = document.getElementById('booking-date');
-  di.min = new Date().toISOString().split('T')[0];
-  di.value = new Date().toISOString().split('T')[0];
-  di.onchange = loadBookingSlots;
+  bookingState.service=bookingState.svcs[svcId];
+  document.getElementById('booking-date-card').style.display='block';
+  const di=document.getElementById('booking-date');
+  di.min=new Date().toISOString().split('T')[0];
+  di.value=new Date().toISOString().split('T')[0];
+  di.onchange=loadBookingSlots;
   document.getElementById('booking-slots-card').style.display='none';
   document.getElementById('booking-client-card').style.display='none';
   await loadBookingSlots();
 }
 
 async function loadBookingSlots() {
-  const date = document.getElementById('booking-date').value;
-  bookingState.date = date;
-  bookingState.time = null;
-
-  const biz = bookingState.biz||{};
-  const wh = biz.working_hours||{start:'08:00',end:'18:00',interval:30};
-  const appts = await DB.get(`appointments_${bookingState.userId}`)||{};
-  const takenTimes = new Set(Object.values(appts).filter(a=>a.date===date&&a.prof_id===bookingState.prof?.id&&a.status!=='cancelado').map(a=>a.time));
-  const folgas = await DB.get(`folgas_${bookingState.userId}`)||[];
-
-  const sc = document.getElementById('booking-slots-card');
-  sc.style.display='block';
-  const slotsEl = document.getElementById('booking-time-slots');
-
-  if (folgas.includes(date)) { slotsEl.innerHTML='<p style="color:var(--danger);font-weight:500">⚠️ Este dia está indisponível (folga)</p>'; return; }
-
-  const dayOfWeek = new Date(date+'T12:00:00').getDay();
-  const days = biz.days||[1,2,3,4,5,6];
-  if (!days.includes(dayOfWeek)) { slotsEl.innerHTML='<p style="color:var(--danger);font-weight:500">⚠️ Não há atendimento neste dia</p>'; return; }
-
-  const slots = [];
-  let [sh,sm] = wh.start.split(':').map(Number);
-  let [eh,em] = wh.end.split(':').map(Number);
-  let cur = sh*60+sm;
-  const end = eh*60+em;
-  while(cur+wh.interval<=end) {
-    const hh = String(Math.floor(cur/60)).padStart(2,'0');
-    const mm = String(cur%60).padStart(2,'0');
-    slots.push(`${hh}:${mm}`);
-    cur += wh.interval;
-  }
-
-  slotsEl.innerHTML = slots.map(s=>`<div class="time-slot${takenTimes.has(s)?' taken':''}" onclick="selectBookingSlot('${s}',this)">${s}</div>`).join('');
+  const date=document.getElementById('booking-date').value;
+  bookingState.date=date; bookingState.time=null;
+  const biz=bookingState.biz||{};
+  const wh=biz.working_hours||{start:'08:00',end:'18:00',interval:30};
+  const appts=await DB.getAppointments(bookingState.userId);
+  const takenTimes=new Set(appts.filter(a=>a.date===date&&a.prof_id===bookingState.prof?.id&&a.status!=='cancelado').map(a=>a.time));
+  const folgas=await DB.getFolgas(bookingState.userId);
+  const slotsEl=document.getElementById('booking-time-slots');
+  document.getElementById('booking-slots-card').style.display='block';
+  if (folgas.includes(date)){slotsEl.innerHTML='<p style="color:var(--danger);font-weight:500">⚠️ Dia indisponível (folga)</p>';return;}
+  const dayOfWeek=new Date(date+'T12:00:00').getDay();
+  if (!(biz.days||[1,2,3,4,5,6]).includes(dayOfWeek)){slotsEl.innerHTML='<p style="color:var(--danger);font-weight:500">⚠️ Sem atendimento neste dia</p>';return;}
+  const slots=[];
+  let cur=parseInt(wh.start.split(':')[0])*60+parseInt(wh.start.split(':')[1]);
+  const end=parseInt(wh.end.split(':')[0])*60+parseInt(wh.end.split(':')[1]);
+  while(cur+wh.interval<=end){slots.push(`${String(Math.floor(cur/60)).padStart(2,'0')}:${String(cur%60).padStart(2,'0')}`);cur+=wh.interval;}
+  slotsEl.innerHTML=slots.map(s=>`<div class="time-slot${takenTimes.has(s)?' taken':''}" onclick="selectBookingSlot('${s}',this)">${s}</div>`).join('');
   document.getElementById('booking-client-card').style.display='none';
 }
 
-function selectBookingSlot(time, el) {
-  if (el.classList.contains('taken')) return;
+function selectBookingSlot(time,el){
+  if(el.classList.contains('taken'))return;
   document.querySelectorAll('#booking-time-slots .time-slot.selected').forEach(e=>e.classList.remove('selected'));
-  el.classList.add('selected');
-  bookingState.time = time;
+  el.classList.add('selected'); bookingState.time=time;
   document.getElementById('booking-client-card').style.display='block';
   document.getElementById('booking-client-card').scrollIntoView({behavior:'smooth'});
 }
 
 async function confirmBooking() {
-  const name = document.getElementById('bk-client-name').value.trim();
-  const email = document.getElementById('bk-client-email').value.trim();
-  const phone = document.getElementById('bk-client-phone').value.trim();
-  const notes = document.getElementById('bk-notes').value.trim();
-  if (!name||!phone) { toast('Informe seu nome e telefone','error'); return; }
-  if (!bookingState.prof||!bookingState.service||!bookingState.date||!bookingState.time) { toast('Selecione todas as opções','error'); return; }
-
-  const clients = await DB.get(`clients_${bookingState.userId}`)||{};
-  let clientId = Object.keys(clients).find(id=>clients[id].phone===phone||clients[id].email===email);
-  if (!clientId) {
-    clientId = uid();
-    clients[clientId] = { id:clientId, name, phone, email, created:new Date().toISOString(), visits:0 };
-    await DB.set(`clients_${bookingState.userId}`, clients);
-  }
-
-  const appts = await DB.get(`appointments_${bookingState.userId}`)||{};
-  const id = uid();
-  appts[id] = {
-    id, client_id:clientId, client_name:name, prof_id:bookingState.prof.id, prof_name:bookingState.prof.name,
-    service_id:bookingState.service.id, service_name:bookingState.service.name,
-    date:bookingState.date, time:bookingState.time, duration:bookingState.service.duration,
-    price:bookingState.service.price, status:'agendado', notes, created:new Date().toISOString()
-  };
-  await DB.set(`appointments_${bookingState.userId}`, appts);
-
-  document.getElementById('booking-step-1').style.display='none';
-  document.getElementById('booking-success').style.display='block';
-  document.getElementById('booking-confirm-text').innerHTML = `
-    Seu agendamento foi confirmado!<br><br>
-    <strong>🏢 ${bookingState.biz.name}</strong><br>
-    <strong>👔 Profissional:</strong> ${bookingState.prof.name}<br>
-    <strong>✂️ Serviço:</strong> ${bookingState.service.name}<br>
-    <strong>📅 Data:</strong> ${formatDate(bookingState.date)}<br>
-    <strong>🕐 Horário:</strong> ${bookingState.time}<br>
-    <strong>💰 Valor:</strong> ${formatCurrency(bookingState.service.price)}<br><br>
-    Uma confirmação será enviada para seu e-mail.
-  `;
+  const name=document.getElementById('bk-client-name').value.trim();
+  const email=document.getElementById('bk-client-email').value.trim();
+  const phone=document.getElementById('bk-client-phone').value.trim();
+  const notes=document.getElementById('bk-notes').value.trim();
+  if (!name||!phone){toast('Informe seu nome e telefone','error');return;}
+  if (!bookingState.prof||!bookingState.service||!bookingState.date||!bookingState.time){toast('Selecione todas as opções','error');return;}
+  try {
+    const clients=await DB.getClients(bookingState.userId);
+    let cl=clients.find(c=>c.phone===phone||c.email===email);
+    if (!cl) cl=await DB.saveClient({id:uid(),user_id:bookingState.userId,name,phone,email,created_at:new Date().toISOString()});
+    await DB.saveAppointment({
+      id:uid(),user_id:bookingState.userId,client_id:cl.id,client_name:name,
+      prof_id:bookingState.prof.id,prof_name:bookingState.prof.name,
+      service_id:bookingState.service.id,service_name:bookingState.service.name,
+      date:bookingState.date,time:bookingState.time,duration:bookingState.service.duration,
+      price:bookingState.service.price,status:'agendado',notes,created_at:new Date().toISOString()
+    });
+    document.getElementById('booking-step-1').style.display='none';
+    document.getElementById('booking-success').style.display='block';
+    document.getElementById('booking-confirm-text').innerHTML=`
+      Seu agendamento foi confirmado!<br><br>
+      <strong>🏢 ${bookingState.biz.name}</strong><br>
+      <strong>👔 Profissional:</strong> ${bookingState.prof.name}<br>
+      <strong>✂️ Serviço:</strong> ${bookingState.service.name}<br>
+      <strong>📅 Data:</strong> ${formatDate(bookingState.date)}<br>
+      <strong>🕐 Horário:</strong> ${bookingState.time}<br>
+      <strong>💰 Valor:</strong> ${formatCurrency(bookingState.service.price)}`;
+  } catch(e) { toast('Erro ao confirmar: '+e.message,'error'); }
 }
 
-function newBooking() {
+function newBooking(){
   document.getElementById('booking-step-1').style.display='block';
   document.getElementById('booking-success').style.display='none';
-  document.getElementById('bk-client-name').value='';
-  document.getElementById('bk-client-email').value='';
-  document.getElementById('bk-client-phone').value='';
-  document.getElementById('bk-notes').value='';
-  bookingState.prof=null; bookingState.service=null; bookingState.date=null; bookingState.time=null;
-  document.querySelectorAll('#booking-step-1 .chip.selected').forEach(c=>c.classList.remove('selected'));
-  document.querySelectorAll('.time-slot.selected').forEach(c=>c.classList.remove('selected'));
-  document.getElementById('booking-services-card').style.display='none';
-  document.getElementById('booking-date-card').style.display='none';
-  document.getElementById('booking-slots-card').style.display='none';
-  document.getElementById('booking-client-card').style.display='none';
+  ['bk-client-name','bk-client-email','bk-client-phone','bk-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  bookingState.prof=null;bookingState.service=null;bookingState.date=null;bookingState.time=null;
+  ['booking-services-card','booking-date-card','booking-slots-card','booking-client-card'].forEach(id=>document.getElementById(id).style.display='none');
+  document.querySelectorAll('#booking-step-1 .chip.selected,.time-slot.selected').forEach(c=>c.classList.remove('selected'));
 }
 
-// ═══════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  SQL SCRIPT MODAL
+// ═══════════════════════════════════════════════════════════════
+
+function showSQLScript() {
+  const sql = `-- ============================================
+-- AgendaPro — Script SQL para Supabase
+-- Cole este script no SQL Editor do Supabase
+-- ============================================
+
+-- Habilitar extensão UUID
+create extension if not exists "uuid-ossp";
+
+-- Tabela de usuários (perfis)
+create table if not exists public.users (
+  id uuid primary key references auth.users(id) on delete cascade,
+  name text not null,
+  email text not null,
+  phone text,
+  area text,
+  setup_done boolean default false,
+  business jsonb default '{}',
+  subscription jsonb default '{"status":"trial","plan":"trial"}',
+  created_at timestamptz default now()
+);
+
+-- Profissionais
+create table if not exists public.professionals (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  name text not null,
+  specialty text,
+  phone text,
+  email text,
+  color text default '#e94560',
+  active boolean default true,
+  created_at timestamptz default now()
+);
+
+-- Serviços
+create table if not exists public.services (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  name text not null,
+  duration integer not null default 30,
+  price numeric(10,2) default 0,
+  active boolean default true,
+  created_at timestamptz default now()
+);
+
+-- Clientes
+create table if not exists public.clients (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  name text not null,
+  phone text,
+  email text,
+  notes text,
+  created_at timestamptz default now()
+);
+
+-- Agendamentos
+create table if not exists public.appointments (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  client_id uuid references public.clients(id),
+  client_name text,
+  prof_id uuid references public.professionals(id),
+  prof_name text,
+  service_id uuid references public.services(id),
+  service_name text,
+  date date not null,
+  time text not null,
+  duration integer default 30,
+  price numeric(10,2) default 0,
+  status text default 'agendado',
+  notes text,
+  created_at timestamptz default now()
+);
+
+-- Folgas
+create table if not exists public.folgas (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  date date not null,
+  unique(user_id, date)
+);
+
+-- ── RLS (Row Level Security) ──
+alter table public.users enable row level security;
+alter table public.professionals enable row level security;
+alter table public.services enable row level security;
+alter table public.clients enable row level security;
+alter table public.appointments enable row level security;
+alter table public.folgas enable row level security;
+
+-- Políticas: usuário acessa apenas seus próprios dados
+create policy "users_own" on public.users for all using (auth.uid() = id);
+create policy "profs_own" on public.professionals for all using (auth.uid() = user_id);
+create policy "svcs_own" on public.services for all using (auth.uid() = user_id);
+create policy "clients_own" on public.clients for all using (auth.uid() = user_id);
+create policy "appts_own" on public.appointments for all using (auth.uid() = user_id);
+create policy "folgas_own" on public.folgas for all using (auth.uid() = user_id);
+
+-- Política pública para página de agendamento
+create policy "appts_public_read" on public.appointments for select using (true);
+create policy "appts_public_insert" on public.appointments for insert with check (true);
+create policy "clients_public_insert" on public.clients for insert with check (true);
+create policy "profs_public_read" on public.professionals for select using (true);
+create policy "svcs_public_read" on public.services for select using (true);
+create policy "folgas_public_read" on public.folgas for select using (true);
+create policy "users_public_read" on public.users for select using (true);
+
+-- Trigger para criar perfil automaticamente após signup
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer as $$
+begin
+  insert into public.users (id, name, email)
+  values (new.id, coalesce(new.raw_user_meta_data->>'name', split_part(new.email,'@',1)), new.email)
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();`;
+
+  const mc = document.getElementById('modal-container');
+  mc.innerHTML = `<div class="modal-backdrop" onclick="event.target===this&&closeModal()">
+    <div class="modal" style="max-width:700px">
+      <div class="modal-header">
+        <div class="modal-title">📄 Script SQL — Cole no Supabase</div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text2);margin-bottom:12px;font-size:13px">
+          1. Acesse seu projeto no Supabase<br>
+          2. Vá em <strong>SQL Editor → New Query</strong><br>
+          3. Cole o script abaixo e clique em <strong>Run</strong>
+        </p>
+        <textarea readonly style="width:100%;height:320px;font-family:monospace;font-size:11px;padding:12px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);resize:vertical">${sql}</textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Fechar</button>
+        <button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.querySelector('.modal textarea').value).then(()=>toast('SQL copiado!'))">📋 Copiar SQL</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INICIALIZAÇÃO
+// ═══════════════════════════════════════════════════════════════
 
 (async function init() {
-  // Check URL for booking page
-  const path = window.location.pathname;
-  const hash = window.location.hash;
-  if (hash.startsWith('#/agenda/')) {
-    const slug = hash.replace('#/agenda/','');
-    const users = await DB.get('users')||{};
-    const entry = Object.entries(users).find(([,u])=>u.business?.slug===slug);
-    if (entry) { await loadBookingPage(entry[0]); return; }
+  const cfg = getSupabaseConfig();
+  if (cfg.url && cfg.key) {
+    initSupabase(cfg.url, cfg.key);
+    // Check for existing session
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const userData = await DB.getUser(session.user.id);
+      if (userData) {
+        currentUser = { ...userData, auth_id: session.user.id };
+        await initApp(); return;
+      }
+    }
+    document.getElementById('config-screen').style.display = 'none';
+    document.getElementById('auth-screen').style.display = 'flex';
+  } else {
+    document.getElementById('config-screen').style.display = 'flex';
   }
-  document.getElementById('auth-screen').style.display='flex';
-  selectedDays = [1,2,3,4,5,6];
 })();
 </script>
 </body>
