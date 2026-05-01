@@ -6,7 +6,8 @@
 <title>AgendaPro - Sistema de Agendamento</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- SUPABASE SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- supabase UMD loads as window.supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -257,11 +258,11 @@
 
     <div class="form-group" style="margin-top:20px">
       <label>Project URL</label>
-      <input type="text" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+      <input type="text" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co" value="https://nwpzwfdweczvuejdbwbm.supabase.co">
     </div>
     <div class="form-group">
       <label>Anon Key (public)</label>
-      <input type="text" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+      <input type="text" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53cHp3ZmR3ZWN6dnVlamRid2JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MDE3MDAsImV4cCI6MjA5MjQ3NzcwMH0.krxCJVqH7IjGvO5H3kIm2rP4tPorXGFWdAnct-KN2ok">
     </div>
 
     <button class="btn btn-primary btn-full" onclick="saveSupabaseConfig()" id="btn-connect">
@@ -406,17 +407,25 @@
 //  SUPABASE CONFIG
 // ═══════════════════════════════════════════════════════════════
 
-let supabase = null;
+var _db = null;
+
+const _DEFAULT_URL = 'https://nwpzwfdweczvuejdbwbm.supabase.co';
+const _DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53cHp3ZmR3ZWN6dnVlamRid2JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MDE3MDAsImV4cCI6MjA5MjQ3NzcwMH0.krxCJVqH7IjGvO5H3kIm2rP4tPorXGFWdAnct-KN2ok';
 
 function getSupabaseConfig() {
-  return {
-    url: localStorage.getItem('sb_url') || '',
-    key: localStorage.getItem('sb_key') || ''
-  };
+  const url = localStorage.getItem('sb_url') || _DEFAULT_URL;
+  const key = localStorage.getItem('sb_key') || _DEFAULT_KEY;
+  // Validate key format — reject old publishable keys
+  const validKey = (key.startsWith('eyJ')) ? key : _DEFAULT_KEY;
+  const validUrl = (url.startsWith('https://')) ? url : _DEFAULT_URL;
+  return { url: validUrl, key: validKey };
 }
 
 function initSupabase(url, key) {
-  supabase = window.supabase.createClient(url, key);
+  console.log('🔌 Iniciando Supabase com URL:', url);
+  console.log('🔑 Key prefix:', key.substring(0, 20) + '...');
+  _db = (window.supabase.createClient || window.supabase.default?.createClient)(url, key);
+  if (!_db) throw new Error('Falha ao criar cliente Supabase');
 }
 
 async function saveSupabaseConfig() {
@@ -424,6 +433,7 @@ async function saveSupabaseConfig() {
   const key = document.getElementById('sb-key').value.trim();
   if (!url || !key) { toast('Preencha URL e Key do Supabase', 'error'); return; }
   if (!url.startsWith('https://')) { toast('URL inválida. Deve começar com https://', 'error'); return; }
+  if (!key.startsWith('eyJ') && !key.startsWith('sb_publishable_') && !key.startsWith('sb_secret_')) { toast('Chave inválida. Verifique a chave do Supabase', 'error'); return; }
 
   const btn = document.getElementById('btn-connect');
   btn.disabled = true; btn.textContent = '⏳ Conectando...';
@@ -431,7 +441,7 @@ async function saveSupabaseConfig() {
   try {
     initSupabase(url, key);
     // Test connection
-    const { error } = await supabase.from('users').select('id').limit(1);
+    const { error } = await _db.from('users').select('id').limit(1);
     if (error && error.code !== 'PGRST116' && error.message?.includes('does not exist')) {
       throw new Error('Tabelas não encontradas. Execute o script SQL primeiro.');
     }
@@ -461,103 +471,106 @@ function reconfigSupabase() {
 const DB = {
   // ── USERS ──
   async getUser(userId) {
-    const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
-    if (error) return null;
+    const { data, error } = await _db.from('users').select('*').eq('id', userId).single();
+    if (error) {
+      console.warn('getUser error:', error.status, error.message);
+      return null;
+    }
     return data;
   },
   async saveUser(user) {
-    const { data, error } = await supabase.from('users').upsert(user).select().single();
+    const { data, error } = await _db.from('users').upsert(user).select().single();
     if (error) throw error;
     return data;
   },
 
   // ── APPOINTMENTS ──
   async getAppointments(userId) {
-    const { data, error } = await supabase.from('appointments').select('*').eq('user_id', userId);
+    const { data, error } = await _db.from('appointments').select('*').eq('user_id', userId);
     if (error) return [];
     return data || [];
   },
   async saveAppointment(appt) {
-    const { data, error } = await supabase.from('appointments').upsert(appt).select().single();
+    const { data, error } = await _db.from('appointments').upsert(appt).select().single();
     if (error) throw error;
     return data;
   },
   async updateAppointment(id, updates) {
-    const { error } = await supabase.from('appointments').update(updates).eq('id', id);
+    const { error } = await _db.from('appointments').update(updates).eq('id', id);
     if (error) throw error;
   },
   async deleteAppointment(id) {
-    const { error } = await supabase.from('appointments').update({status:'cancelado'}).eq('id', id);
+    const { error } = await _db.from('appointments').update({status:'cancelado'}).eq('id', id);
     if (error) throw error;
   },
 
   // ── CLIENTS ──
   async getClients(userId) {
-    const { data, error } = await supabase.from('clients').select('*').eq('user_id', userId);
+    const { data, error } = await _db.from('clients').select('*').eq('user_id', userId);
     if (error) return [];
     return data || [];
   },
   async saveClient(client) {
-    const { data, error } = await supabase.from('clients').upsert(client).select().single();
+    const { data, error } = await _db.from('clients').upsert(client).select().single();
     if (error) throw error;
     return data;
   },
 
   // ── PROFESSIONALS ──
   async getProfessionals(userId) {
-    const { data, error } = await supabase.from('professionals').select('*').eq('user_id', userId);
+    const { data, error } = await _db.from('professionals').select('*').eq('user_id', userId);
     if (error) return [];
     return data || [];
   },
   async saveProfessional(prof) {
-    const { data, error } = await supabase.from('professionals').upsert(prof).select().single();
+    const { data, error } = await _db.from('professionals').upsert(prof).select().single();
     if (error) throw error;
     return data;
   },
   async updateProfessional(id, updates) {
-    const { error } = await supabase.from('professionals').update(updates).eq('id', id);
+    const { error } = await _db.from('professionals').update(updates).eq('id', id);
     if (error) throw error;
   },
 
   // ── SERVICES ──
   async getServices(userId) {
-    const { data, error } = await supabase.from('services').select('*').eq('user_id', userId);
+    const { data, error } = await _db.from('services').select('*').eq('user_id', userId);
     if (error) return [];
     return data || [];
   },
   async saveService(svc) {
-    const { data, error } = await supabase.from('services').upsert(svc).select().single();
+    const { data, error } = await _db.from('services').upsert(svc).select().single();
     if (error) throw error;
     return data;
   },
   async deleteService(id) {
-    const { error } = await supabase.from('services').delete().eq('id', id);
+    const { error } = await _db.from('services').delete().eq('id', id);
     if (error) throw error;
   },
 
   // ── FOLGAS ──
   async getFolgas(userId) {
-    const { data, error } = await supabase.from('folgas').select('date').eq('user_id', userId);
+    const { data, error } = await _db.from('folgas').select('date').eq('user_id', userId);
     if (error) return [];
     return (data || []).map(f => f.date);
   },
   async addFolga(userId, date) {
-    const { error } = await supabase.from('folgas').upsert({ user_id: userId, date });
+    const { error } = await _db.from('folgas').upsert({ user_id: userId, date });
     if (error) throw error;
   },
   async removeFolga(userId, date) {
-    const { error } = await supabase.from('folgas').delete().eq('user_id', userId).eq('date', date);
+    const { error } = await _db.from('folgas').delete().eq('user_id', userId).eq('date', date);
     if (error) throw error;
   },
 
   // ── ALL USERS (admin) ──
   async getAllUsers() {
-    const { data, error } = await supabase.from('users').select('*');
+    const { data, error } = await _db.from('users').select('*');
     if (error) return [];
     return data || [];
   },
   async updateUserSubscription(userId, subscription) {
-    const { error } = await supabase.from('users').update({ subscription }).eq('id', userId);
+    const { error } = await _db.from('users').update({ subscription }).eq('id', userId);
     if (error) throw error;
   }
 };
@@ -568,13 +581,21 @@ const DB = {
 
 function uid() { return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2); }
 
-function toast(msg, type='success') {
+function toast(msg, type='success', duration=3500) {
   const c = document.getElementById('toast-container');
   const el = document.createElement('div');
   el.className = `toast ${type}`;
   el.innerHTML = `<span>${{success:'✓',error:'✗',warning:'⚠'}[type]||'ℹ'}</span><span>${msg}</span>`;
   c.appendChild(el);
-  setTimeout(() => el.remove(), 3500);
+  setTimeout(() => el.remove(), duration);
+}
+
+function handleSupabaseError(e) {
+  if (e?.status === 429 || e?.message?.includes('429') || e?.message?.includes('rate limit') || e?.message?.includes('Too Many')) {
+    toast('⏳ Muitas requisições. Aguarde alguns segundos e tente novamente.', 'warning', 6000);
+    return true;
+  }
+  return false;
 }
 
 function initials(name='') { return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'AP'; }
@@ -629,7 +650,7 @@ async function doLogin() {
       await initApp(); return;
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pwd });
+    const { data, error } = await _db.auth.signInWithPassword({ email, password: pwd });
     if (error) throw error;
 
     const userData = await DB.getUser(data.user.id);
@@ -638,7 +659,7 @@ async function doLogin() {
     isAdmin = false;
     await initApp();
   } catch(e) {
-    toast(e.message || 'Credenciais inválidas', 'error');
+    if (!handleSupabaseError(e)) toast(e.message || 'Credenciais inválidas', 'error');
   } finally {
     btn.disabled = false; btn.textContent = 'Entrar';
   }
@@ -658,10 +679,23 @@ async function doRegister() {
 
   try {
     // 1. Create auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password: pwd });
+    const { data: authData, error: authError } = await _db.auth.signUp({ email, password: pwd, options: { data: { name, phone, area } } });
     if (authError) throw authError;
 
-    // 2. Create user profile
+    // 2. Wait for session — signUp may return session immediately (email confirm off)
+    let session = authData.session;
+    if (!session) {
+      // Try signing in right away
+      const { data: signInData, error: signInErr } = await _db.auth.signInWithPassword({ email, password: pwd });
+      if (signInErr) {
+        toast('Conta criada! Confirme seu e-mail e faça login.', 'success');
+        switchAuthTab('login');
+        return;
+      }
+      session = signInData.session;
+    }
+
+    // 3. Create user profile (session is active, token will be sent automatically)
     const userId = authData.user.id;
     const userData = {
       id: userId,
@@ -675,7 +709,7 @@ async function doRegister() {
     isAdmin = false;
     await initApp();
   } catch(e) {
-    toast(e.message || 'Erro ao criar conta', 'error');
+    if (!handleSupabaseError(e)) toast(e.message || 'Erro ao criar conta', 'error');
   } finally {
     btn.disabled = false; btn.textContent = 'Criar Conta Grátis';
   }
@@ -683,7 +717,7 @@ async function doRegister() {
 
 async function doLogout() {
   showLoading('Saindo...');
-  await supabase.auth.signOut();
+  await _db.auth.signOut();
   currentUser = null; isAdmin = false;
   hideLoading();
   document.getElementById('app').style.display = 'none';
@@ -1951,23 +1985,41 @@ create trigger on_auth_user_created
 // ═══════════════════════════════════════════════════════════════
 
 (async function init() {
-  const cfg = getSupabaseConfig();
-  if (cfg.url && cfg.key) {
-    initSupabase(cfg.url, cfg.key);
-    // Check for existing session
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
+  // Sempre inicializa com credenciais válidas — limpa localStorage corrompido
+  localStorage.setItem('sb_url', _DEFAULT_URL);
+  localStorage.setItem('sb_key', _DEFAULT_KEY);
+
+  try {
+    initSupabase(_DEFAULT_URL, _DEFAULT_KEY);
+  } catch(e) {
+    console.error('Erro ao iniciar Supabase:', e);
+    document.getElementById('config-screen').style.display = 'flex';
+    return;
+  }
+
+  // Verifica sessão existente
+  try {
+    const { data: { session } } = await _db.auth.getSession();
+    if (session && session.user) {
       const userData = await DB.getUser(session.user.id);
       if (userData) {
         currentUser = { ...userData, auth_id: session.user.id };
         await initApp(); return;
       }
     }
-    document.getElementById('config-screen').style.display = 'none';
-    document.getElementById('auth-screen').style.display = 'flex';
-  } else {
-    document.getElementById('config-screen').style.display = 'flex';
+  } catch(e) {
+    console.warn('Sem sessão válida:', e.message);
+    if (e?.status === 429 || e?.message?.includes('429')) {
+      document.getElementById('config-screen').style.display = 'none';
+      document.getElementById('auth-screen').style.display = 'flex';
+      setTimeout(() => toast('⏳ Serviço temporariamente sobrecarregado. Tente em alguns segundos.', 'warning', 6000), 500);
+      return;
+    }
   }
+
+  // Vai direto para login — sem passar pela tela de config
+  document.getElementById('config-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
 })();
 </script>
 </body>
