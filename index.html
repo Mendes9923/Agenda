@@ -914,7 +914,7 @@ async function saveSetupStep(step) {
   }
   currentUser.business = biz;
   try {
-    await DB.saveUser({ id: currentUser.id, business: biz, setup_done: currentUser.setup_done });
+    await DB.saveUser({ id: currentUser.id, name: currentUser.name, email: currentUser.email, business: biz, setup_done: currentUser.setup_done });await DB.saveUser({ id: currentUser.id, business: biz, setup_done: currentUser.setup_done });
     if (step < 4) renderSetupStep(step+1);
     else { toast('Configuração concluída! Bem-vindo!'); await navigateTo('dashboard'); }
   } catch(e) { toast('Erro ao salvar: '+e.message,'error'); }
