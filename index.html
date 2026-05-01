@@ -1985,10 +1985,21 @@ create trigger on_auth_user_created
 // ═══════════════════════════════════════════════════════════════
 
 (async function init() {
-  // Sempre inicializa com credenciais válidas — limpa localStorage corrompido
   localStorage.setItem('sb_url', _DEFAULT_URL);
   localStorage.setItem('sb_key', _DEFAULT_KEY);
 
+  // Verifica se é link de agendamento público (?booking=slug)
+  const params = new URLSearchParams(window.location.search);
+  const bookingSlug = params.get('booking');
+  if (bookingSlug) {
+    try {
+      initSupabase(_DEFAULT_URL, _DEFAULT_KEY);
+      const { data: users } = await _db.from('users').select('*');
+      const found = users?.find(u => u.business?.slug === bookingSlug);
+      if (found) { await loadBookingPage(found.id); return; }
+      else { document.body.innerHTML = '<div style="text-align:center;padding:60px;font-family:sans-serif"><h2>Negócio não encontrado</h2></div>'; return; }
+    } catch(e) { console.error(e); }
+  }
   try {
     initSupabase(_DEFAULT_URL, _DEFAULT_KEY);
   } catch(e) {
