@@ -231,56 +231,6 @@
 
 <div id="toast-container"></div>
 
-<!-- ══════════════════════════════════════
-     TELA 0: CONFIGURAÇÃO DO SUPABASE
-══════════════════════════════════════ -->
-<div id="config-screen">
-  <div class="config-box">
-    <div class="config-logo">Agenda<span>Pro</span></div>
-    <p style="color:var(--text2);font-size:13px;margin-bottom:20px">Conecte seu banco de dados Supabase</p>
-
-    <div class="config-step">
-      <strong>📋 Passo 1 — Crie sua conta</strong><br>
-      Acesse <a href="https://supabase.com" target="_blank">supabase.com</a> e crie um projeto gratuito.
-    </div>
-
-    <div class="config-step">
-      <strong>📋 Passo 2 — Crie as tabelas</strong><br>
-      No painel do Supabase, vá em <strong>SQL Editor</strong> e execute o script SQL disponível abaixo clicando em "📄 Ver Script SQL".
-    </div>
-
-    <div class="config-step">
-      <strong>📋 Passo 3 — Copie as credenciais</strong><br>
-      Vá em <strong>Project Settings → API</strong> e copie:<br>
-      • <code>Project URL</code><br>
-      • <code>anon public key</code>
-    </div>
-
-    <div class="form-group" style="margin-top:20px">
-      <label>Project URL</label>
-      <input type="text" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co" value="https://nwpzwfdweczvuejdbwbm.supabase.co">
-    </div>
-    <div class="form-group">
-      <label>Anon Key (public)</label>
-      <input type="text" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53cHp3ZmR3ZWN6dnVlamRid2JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MDE3MDAsImV4cCI6MjA5MjQ3NzcwMH0.krxCJVqH7IjGvO5H3kIm2rP4tPorXGFWdAnct-KN2ok">
-    </div>
-
-    <button class="btn btn-primary btn-full" onclick="saveSupabaseConfig()" id="btn-connect">
-      🔌 Conectar ao Supabase
-    </button>
-
-    <hr class="divider">
-
-    <button class="btn btn-secondary btn-full" onclick="showSQLScript()">
-      📄 Ver Script SQL para criar tabelas
-    </button>
-
-    <p style="text-align:center;margin-top:12px;font-size:11px;color:var(--text2)">
-      As credenciais são salvas apenas no seu navegador (localStorage)
-    </p>
-  </div>
-</div>
-
 <!-- AUTH -->
 <div id="auth-screen" style="display:none">
   <div class="auth-box">
@@ -294,8 +244,6 @@
       <div class="form-group"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
       <div class="form-group"><label>Senha</label><input type="password" id="login-pwd" placeholder="••••••••"></div>
       <button class="btn btn-primary btn-full" id="btn-login" onclick="doLogin()">Entrar</button>
-      <hr class="divider">
-      <button class="btn btn-secondary btn-full btn-sm" onclick="reconfigSupabase()">⚙️ Reconfigurar Supabase</button>
     </div>
     <div id="register-form" style="display:none">
       <div class="form-row">
@@ -870,9 +818,9 @@ function renderSetupStep(step) {
     const slug = biz.slug||(currentUser.name||'').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
     c.innerHTML = `<div class="card">
       <div class="card-title">🔗 Seu Link de Agendamento</div>
-      <div class="form-group"><label>Slug (nome no link)</label><input id="s-slug" value="${slug}" oninput="document.getElementById('slug-preview').textContent=window.location.origin+'/?booking='+this.value"></div>
+      <div class="form-group"><label>Slug (nome no link)</label><input id="s-slug" value="${slug}" oninput="document.getElementById('slug-preview').textContent='https://agenda-seven-ebon.vercel.app/?booking='+this.value"></div>
       <div class="link-box" style="margin-bottom:20px">
-        <code id="slug-preview">https://seusite.vercel.app/?booking=${slug}</code>
+        <code id="slug-preview">https://agenda-seven-ebon.vercel.app/?booking=${slug}</code>
         <button class="btn btn-sm btn-secondary" onclick="copyLink()">📋 Copiar</button>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:20px">
@@ -914,7 +862,7 @@ async function saveSetupStep(step) {
   }
   currentUser.business = biz;
   try {
-    await DB.saveUser({ id: currentUser.id, name: currentUser.name, email: currentUser.email, business: biz, setup_done: currentUser.setup_done });await DB.saveUser({ id: currentUser.id, business: biz, setup_done: currentUser.setup_done });
+    await DB.saveUser({ id: currentUser.id, name: currentUser.name, email: currentUser.email, business: biz, setup_done: currentUser.setup_done });
     if (step < 4) renderSetupStep(step+1);
     else { toast('Configuração concluída! Bem-vindo!'); await navigateTo('dashboard'); }
   } catch(e) { toast('Erro ao salvar: '+e.message,'error'); }
@@ -922,7 +870,7 @@ async function saveSetupStep(step) {
 
 function copyLink() {
   const slug = currentUser.business?.slug||'';
-  <code style="font-size:12px;word-break:break-all">${window.location.origin}/?booking=${biz.slug||'seu-negocio'}</code>.then(()=>toast('Link copiado!')).catch(()=>{});
+  navigator.clipboard.writeText('https://agenda-seven-ebon.vercel.app/?booking='+slug).then(()=>toast('Link copiado!')).catch(()=>{});
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -975,7 +923,7 @@ async function renderDashboard() {
     <div class="card">
       <div class="card-title">🔗 Seu Link</div>
       <div class="link-box" style="margin-bottom:12px">
-        <code style="font-size:12px;word-break:break-all">agendapro.app/${biz.slug||'seu-negocio'}</code>
+        <code style="font-size:12px;word-break:break-all">https://agenda-seven-ebon.vercel.app/?booking=${biz.slug||'seu-negocio'}</code>
         <button class="btn btn-sm btn-secondary" onclick="copyLink()">📋</button>
       </div>
       <button class="btn btn-primary btn-full btn-sm" onclick="previewBooking()">👁️ Visualizar Página</button>
@@ -1303,7 +1251,7 @@ async function saveHorarios() {
   biz.working_hours = { start:document.getElementById('cfg-start').value, end:document.getElementById('cfg-end').value, interval:parseInt(document.getElementById('cfg-interval').value) };
   biz.days = days;
   currentUser.business = biz;
-  try { await DB.saveUser({id:currentUser.id, business:biz}); toast('Horários salvos!'); }
+  try { await DB.saveUser({id:currentUser.id, name:currentUser.name, email:currentUser.email, business:biz}); toast('Horários salvos!'); }
   catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
@@ -1315,7 +1263,7 @@ async function saveNegocio() {
   biz.email = document.getElementById('cfg-biz-email').value.trim();
   biz.slug = document.getElementById('cfg-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
   currentUser.business = biz;
-  try { await DB.saveUser({id:currentUser.id, business:biz}); toast('Configurações salvas!'); }
+  try { await DB.saveUser({id:currentUser.id, name:currentUser.name, email:currentUser.email, business:biz}); toast('Configurações salvas!'); }
   catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
@@ -2000,11 +1948,12 @@ create trigger on_auth_user_created
       else { document.body.innerHTML = '<div style="text-align:center;padding:60px;font-family:sans-serif"><h2>Negócio não encontrado</h2></div>'; return; }
     } catch(e) { console.error(e); }
   }
+
   try {
     initSupabase(_DEFAULT_URL, _DEFAULT_KEY);
   } catch(e) {
     console.error('Erro ao iniciar Supabase:', e);
-    document.getElementById('config-screen').style.display = 'flex';
+    document.getElementById('auth-screen').style.display = 'flex';
     return;
   }
 
@@ -2021,15 +1970,12 @@ create trigger on_auth_user_created
   } catch(e) {
     console.warn('Sem sessão válida:', e.message);
     if (e?.status === 429 || e?.message?.includes('429')) {
-      document.getElementById('config-screen').style.display = 'none';
       document.getElementById('auth-screen').style.display = 'flex';
       setTimeout(() => toast('⏳ Serviço temporariamente sobrecarregado. Tente em alguns segundos.', 'warning', 6000), 500);
       return;
     }
   }
 
-  // Vai direto para login — sem passar pela tela de config
-  document.getElementById('config-screen').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
 })();
 </script>
