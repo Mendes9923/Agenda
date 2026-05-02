@@ -214,11 +214,23 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .sidebar-toggle { display: none; }
+  .sidebar-close-btn { display: none; }
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99; }
   @media (max-width: 768px) {
     .sidebar { transform: translateX(-100%); }
     .sidebar.open { transform: none; }
     .main-content { margin-left: 0; }
     .sidebar-toggle { display: block; }
+    .sidebar-close-btn {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      margin: 10px 16px 4px; padding: 8px 14px; border-radius: 8px;
+      background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);
+      border: 1px solid rgba(255,255,255,0.12); cursor: pointer;
+      font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+      transition: all .2s;
+    }
+    .sidebar-close-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    .sidebar.open ~ .sidebar-overlay { display: block; }
     .stat-grid { grid-template-columns: 1fr 1fr; }
     .form-row { grid-template-columns: 1fr; }
   }
@@ -311,6 +323,7 @@
   <div class="app-layout">
     <nav class="sidebar" id="sidebar">
       <div class="sidebar-logo">Agenda<span>Pro</span></div>
+      <button class="sidebar-close-btn" onclick="closeSidebar()">✕ Fechar menu</button>
       <div class="sidebar-user">
         <div class="sidebar-avatar" id="sidebar-avatar">AP</div>
         <div class="sidebar-user-info">
@@ -323,6 +336,7 @@
         <button class="btn btn-secondary btn-full btn-sm" onclick="doLogout()">↩ Sair</button>
       </div>
     </nav>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
     <div class="main-content">
       <div class="topbar">
         <div style="display:flex;align-items:center;gap:12px">
@@ -722,6 +736,8 @@ function buildAdminNav() {
 
 async function navigateTo(page) {
   currentPage = page;
+  // Fecha sidebar no mobile ao navegar
+  closeSidebar();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById(`page-${page}`)?.classList.add('active');
@@ -829,6 +845,10 @@ function renderSetupStep(step) {
       </div>
     </div>`;
   }
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar')?.classList.remove('open');
 }
 
 function toggleDay(i, el) {
@@ -1357,11 +1377,12 @@ async function renderAdmin() {
       <tbody>${users.map(u=>`<tr>
         <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-circle" style="width:28px;height:28px;font-size:11px">${initials(u.name)}</div><strong>${u.name}</strong></div></td>
         <td>${u.email}</td><td>${u.area||'-'}</td>
-        <td>${u.subscription?.plan==='annual'?'Anual':'Mensal'}</td>
+        <td>${u.subscription?.plan==='annual'?'🌟 Anual':u.subscription?.plan==='trial'?'Trial':'Mensal'}</td>
         <td>${statusBadge(u.subscription?.status||'expired')}</td>
         <td>${u.subscription?.expires?new Date(u.subscription.expires).toLocaleDateString('pt-BR'):'-'}</td>
         <td>
-          <button class="btn btn-sm btn-success" onclick="adminRenew('${u.id}',30)">+30d</button>
+          <button class="btn btn-sm btn-success" onclick="adminRenew('${u.id}',30,'monthly')">+30d</button>
+          <button class="btn btn-sm btn-warning" onclick="adminRenew('${u.id}',365,'annual')">🌟 Anual</button>
           <button class="btn btn-sm btn-danger" onclick="adminCancel('${u.id}')">Cancelar</button>
         </td>
       </tr>`).join('')}</tbody>
@@ -1369,9 +1390,11 @@ async function renderAdmin() {
   </div>`;
 }
 
-async function adminRenew(uid, days) {
-  const sub = { status:'active', plan:'monthly', expires:new Date(Date.now()+days*86400000).toISOString() };
-  try { await DB.updateUserSubscription(uid, sub); toast(`Renovado por ${days} dias`); await renderAdmin(); }
+async function adminRenew(uid, days, plan='monthly') {
+  const expires = new Date(Date.now()+days*86400000).toISOString();
+  const sub = { status:'active', plan, expires };
+  const label = plan==='annual' ? '1 ano (Anual)' : `${days} dias`;
+  try { await DB.updateUserSubscription(uid, sub); toast(`✅ Renovado: ${label}`); await renderAdmin(); }
   catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
