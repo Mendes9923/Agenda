@@ -2053,7 +2053,7 @@ async function doForgotPassword() {
   btn.textContent = 'Enviando...';
 
   try {
-    const redirectUrl = window.location.origin + window.location.pathname + '?reset=true';
+    const redirectUrl = 'https://agenda-seven-ebon.vercel.app/?reset=true';
     const { error } = await _db.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
     if (error) {
       toast('Erro: ' + error.message, 'error');
