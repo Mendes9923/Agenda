@@ -256,6 +256,22 @@
       <div class="form-group"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
       <div class="form-group"><label>Senha</label><input type="password" id="login-pwd" placeholder="••••••••"></div>
       <button class="btn btn-primary btn-full" id="btn-login" onclick="doLogin()">Entrar</button>
+      <p style="text-align:center;margin-top:12px;font-size:13px">
+        <a href="#" onclick="showForgotPassword();return false;" style="color:var(--accent);font-weight:600">Esqueci minha senha</a>
+      </p>
+    </div>
+    <div id="forgot-form" style="display:none">
+      <p style="color:var(--text2);font-size:13px;margin-bottom:16px">
+        Digite seu e-mail e enviaremos um link para redefinir sua senha.
+      </p>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="forgot-email" placeholder="seu@email.com">
+      </div>
+      <button class="btn btn-primary btn-full" id="btn-forgot" onclick="doForgotPassword()">📧 Enviar link de recuperação</button>
+      <p style="text-align:center;margin-top:12px;font-size:13px">
+        <a href="#" onclick="showLoginForm();return false;" style="color:var(--accent);font-weight:600">← Voltar para o login</a>
+      </p>
     </div>
     <div id="register-form" style="display:none">
       <div class="form-row">
@@ -1959,6 +1975,15 @@ create trigger on_auth_user_created
   localStorage.setItem('sb_url', _DEFAULT_URL);
   localStorage.setItem('sb_key', _DEFAULT_KEY);
 
+  // Verifica se voltou do link de redefinição de senha
+  const resetCheck = new URLSearchParams(window.location.search);
+  if (resetCheck.get('reset') === 'true') {
+    try { initSupabase(_DEFAULT_URL, _DEFAULT_KEY); } catch(e) {}
+    document.getElementById('auth-screen').style.display = 'flex';
+    setTimeout(() => openResetPasswordModal(), 600);
+    return;
+  }
+
   // Verifica se é link de agendamento público (?booking=slug)
   const params = new URLSearchParams(window.location.search);
   const bookingSlug = params.get('booking');
@@ -2001,6 +2026,89 @@ create trigger on_auth_user_created
 
   document.getElementById('auth-screen').style.display = 'flex';
 })();
+
+// ═══════════════════════════════════════════════════════════════
+//  RECUPERAÇÃO DE SENHA
+// ═══════════════════════════════════════════════════════════════
+
+function showForgotPassword() {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'none';
+  document.getElementById('forgot-form').style.display = 'block';
+  const emailVal = document.getElementById('login-email').value;
+  if (emailVal) document.getElementById('forgot-email').value = emailVal;
+}
+
+function showLoginForm() {
+  document.getElementById('forgot-form').style.display = 'none';
+  document.getElementById('login-form').style.display = 'block';
+}
+
+async function doForgotPassword() {
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) { toast('Digite seu e-mail', 'error'); return; }
+
+  const btn = document.getElementById('btn-forgot');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  try {
+    const redirectUrl = window.location.origin + window.location.pathname + '?reset=true';
+    const { error } = await _db.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
+    if (error) {
+      toast('Erro: ' + error.message, 'error');
+    } else {
+      toast('✅ E-mail enviado! Verifique sua caixa de entrada.', 'success', 7000);
+      showLoginForm();
+    }
+  } catch(e) {
+    toast('Erro ao enviar e-mail: ' + e.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '📧 Enviar link de recuperação';
+}
+
+function openResetPasswordModal() {
+  const mc = document.getElementById('modal-container');
+  mc.innerHTML = `<div class="modal-backdrop">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <div class="modal-title">🔒 Criar Nova Senha</div>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Escolha uma nova senha para sua conta.</p>
+        <div class="form-group">
+          <label>Nova Senha</label>
+          <input type="password" id="new-password" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="form-group">
+          <label>Confirmar Nova Senha</label>
+          <input type="password" id="confirm-password" placeholder="Repita a senha">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-full" onclick="doResetPassword()">✅ Salvar Nova Senha</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function doResetPassword() {
+  const pwd = document.getElementById('new-password').value;
+  const confirm = document.getElementById('confirm-password').value;
+  if (pwd.length < 6) { toast('A senha precisa ter ao menos 6 caracteres', 'error'); return; }
+  if (pwd !== confirm) { toast('As senhas não coincidem', 'error'); return; }
+
+  const { error } = await _db.auth.updateUser({ password: pwd });
+  if (error) {
+    toast('Erro: ' + error.message, 'error');
+  } else {
+    toast('✅ Senha alterada com sucesso! Faça login.', 'success', 5000);
+    document.getElementById('modal-container').innerHTML = '';
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+}
 </script>
 </body>
 </html>
