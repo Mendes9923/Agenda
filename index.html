@@ -637,18 +637,60 @@ const DB = {
     },
     
     async saveAppointment(appt) {
-        await tursoExec(
-            `INSERT OR REPLACE INTO appointments 
-             (id, user_id, client_id, client_name, prof_id, prof_name, service_id, service_name, 
-              date, time, duration, price, status, notes, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                appt.id, appt.user_id, appt.client_id || '', appt.client_name || '',
-                appt.prof_id || '', appt.prof_name || '', appt.service_id || '', appt.service_name || '',
-                appt.date, appt.time, appt.duration || 30, appt.price || 0,
-                appt.status || 'agendado', appt.notes || '', appt.created_at || new Date().toISOString()
-            ]
-        );
+        // Primeiro verifica se o agendamento já existe
+        const existing = await tursoQuery('SELECT id FROM appointments WHERE id = ?', [appt.id]);
+        
+        if (existing && existing.length > 0) {
+            // Atualiza agendamento existente
+            await tursoExec(
+                `UPDATE appointments 
+                SET client_id = ?, client_name = ?, prof_id = ?, prof_name = ?,
+                    service_id = ?, service_name = ?, date = ?, time = ?,
+                    duration = ?, price = ?, status = ?, notes = ?, created_at = ?
+                WHERE id = ?`,
+                [
+                    appt.client_id || '',
+                    appt.client_name || '',
+                    appt.prof_id || '',
+                    appt.prof_name || '',
+                    appt.service_id || '',
+                    appt.service_name || '',
+                    appt.date,
+                    appt.time,
+                    appt.duration || 30,
+                    appt.price || 0,
+                    appt.status || 'agendado',
+                    appt.notes || '',
+                    appt.created_at || new Date().toISOString(),
+                    appt.id
+                ]
+            );
+        } else {
+            // Insere novo agendamento
+            await tursoExec(
+                `INSERT INTO appointments 
+                (id, user_id, client_id, client_name, prof_id, prof_name, service_id, service_name, 
+                  date, time, duration, price, status, notes, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    appt.id,
+                    appt.user_id,
+                    appt.client_id || '',
+                    appt.client_name || '',
+                    appt.prof_id || '',
+                    appt.prof_name || '',
+                    appt.service_id || '',
+                    appt.service_name || '',
+                    appt.date,
+                    appt.time,
+                    appt.duration || 30,
+                    appt.price || 0,
+                    appt.status || 'agendado',
+                    appt.notes || '',
+                    appt.created_at || new Date().toISOString()
+                ]
+            );
+        }
         return appt;
     },
     
@@ -686,19 +728,46 @@ const DB = {
     },
     
     async saveProfessional(prof) {
-        await tursoExec(
-            `INSERT OR REPLACE INTO professionals 
-             (id, user_id, name, specialty, phone, email, color, active, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                prof.id, prof.user_id, prof.name, prof.specialty || '',
-                prof.phone || '', prof.email || '', prof.color || '#e94560',
-                prof.active ? 1 : 0, prof.created_at || new Date().toISOString()
-            ]
-        );
+        // Primeiro verifica se o profissional já existe
+        const existing = await tursoQuery('SELECT id FROM professionals WHERE id = ?', [prof.id]);
+        
+        if (existing && existing.length > 0) {
+            // Atualiza profissional existente
+            await tursoExec(
+                `UPDATE professionals 
+                SET name = ?, specialty = ?, phone = ?, email = ?, color = ?, active = ?, created_at = ?
+                WHERE id = ?`,
+                [
+                    prof.name,
+                    prof.specialty || '',
+                    prof.phone || '',
+                    prof.email || '',
+                    prof.color || '#e94560',
+                    prof.active ? 1 : 0,
+                    prof.created_at || new Date().toISOString(),
+                    prof.id
+                ]
+            );
+        } else {
+            // Insere novo profissional
+            await tursoExec(
+                `INSERT INTO professionals (id, user_id, name, specialty, phone, email, color, active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    prof.id,
+                    prof.user_id,
+                    prof.name,
+                    prof.specialty || '',
+                    prof.phone || '',
+                    prof.email || '',
+                    prof.color || '#e94560',
+                    prof.active ? 1 : 0,
+                    prof.created_at || new Date().toISOString()
+                ]
+            );
+        }
         return prof;
-    },
-    
+    },    
     async updateProfessional(id, updates) {
         const fields = Object.keys(updates);
         let values = Object.values(updates);
@@ -713,14 +782,40 @@ const DB = {
     },
     
     async saveService(svc) {
-        await tursoExec(
-            `INSERT OR REPLACE INTO services (id, user_id, name, duration, price, active, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [
-                svc.id, svc.user_id, svc.name, svc.duration || 30,
-                svc.price || 0, svc.active ? 1 : 0, svc.created_at || new Date().toISOString()
-            ]
-        );
+        // Primeiro verifica se o serviço já existe
+        const existing = await tursoQuery('SELECT id FROM services WHERE id = ?', [svc.id]);
+        
+        if (existing && existing.length > 0) {
+            // Atualiza serviço existente
+            await tursoExec(
+                `UPDATE services 
+                SET name = ?, duration = ?, price = ?, active = ?, created_at = ?
+                WHERE id = ?`,
+                [
+                    svc.name,
+                    svc.duration || 30,
+                    svc.price || 0,
+                    svc.active ? 1 : 0,
+                    svc.created_at || new Date().toISOString(),
+                    svc.id
+                ]
+            );
+        } else {
+            // Insere novo serviço
+            await tursoExec(
+                `INSERT INTO services (id, user_id, name, duration, price, active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    svc.id,
+                    svc.user_id,
+                    svc.name,
+                    svc.duration || 30,
+                    svc.price || 0,
+                    svc.active ? 1 : 0,
+                    svc.created_at || new Date().toISOString()
+                ]
+            );
+        }
         return svc;
     },
     
