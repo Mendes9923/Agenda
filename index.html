@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AgendaPro - Sistema de Agendamento</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script src="https://unpkg.com/@libsql/client/web@0.3.0/dist/web/index.js"></script>
+
 <!-- SUPABASE SDK -->
 <!-- supabase UMD loads as window.supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -499,171 +501,259 @@
 //  SUPABASE CONFIG
 // ═══════════════════════════════════════════════════════════════
 
-var _db = null;
-
-const _DEFAULT_URL = 'https://nwpzwfdweczvuejdbwbm.supabase.co';
-const _DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53cHp3ZmR3ZWN6dnVlamRid2JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MDE3MDAsImV4cCI6MjA5MjQ3NzcwMH0.krxCJVqH7IjGvO5H3kIm2rP4tPorXGFWdAnct-KN2ok';
-
-function getSupabaseConfig() {
-  const url = localStorage.getItem('sb_url') || _DEFAULT_URL;
-  const key = localStorage.getItem('sb_key') || _DEFAULT_KEY;
-  // Validate key format — reject old publishable keys
-  const validKey = (key.startsWith('eyJ')) ? key : _DEFAULT_KEY;
-  const validUrl = (url.startsWith('https://')) ? url : _DEFAULT_URL;
-  return { url: validUrl, key: validKey };
-}
-
-function initSupabase(url, key) {
-  console.log('🔌 Iniciando Supabase com URL:', url);
-  console.log('🔑 Key prefix:', key.substring(0, 20) + '...');
-  _db = (window.supabase.createClient || window.supabase.default?.createClient)(url, key);
-  if (!_db) throw new Error('Falha ao criar cliente Supabase');
-}
-
-async function saveSupabaseConfig() {
-  const url = document.getElementById('sb-url').value.trim();
-  const key = document.getElementById('sb-key').value.trim();
-  if (!url || !key) { toast('Preencha URL e Key do Supabase', 'error'); return; }
-  if (!url.startsWith('https://')) { toast('URL inválida. Deve começar com https://', 'error'); return; }
-  if (!key.startsWith('eyJ') && !key.startsWith('sb_publishable_') && !key.startsWith('sb_secret_')) { toast('Chave inválida. Verifique a chave do Supabase', 'error'); return; }
-
-  const btn = document.getElementById('btn-connect');
-  btn.disabled = true; btn.textContent = '⏳ Conectando...';
-
-  try {
-    initSupabase(url, key);
-    // Test connection
-    const { error } = await _db.from('users').select('id').limit(1);
-    if (error && error.code !== 'PGRST116' && error.message?.includes('does not exist')) {
-      throw new Error('Tabelas não encontradas. Execute o script SQL primeiro.');
-    }
-    localStorage.setItem('sb_url', url);
-    localStorage.setItem('sb_key', key);
-    toast('✅ Conectado com sucesso!');
-    document.getElementById('config-screen').style.display = 'none';
-    document.getElementById('auth-screen').style.display = 'flex';
-  } catch(e) {
-    toast('Erro: ' + (e.message || 'Verifique as credenciais'), 'error');
-  } finally {
-    btn.disabled = false; btn.textContent = '🔌 Conectar ao Supabase';
-  }
-}
-
-function reconfigSupabase() {
-  localStorage.removeItem('sb_url');
-  localStorage.removeItem('sb_key');
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('config-screen').style.display = 'flex';
-}
-
 // ═══════════════════════════════════════════════════════════════
-//  DATABASE LAYER — Supabase
+//  TURSO CONFIG
+// ═══════════════════════════════════════════════════════════════
+
+let _db = null;
+
+const TURSO_URL = 'libsql://agendapro-mendes9923.aws-us-east-1.turso.io';
+const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODAwMTM2ODUsImlkIjoiMDE5ZTcxMTQtOTIwMS03NzJjLTg0M2QtNGQ3MGY1MDdjOTgxIiwicmlkIjoiNGM3MTY5NGYtY2E0MS00NmY4LTkzOWItYmI3OTUxZTAxYjliIn0.PuUu5kM7XBuk4XH0zAQrTPy1CnFP-ZRY8NbhWLKLlRHUVyUSf39nLxy3BgBUh-fldao0SFew6JgD1YfqdAIVBA';
+
+async function initTurso() {
+    try {
+        // Criar cliente Turso usando o SDK
+        _db = createClient({
+            url: TURSO_URL,
+            authToken: TURSO_TOKEN
+        });
+        
+        // Testar conexão
+        const result = await _db.execute("SELECT 1 as test");
+        console.log('✅ Turso conectado!', result);
+        return true;
+    } catch (error) {
+        console.error('❌ Erro ao conectar Turso:', error);
+        return false;
+    }
+}
+
+// Funções auxiliares para queries
+async function tursoQuery(sql, params = []) {
+    if (!_db) throw new Error('Banco não inicializado');
+    const result = await _db.execute({ sql, args: params });
+    return result.rows;
+}
+
+async function tursoExec(sql, params = []) {
+    if (!_db) throw new Error('Banco não inicializado');
+    const result = await _db.execute({ sql, args: params });
+    return result;
+}
+
+async function tursoQuery(sql, args = []) {
+  return await _tursoFetch(sql, args);
+}
+
+async function tursoExec(sql, args = []) {
+  return await _tursoFetch(sql, args);
+}
+
+async function _tursoFetch(sql, args = []) {
+  const url = `${_TURSO_URL}/v2/pipeline`;
+
+  // Converte args para o formato que a API espera
+  const convertedArgs = args.map(a => {
+    if (a === null || a === undefined) return { type: 'null' };
+    if (typeof a === 'number') return { type: 'float', value: String(a) };
+    if (typeof a === 'boolean') return { type: 'integer', value: a ? '1' : '0' };
+    return { type: 'text', value: String(a) };
+  });
+
+  const body = {
+    requests: [
+      { type: 'execute', stmt: { sql, args: convertedArgs } },
+      { type: 'close' }
+    ]
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${_TURSO_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Turso HTTP error ${res.status}: ${err}`);
+  }
+
+  const data = await res.json();
+  const result = data.results?.[0];
+
+  if (result?.type === 'error') {
+    throw new Error(result.error?.message || 'Erro Turso');
+  }
+
+  const rows = result?.response?.result?.rows || [];
+  const cols = result?.response?.result?.cols || [];
+
+  return rows.map(row => {
+    const obj = {};
+    cols.forEach((col, i) => {
+      let val = row[i]?.value ?? null;
+      if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
+        try { val = JSON.parse(val); } catch {}
+      }
+      obj[col.name] = val;
+    });
+    return obj;
+  });
+}
+// ═══════════════════════════════════════════════════════════════
+//  DATABASE LAYER — Turso
 // ═══════════════════════════════════════════════════════════════
 
 const DB = {
+  // ── AUTH (local, sem Supabase Auth) ──
+  async loginUser(email, password) {
+      const rows = await tursoQuery(
+          'SELECT * FROM users WHERE email = ? AND password_hash = ? LIMIT 1',
+          [email, btoa(password)]
+      );
+      return rows[0] || null;
+  },
+  async registerUser(user) {
+    await tursoExec(
+      `INSERT OR IGNORE INTO users (id, name, email, password_hash, phone, area, setup_done, business, subscription, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+      [user.id, user.name, user.email, btoa(user.password), user.phone || '',
+       user.area || '', '{}',
+       JSON.stringify({ status: 'trial', plan: 'trial', expires: new Date(Date.now() + 7 * 86400000).toISOString() }),
+       new Date().toISOString()]
+    );
+    return await this.getUser(user.id);
+  },
+
   // ── USERS ──
   async getUser(userId) {
-    const { data, error } = await _db.from('users').select('*').eq('id', userId).single();
-    if (error) {
-      console.warn('getUser error:', error.status, error.message);
-      return null;
-    }
-    return data;
+    const rows = await tursoQuery('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
+    if (!rows[0]) return null;
+    const u = rows[0];
+    if (typeof u.business === 'string') try { u.business = JSON.parse(u.business); } catch { u.business = {}; }
+    if (typeof u.subscription === 'string') try { u.subscription = JSON.parse(u.subscription); } catch { u.subscription = {}; }
+    u.setup_done = !!u.setup_done;
+    return u;
   },
   async saveUser(user) {
-    const { data, error } = await _db.from('users').upsert(user).select().single();
-    if (error) throw error;
-    return data;
+    await tursoExec(
+      `INSERT INTO users (id, name, email, phone, area, setup_done, business, subscription, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         name=excluded.name, phone=excluded.phone, area=excluded.area,
+         setup_done=excluded.setup_done, business=excluded.business, subscription=excluded.subscription`,
+      [user.id, user.name, user.email, user.phone || '', user.area || '',
+       user.setup_done ? 1 : 0,
+       JSON.stringify(user.business || {}),
+       JSON.stringify(user.subscription || {}),
+       user.created_at || new Date().toISOString()]
+    );
+    return await this.getUser(user.id);
   },
 
   // ── APPOINTMENTS ──
   async getAppointments(userId) {
-    const { data, error } = await _db.from('appointments').select('*').eq('user_id', userId);
-    if (error) return [];
-    return data || [];
+    return await tursoQuery('SELECT * FROM appointments WHERE user_id = ?', [userId]);
   },
   async saveAppointment(appt) {
-    const { data, error } = await _db.from('appointments').upsert(appt).select().single();
-    if (error) throw error;
-    return data;
+    await tursoExec(
+      `INSERT INTO appointments (id, user_id, client_id, client_name, prof_id, prof_name, service_id, service_name, date, time, duration, price, status, notes, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET status=excluded.status, notes=excluded.notes`,
+      [appt.id, appt.user_id, appt.client_id || '', appt.client_name || '',
+       appt.prof_id || '', appt.prof_name || '', appt.service_id || '', appt.service_name || '',
+       appt.date, appt.time, appt.duration || 30, appt.price || 0,
+       appt.status || 'agendado', appt.notes || '', appt.created_at || new Date().toISOString()]
+    );
+    return appt;
   },
   async updateAppointment(id, updates) {
-    const { error } = await _db.from('appointments').update(updates).eq('id', id);
-    if (error) throw error;
+    const sets = Object.keys(updates).map(k => `${k} = ?`).join(', ');
+    await tursoExec(`UPDATE appointments SET ${sets} WHERE id = ?`, [...Object.values(updates), id]);
   },
   async deleteAppointment(id) {
-    const { error } = await _db.from('appointments').update({status:'cancelado'}).eq('id', id);
-    if (error) throw error;
+    await tursoExec(`UPDATE appointments SET status = 'cancelado' WHERE id = ?`, [id]);
   },
 
   // ── CLIENTS ──
   async getClients(userId) {
-    const { data, error } = await _db.from('clients').select('*').eq('user_id', userId);
-    if (error) return [];
-    return data || [];
+    return await tursoQuery('SELECT * FROM clients WHERE user_id = ?', [userId]);
   },
   async saveClient(client) {
-    const { data, error } = await _db.from('clients').upsert(client).select().single();
-    if (error) throw error;
-    return data;
+    await tursoExec(
+      `INSERT INTO clients (id, user_id, name, phone, email, notes, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET name=excluded.name, phone=excluded.phone, email=excluded.email`,
+      [client.id, client.user_id, client.name, client.phone || '', client.email || '', client.notes || '', client.created_at || new Date().toISOString()]
+    );
+    return client;
   },
 
   // ── PROFESSIONALS ──
   async getProfessionals(userId) {
-    const { data, error } = await _db.from('professionals').select('*').eq('user_id', userId);
-    if (error) return [];
-    return data || [];
+    const rows = await tursoQuery('SELECT * FROM professionals WHERE user_id = ?', [userId]);
+    return rows.map(p => ({ ...p, active: !!p.active }));
   },
   async saveProfessional(prof) {
-    const { data, error } = await _db.from('professionals').upsert(prof).select().single();
-    if (error) throw error;
-    return data;
+    await tursoExec(
+      `INSERT INTO professionals (id, user_id, name, specialty, phone, email, color, active, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET name=excluded.name, specialty=excluded.specialty, phone=excluded.phone, email=excluded.email, color=excluded.color, active=excluded.active`,
+      [prof.id, prof.user_id, prof.name, prof.specialty || '', prof.phone || '', prof.email || '', prof.color || '#e94560', prof.active ? 1 : 0, prof.created_at || new Date().toISOString()]
+    );
+    return prof;
   },
   async updateProfessional(id, updates) {
-    const { error } = await _db.from('professionals').update(updates).eq('id', id);
-    if (error) throw error;
+    if ('active' in updates) updates.active = updates.active ? 1 : 0;
+    const sets = Object.keys(updates).map(k => `${k} = ?`).join(', ');
+    await tursoExec(`UPDATE professionals SET ${sets} WHERE id = ?`, [...Object.values(updates), id]);
   },
 
   // ── SERVICES ──
   async getServices(userId) {
-    const { data, error } = await _db.from('services').select('*').eq('user_id', userId);
-    if (error) return [];
-    return data || [];
+    const rows = await tursoQuery('SELECT * FROM services WHERE user_id = ?', [userId]);
+    return rows.map(s => ({ ...s, active: !!s.active }));
   },
   async saveService(svc) {
-    const { data, error } = await _db.from('services').upsert(svc).select().single();
-    if (error) throw error;
-    return data;
+    await tursoExec(
+      `INSERT INTO services (id, user_id, name, duration, price, active, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET name=excluded.name, duration=excluded.duration, price=excluded.price, active=excluded.active`,
+      [svc.id, svc.user_id, svc.name, svc.duration || 30, svc.price || 0, svc.active ? 1 : 0, svc.created_at || new Date().toISOString()]
+    );
+    return svc;
   },
   async deleteService(id) {
-    const { error } = await _db.from('services').delete().eq('id', id);
-    if (error) throw error;
+    await tursoExec('DELETE FROM services WHERE id = ?', [id]);
   },
 
   // ── FOLGAS ──
   async getFolgas(userId) {
-    const { data, error } = await _db.from('folgas').select('date').eq('user_id', userId);
-    if (error) return [];
-    return (data || []).map(f => f.date);
+    const rows = await tursoQuery('SELECT date FROM folgas WHERE user_id = ?', [userId]);
+    return rows.map(r => r.date);
   },
   async addFolga(userId, date) {
-    const { error } = await _db.from('folgas').upsert({ user_id: userId, date });
-    if (error) throw error;
+    await tursoExec('INSERT OR IGNORE INTO folgas (id, user_id, date) VALUES (?, ?, ?)', [uid(), userId, date]);
   },
   async removeFolga(userId, date) {
-    const { error } = await _db.from('folgas').delete().eq('user_id', userId).eq('date', date);
-    if (error) throw error;
+    await tursoExec('DELETE FROM folgas WHERE user_id = ? AND date = ?', [userId, date]);
   },
 
   // ── ALL USERS (admin) ──
   async getAllUsers() {
-    const { data, error } = await _db.from('users').select('*');
-    if (error) return [];
-    return data || [];
+    const rows = await tursoQuery('SELECT * FROM users', []);
+    return rows.map(u => {
+      if (typeof u.business === 'string') try { u.business = JSON.parse(u.business); } catch {}
+      if (typeof u.subscription === 'string') try { u.subscription = JSON.parse(u.subscription); } catch {}
+      u.setup_done = !!u.setup_done;
+      return u;
+    });
   },
   async updateUserSubscription(userId, subscription) {
-    const { error } = await _db.from('users').update({ subscription }).eq('id', userId);
-    if (error) throw error;
+    await tursoExec('UPDATE users SET subscription = ? WHERE id = ?', [JSON.stringify(subscription), userId]);
   }
 };
 
@@ -729,29 +819,24 @@ function switchAuthTab(tab) {
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const pwd = document.getElementById('login-pwd').value;
-  if (!email||!pwd) { toast('Preencha todos os campos','error'); return; }
+  if (!email || !pwd) { toast('Preencha todos os campos', 'error'); return; }
 
   const btn = document.getElementById('btn-login');
   btn.disabled = true; btn.textContent = '⏳ Entrando...';
 
   try {
-    // Admin shortcut
-    if (email==='admin@agendapro.com' && pwd==='admin123') {
+    if (email === 'admin@agendapro.com' && pwd === 'admin123') {
       isAdmin = true;
-      currentUser = { id:'admin', name:'Administrador', email:'admin@agendapro.com' };
+      currentUser = { id: 'admin', name: 'Administrador', email: 'admin@agendapro.com' };
       await initApp(); return;
     }
-
-    const { data, error } = await _db.auth.signInWithPassword({ email, password: pwd });
-    if (error) throw error;
-
-    const userData = await DB.getUser(data.user.id);
-    if (!userData) throw new Error('Usuário não encontrado no banco');
-    currentUser = { ...userData, auth_id: data.user.id };
+    const userData = await DB.loginUser(email, pwd);
+    if (!userData) throw new Error('E-mail ou senha incorretos');
+    currentUser = userData;
     isAdmin = false;
     await initApp();
   } catch(e) {
-    if (!handleSupabaseError(e)) toast(e.message || 'Credenciais inválidas', 'error');
+    toast(e.message || 'Credenciais inválidas', 'error');
   } finally {
     btn.disabled = false; btn.textContent = 'Entrar';
   }
@@ -763,50 +848,32 @@ async function doRegister() {
   const email = document.getElementById('reg-email').value.trim();
   const pwd = document.getElementById('reg-pwd').value;
   const area = document.getElementById('reg-area').value;
-  if (!name||!email||!pwd||!area) { toast('Preencha todos os campos','error'); return; }
-  if (pwd.length < 6) { toast('Senha mínimo 6 caracteres','error'); return; }
+  if (!name || !email || !pwd || !area) { toast('Preencha todos os campos', 'error'); return; }
+  if (pwd.length < 6) { toast('Senha mínimo 6 caracteres', 'error'); return; }
 
   const btn = document.getElementById('btn-register');
   btn.disabled = true; btn.textContent = '⏳ Criando conta...';
 
   try {
-    // 1. Create auth user
-    const { data: authData, error: authError } = await _db.auth.signUp({ email, password: pwd, options: { data: { name, phone, area } } });
-    if (authError) throw authError;
-
-    // 2. Wait for session — signUp may return session immediately (email confirm off)
-    let session = authData.session;
-    if (!session) {
-      // Try signing in right away
-      const { data: signInData, error: signInErr } = await _db.auth.signInWithPassword({ email, password: pwd });
-      if (signInErr) {
-        toast('Conta criada! Confirme seu e-mail e faça login.', 'success');
-        switchAuthTab('login');
-        return;
-      }
-      session = signInData.session;
-    }
-
-    // 3. Create user profile (session is active, token will be sent automatically)
-    const userId = authData.user.id;
-    const userData = {
-      id: userId,
-      name, phone, email, area,
-      created_at: new Date().toISOString(),
-      setup_done: false,
-      subscription: { status:'trial', plan:'trial', expires: new Date(Date.now()+7*86400000).toISOString() }
-    };
-    await DB.saveUser(userData);
-    currentUser = { ...userData, auth_id: userId };
+    const existing = await tursoQuery('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
+    if (existing.length > 0) throw new Error('E-mail já cadastrado');
+    const newUser = { id: uid(), name, phone, email, password: pwd, area };
+    await DB.registerUser(newUser);
+    currentUser = await DB.getUser(newUser.id);
     isAdmin = false;
     await initApp();
   } catch(e) {
-    if (!handleSupabaseError(e)) toast(e.message || 'Erro ao criar conta', 'error');
+    toast(e.message || 'Erro ao criar conta', 'error');
   } finally {
     btn.disabled = false; btn.textContent = 'Criar Conta Grátis';
   }
 }
 
+async function doLogout() {
+  currentUser = null; isAdmin = false;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
 async function doLogout() {
   showLoading('Saindo...');
   await _db.auth.signOut();
@@ -825,6 +892,8 @@ async function initApp() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('booking-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  localStorage.setItem('current_user_id', currentUser.id);
+
 
   const av = initials(currentUser.name);
   document.getElementById('sidebar-avatar').textContent = av;
@@ -2086,59 +2155,51 @@ create trigger on_auth_user_created
 // ═══════════════════════════════════════════════════════════════
 
 (async function init() {
-  localStorage.setItem('sb_url', _DEFAULT_URL);
-  localStorage.setItem('sb_key', _DEFAULT_KEY);
-
-  // Verifica se voltou do link de redefinição de senha
-  const resetCheck = new URLSearchParams(window.location.search);
-  if (resetCheck.get('reset') === 'true') {
-    try { initSupabase(_DEFAULT_URL, _DEFAULT_KEY); } catch(e) {}
-    document.getElementById('auth-screen').style.display = 'flex';
-    setTimeout(() => openResetPasswordModal(), 600);
-    return;
-  }
-
-  // Verifica se é link de agendamento público (?booking=slug)
-  const params = new URLSearchParams(window.location.search);
-  const bookingSlug = params.get('booking');
-  if (bookingSlug) {
-    try {
-      initSupabase(_DEFAULT_URL, _DEFAULT_KEY);
-      const { data: users } = await _db.from('users').select('*');
-      const found = users?.find(u => u.business?.slug === bookingSlug);
-      if (found) { await loadBookingPage(found.id); return; }
-      else { document.body.innerHTML = '<div style="text-align:center;padding:60px;font-family:sans-serif"><h2>Negócio não encontrado</h2></div>'; return; }
-    } catch(e) { console.error(e); }
-  }
-
-  try {
-    initSupabase(_DEFAULT_URL, _DEFAULT_KEY);
-  } catch(e) {
-    console.error('Erro ao iniciar Supabase:', e);
-    document.getElementById('auth-screen').style.display = 'flex';
-    return;
-  }
-
-  // Verifica sessão existente
-  try {
-    const { data: { session } } = await _db.auth.getSession();
-    if (session && session.user) {
-      const userData = await DB.getUser(session.user.id);
-      if (userData) {
-        currentUser = { ...userData, auth_id: session.user.id };
-        await initApp(); return;
-      }
+    // Aguarda conectar ao Turso
+    const connected = await initTurso();
+    if (!connected) {
+        console.error('Não foi possível conectar ao Turso');
+        document.body.innerHTML = '<div style="text-align:center;padding:60px"><h2>Erro de conexão com o banco de dados</h2><p>Verifique sua internet e tente novamente</p></div>';
+        return;
     }
-  } catch(e) {
-    console.warn('Sem sessão válida:', e.message);
-    if (e?.status === 429 || e?.message?.includes('429')) {
-      document.getElementById('auth-screen').style.display = 'flex';
-      setTimeout(() => toast('⏳ Serviço temporariamente sobrecarregado. Tente em alguns segundos.', 'warning', 6000), 500);
-      return;
-    }
-  }
 
-  document.getElementById('auth-screen').style.display = 'flex';
+    const params = new URLSearchParams(window.location.search);
+    const bookingSlug = params.get('booking');
+    
+    if (bookingSlug) {
+        try {
+            const users = await DB.getAllUsers();
+            const found = users.find(u => {
+                try {
+                    const biz = typeof u.business === 'string' ? JSON.parse(u.business) : u.business;
+                    return biz?.slug === bookingSlug;
+                } catch { return false; }
+            });
+            if (found) { 
+                await loadBookingPage(found.id); 
+                return; 
+            }
+        } catch(e) { 
+            console.error(e);
+        }
+    }
+
+    // Verifica sessão salva
+    const savedId = localStorage.getItem('current_user_id');
+    if (savedId) {
+        try {
+            const userData = await DB.getUser(savedId);
+            if (userData) { 
+                currentUser = userData; 
+                await initApp(); 
+                return; 
+            }
+        } catch(e) { 
+            localStorage.removeItem('current_user_id');
+        }
+    }
+
+    document.getElementById('auth-screen').style.display = 'flex';
 })();
 
 // ═══════════════════════════════════════════════════════════════
