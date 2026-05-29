@@ -518,6 +518,11 @@ async function tursoExecute(sql, params = []) {
         requests: [{ type: 'execute', stmt: { sql, args } }]
     };
     
+    // Log para debug
+    console.log('📝 Turso SQL:', sql);
+    console.log('📝 Turso Params:', params);
+    console.log('📝 Turso Body:', JSON.stringify(body, null, 2));
+    
     const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -528,10 +533,13 @@ async function tursoExecute(sql, params = []) {
     });
     
     if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ Turso Error Response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
     
     const data = await response.json();
+    console.log('✅ Turso Response:', data);
     
     if (data.results?.[0]?.type === 'error') {
         throw new Error(data.results[0].error.message);
