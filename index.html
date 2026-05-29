@@ -684,174 +684,242 @@ async function _tursoFetch(sql, args = []) {
 //  DATABASE LAYER — Turso
 // ═══════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════
+//  DATABASE LAYER — Turso (COMPLETO)
+// ═══════════════════════════════════════════════════════════════
+
 const DB = {
-  // ── AUTH (local, sem Supabase Auth) ──
-  async loginUser(email, password) {
-      const rows = await tursoQuery(
-          'SELECT * FROM users WHERE email = ? AND password_hash = ? LIMIT 1',
-          [email, btoa(password)]
-      );
-      return rows[0] || null;
-  },
-  async registerUser(user) {
-    const userId = user.id || uid();
-    const now = new Date().toISOString();
+    // ── AUTH ──
+    async loginUser(email, password) {
+        const rows = await tursoQuery(
+            'SELECT * FROM users WHERE email = ? AND password_hash = ? LIMIT 1',
+            [email, btoa(password)]
+        );
+        return rows[0] || null;
+    },
     
-    await tursoExec(
-        `INSERT OR IGNORE INTO users (id, name, email, password_hash, phone, area, setup_done, business, subscription, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
-        [
-            userId,
-            user.name,
-            user.email,
-            btoa(user.password),
-            user.phone || '',
-            user.area || '',
-            '{}',
-            JSON.stringify({ status: 'trial', plan: 'trial', expires: new Date(Date.now() + 7 * 86400000).toISOString() }),
-            now
-        ]
-    );
-    return await this.getUser(userId);
-  },
+    async registerUser(user) {
+        const userId = user.id || uid();
+        const now = new Date().toISOString();
+        
+        await tursoExec(
+            `INSERT INTO users (id, name, email, password_hash, phone, area, setup_done, business, subscription, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+            [
+                userId,
+                user.name,
+                user.email,
+                btoa(user.password),
+                user.phone || '',
+                user.area || '',
+                JSON.stringify({}),
+                JSON.stringify({ status: 'trial', plan: 'trial', expires: new Date(Date.now() + 7 * 86400000).toISOString() }),
+                now
+            ]
+        );
+        return await this.getUser(userId);
+    },
 
-  // ── USERS ──
-  async getUser(userId) {
-      const rows = await tursoQuery('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
-      if (!rows || rows.length === 0) return null;
-      
-      const u = rows[0];
-      
-      // Parse JSON fields
-      if (typeof u.business === 'string') {
-          try { u.business = JSON.parse(u.business); } catch { u.business = {}; }
-      }
-      if (typeof u.subscription === 'string') {
-          try { u.subscription = JSON.parse(u.subscription); } catch { u.subscription = {}; }
-      }
-      
-      u.setup_done = !!u.setup_done;
-      return u;
-  },
-  async saveUser(user) {
-    await tursoExec(
-      `INSERT INTO users (id, name, email, phone, area, setup_done, business, subscription, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         name=excluded.name, phone=excluded.phone, area=excluded.area,
-         setup_done=excluded.setup_done, business=excluded.business, subscription=excluded.subscription`,
-      [user.id, user.name, user.email, user.phone || '', user.area || '',
-       user.setup_done ? 1 : 0,
-       JSON.stringify(user.business || {}),
-       JSON.stringify(user.subscription || {}),
-       user.created_at || new Date().toISOString()]
-    );
-    return await this.getUser(user.id);
-  },
+    // ── USERS ──
+    async getUser(userId) {
+        const rows = await tursoQuery('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
+        if (!rows || rows.length === 0) return null;
+        
+        const u = rows[0];
+        
+        // Parse JSON fields
+        if (typeof u.business === 'string') {
+            try { u.business = JSON.parse(u.business); } catch { u.business = {}; }
+        }
+        if (typeof u.subscription === 'string') {
+            try { u.subscription = JSON.parse(u.subscription); } catch { u.subscription = {}; }
+        }
+        
+        u.setup_done = !!u.setup_done;
+        return u;
+    },
+    
+    async saveUser(user) {
+        const now = user.created_at || new Date().toISOString();
+        await tursoExec(
+            `INSERT OR REPLACE INTO users (id, name, email, phone, area, setup_done, business, subscription, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                user.id,
+                user.name,
+                user.email,
+                user.phone || '',
+                user.area || '',
+                user.setup_done ? 1 : 0,
+                JSON.stringify(user.business || {}),
+                JSON.stringify(user.subscription || {}),
+                now
+            ]
+        );
+        return await this.getUser(user.id);
+    },
 
-  // ── APPOINTMENTS ──
-  async getAppointments(userId) {
-    return await tursoQuery('SELECT * FROM appointments WHERE user_id = ?', [userId]);
-  },
-  async saveAppointment(appt) {
-    await tursoExec(
-      `INSERT INTO appointments (id, user_id, client_id, client_name, prof_id, prof_name, service_id, service_name, date, time, duration, price, status, notes, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET status=excluded.status, notes=excluded.notes`,
-      [appt.id, appt.user_id, appt.client_id || '', appt.client_name || '',
-       appt.prof_id || '', appt.prof_name || '', appt.service_id || '', appt.service_name || '',
-       appt.date, appt.time, appt.duration || 30, appt.price || 0,
-       appt.status || 'agendado', appt.notes || '', appt.created_at || new Date().toISOString()]
-    );
-    return appt;
-  },
-  async updateAppointment(id, updates) {
-    const sets = Object.keys(updates).map(k => `${k} = ?`).join(', ');
-    await tursoExec(`UPDATE appointments SET ${sets} WHERE id = ?`, [...Object.values(updates), id]);
-  },
-  async deleteAppointment(id) {
-    await tursoExec(`UPDATE appointments SET status = 'cancelado' WHERE id = ?`, [id]);
-  },
+    // ── APPOINTMENTS ──
+    async getAppointments(userId) {
+        return await tursoQuery(
+            'SELECT * FROM appointments WHERE user_id = ? ORDER BY date DESC, time DESC',
+            [userId]
+        );
+    },
+    
+    async saveAppointment(appt) {
+        await tursoExec(
+            `INSERT OR REPLACE INTO appointments 
+             (id, user_id, client_id, client_name, prof_id, prof_name, service_id, service_name, 
+              date, time, duration, price, status, notes, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                appt.id, appt.user_id, appt.client_id || '', appt.client_name || '',
+                appt.prof_id || '', appt.prof_name || '', appt.service_id || '', appt.service_name || '',
+                appt.date, appt.time, appt.duration || 30, appt.price || 0,
+                appt.status || 'agendado', appt.notes || '', appt.created_at || new Date().toISOString()
+            ]
+        );
+        return appt;
+    },
+    
+    async updateAppointment(id, updates) {
+        const fields = Object.keys(updates);
+        const values = Object.values(updates);
+        const setClause = fields.map(f => `${f} = ?`).join(', ');
+        await tursoExec(`UPDATE appointments SET ${setClause} WHERE id = ?`, [...values, id]);
+    },
+    
+    async deleteAppointment(id) {
+        await tursoExec(`UPDATE appointments SET status = 'cancelado' WHERE id = ?`, [id]);
+    },
 
-  // ── CLIENTS ──
-  async getClients(userId) {
-    return await tursoQuery('SELECT * FROM clients WHERE user_id = ?', [userId]);
-  },
-  async saveClient(client) {
-    await tursoExec(
-      `INSERT INTO clients (id, user_id, name, phone, email, notes, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET name=excluded.name, phone=excluded.phone, email=excluded.email`,
-      [client.id, client.user_id, client.name, client.phone || '', client.email || '', client.notes || '', client.created_at || new Date().toISOString()]
-    );
-    return client;
-  },
+    // ── CLIENTS ──
+    async getClients(userId) {
+        return await tursoQuery(
+            'SELECT * FROM clients WHERE user_id = ? ORDER BY name',
+            [userId]
+        );
+    },
+    
+    async saveClient(client) {
+        await tursoExec(
+            `INSERT OR REPLACE INTO clients (id, user_id, name, phone, email, notes, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+                client.id, client.user_id, client.name, 
+                client.phone || '', client.email || '', 
+                client.notes || '', client.created_at || new Date().toISOString()
+            ]
+        );
+        return client;
+    },
 
-  // ── PROFESSIONALS ──
-  async getProfessionals(userId) {
-    const rows = await tursoQuery('SELECT * FROM professionals WHERE user_id = ?', [userId]);
-    return rows.map(p => ({ ...p, active: !!p.active }));
-  },
-  async saveProfessional(prof) {
-    await tursoExec(
-      `INSERT INTO professionals (id, user_id, name, specialty, phone, email, color, active, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET name=excluded.name, specialty=excluded.specialty, phone=excluded.phone, email=excluded.email, color=excluded.color, active=excluded.active`,
-      [prof.id, prof.user_id, prof.name, prof.specialty || '', prof.phone || '', prof.email || '', prof.color || '#e94560', prof.active ? 1 : 0, prof.created_at || new Date().toISOString()]
-    );
-    return prof;
-  },
-  async updateProfessional(id, updates) {
-    if ('active' in updates) updates.active = updates.active ? 1 : 0;
-    const sets = Object.keys(updates).map(k => `${k} = ?`).join(', ');
-    await tursoExec(`UPDATE professionals SET ${sets} WHERE id = ?`, [...Object.values(updates), id]);
-  },
+    // ── PROFESSIONALS ──
+    async getProfessionals(userId) {
+        const rows = await tursoQuery(
+            'SELECT * FROM professionals WHERE user_id = ? ORDER BY name',
+            [userId]
+        );
+        return rows.map(p => ({ ...p, active: !!p.active }));
+    },
+    
+    async saveProfessional(prof) {
+        await tursoExec(
+            `INSERT OR REPLACE INTO professionals 
+             (id, user_id, name, specialty, phone, email, color, active, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                prof.id, prof.user_id, prof.name, prof.specialty || '',
+                prof.phone || '', prof.email || '', prof.color || '#e94560',
+                prof.active ? 1 : 0, prof.created_at || new Date().toISOString()
+            ]
+        );
+        return prof;
+    },
+    
+    async updateProfessional(id, updates) {
+        const fields = Object.keys(updates);
+        const values = Object.values(updates);
+        // Converte active para inteiro se existir
+        const finalValues = values.map(v => {
+            if (typeof v === 'boolean') return v ? 1 : 0;
+            return v;
+        });
+        const setClause = fields.map(f => `${f} = ?`).join(', ');
+        await tursoExec(`UPDATE professionals SET ${setClause} WHERE id = ?`, [...finalValues, id]);
+    },
 
-  // ── SERVICES ──
-  async getServices(userId) {
-    const rows = await tursoQuery('SELECT * FROM services WHERE user_id = ?', [userId]);
-    return rows.map(s => ({ ...s, active: !!s.active }));
-  },
-  async saveService(svc) {
-    await tursoExec(
-      `INSERT INTO services (id, user_id, name, duration, price, active, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET name=excluded.name, duration=excluded.duration, price=excluded.price, active=excluded.active`,
-      [svc.id, svc.user_id, svc.name, svc.duration || 30, svc.price || 0, svc.active ? 1 : 0, svc.created_at || new Date().toISOString()]
-    );
-    return svc;
-  },
-  async deleteService(id) {
-    await tursoExec('DELETE FROM services WHERE id = ?', [id]);
-  },
+    // ── SERVICES ──
+    async getServices(userId) {
+        const rows = await tursoQuery(
+            'SELECT * FROM services WHERE user_id = ? ORDER BY name',
+            [userId]
+        );
+        return rows.map(s => ({ ...s, active: !!s.active }));
+    },
+    
+    async saveService(svc) {
+        await tursoExec(
+            `INSERT OR REPLACE INTO services (id, user_id, name, duration, price, active, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+                svc.id, svc.user_id, svc.name, svc.duration || 30,
+                svc.price || 0, svc.active ? 1 : 0, svc.created_at || new Date().toISOString()
+            ]
+        );
+        return svc;
+    },
+    
+    async deleteService(id) {
+        await tursoExec('DELETE FROM services WHERE id = ?', [id]);
+    },
 
-  // ── FOLGAS ──
-  async getFolgas(userId) {
-    const rows = await tursoQuery('SELECT date FROM folgas WHERE user_id = ?', [userId]);
-    return rows.map(r => r.date);
-  },
-  async addFolga(userId, date) {
-    await tursoExec('INSERT OR IGNORE INTO folgas (id, user_id, date) VALUES (?, ?, ?)', [uid(), userId, date]);
-  },
-  async removeFolga(userId, date) {
-    await tursoExec('DELETE FROM folgas WHERE user_id = ? AND date = ?', [userId, date]);
-  },
+    // ── FOLGAS ──
+    async getFolgas(userId) {
+        const rows = await tursoQuery(
+            'SELECT date FROM folgas WHERE user_id = ?',
+            [userId]
+        );
+        return rows.map(r => r.date);
+    },
+    
+    async addFolga(userId, date) {
+        await tursoExec(
+            'INSERT OR IGNORE INTO folgas (id, user_id, date) VALUES (?, ?, ?)',
+            [uid(), userId, date]
+        );
+    },
+    
+    async removeFolga(userId, date) {
+        await tursoExec(
+            'DELETE FROM folgas WHERE user_id = ? AND date = ?',
+            [userId, date]
+        );
+    },
 
-  // ── ALL USERS (admin) ──
-  async getAllUsers() {
-    const rows = await tursoQuery('SELECT * FROM users', []);
-    return rows.map(u => {
-      if (typeof u.business === 'string') try { u.business = JSON.parse(u.business); } catch {}
-      if (typeof u.subscription === 'string') try { u.subscription = JSON.parse(u.subscription); } catch {}
-      u.setup_done = !!u.setup_done;
-      return u;
-    });
-  },
-  async updateUserSubscription(userId, subscription) {
-    await tursoExec('UPDATE users SET subscription = ? WHERE id = ?', [JSON.stringify(subscription), userId]);
-  }
+    // ── ADMIN ──
+    async getAllUsers() {
+        const rows = await tursoQuery('SELECT * FROM users ORDER BY created_at DESC', []);
+        return rows.map(u => {
+            if (typeof u.business === 'string') {
+                try { u.business = JSON.parse(u.business); } catch { u.business = {}; }
+            }
+            if (typeof u.subscription === 'string') {
+                try { u.subscription = JSON.parse(u.subscription); } catch { u.subscription = {}; }
+            }
+            u.setup_done = !!u.setup_done;
+            return u;
+        });
+    },
+    
+    async updateUserSubscription(userId, subscription) {
+        await tursoExec(
+            'UPDATE users SET subscription = ? WHERE id = ?',
+            [JSON.stringify(subscription), userId]
+        );
+    }
 };
-
 // ═══════════════════════════════════════════════════════════════
 //  UTILS
 // ═══════════════════════════════════════════════════════════════
