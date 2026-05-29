@@ -498,207 +498,84 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  SUPABASE CONFIG
+//  TURSO CONFIG - VERSÃO CORRIGIDA
 // ═══════════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════════════
-//  TURSO CONFIG
-// ═══════════════════════════════════════════════════════════════
-
-// Definição GLOBAL das variáveis
 const _TURSO_URL = 'https://agendapro-mendes9923.aws-us-east-1.turso.io';
 const _TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODAwMTM2ODUsImlkIjoiMDE5ZTcxMTQtOTIwMS03NzJjLTg0M2QtNGQ3MGY1MDdjOTgxIiwicmlkIjoiNGM3MTY5NGYtY2E0MS00NmY4LTkzOWItYmI3OTUxZTAxYjliIn0.PuUu5kM7XBuk4XH0zAQrTPy1CnFP-ZRY8NbhWLKLlRHUVyUSf39nLxy3BgBUh-fldao0SFew6JgD1YfqdAIVBA';
 
-let _db = null;
-
-// Função principal para executar queries no Turso
 async function tursoExecute(sql, params = []) {
     const url = `${_TURSO_URL}/v2/pipeline`;
     
-    // Converte os parâmetros para o formato esperado pela API
     const args = params.map(param => {
-        if (param === null || param === undefined) {
-            return { type: 'null' };
-        }
-        if (typeof param === 'number') {
-            return { type: 'float', value: param.toString() };
-        }
-        if (typeof param === 'boolean') {
-            return { type: 'integer', value: param ? '1' : '0' };
-        }
+        if (param === null || param === undefined) return { type: 'null' };
+        if (typeof param === 'number') return { type: 'float', value: param.toString() };
+        if (typeof param === 'boolean') return { type: 'integer', value: param ? '1' : '0' };
         return { type: 'text', value: param.toString() };
     });
     
     const body = {
-        requests: [
-            {
-                type: 'execute',
-                stmt: {
-                    sql: sql,
-                    args: args
-                }
-            }
-        ]
+        requests: [{ type: 'execute', stmt: { sql, args } }]
     };
     
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${_TURSO_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-        
-        const data = await response.json();
-        
-        // Verifica se houve erro na resposta
-        if (data.results && data.results[0] && data.results[0].type === 'error') {
-            throw new Error(data.results[0].error.message);
-        }
-        
-        // Extrai as linhas do resultado
-        const result = data.results?.[0]?.response?.result;
-        if (!result) {
-            return [];
-        }
-        
-        const columns = result.cols || [];
-        const rows = result.rows || [];
-        
-        // Converte para array de objetos
-        return rows.map(row => {
-            const obj = {};
-            columns.forEach((col, index) => {
-                let value = row[index]?.value;
-                // Tenta parsear JSON se for string que parece JSON
-                if (typeof value === 'string' && (value.startsWith('{') || value.startsWith('['))) {
-                    try {
-                        value = JSON.parse(value);
-                    } catch(e) {}
-                }
-                obj[col.name] = value;
-            });
-            return obj;
-        });
-        
-    } catch (error) {
-        console.error('Erro na query Turso:', error);
-        throw error;
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${_TURSO_TOKEN}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    });
+    
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
     }
+    
+    const data = await response.json();
+    
+    if (data.results?.[0]?.type === 'error') {
+        throw new Error(data.results[0].error.message);
+    }
+    
+    const result = data.results?.[0]?.response?.result;
+    if (!result) return [];
+    
+    const columns = result.cols || [];
+    const rows = result.rows || [];
+    
+    return rows.map(row => {
+        const obj = {};
+        columns.forEach((col, index) => {
+            let value = row[index]?.value;
+            if (typeof value === 'string' && (value.startsWith('{') || value.startsWith('['))) {
+                try { value = JSON.parse(value); } catch(e) {}
+            }
+            obj[col.name] = value;
+        });
+        return obj;
+    });
 }
 
-// Wrappers para compatibilidade
-async function tursoQuery(sql, params = []) {
-    return await tursoExecute(sql, params);
-}
-
-async function tursoExec(sql, params = []) {
-    return await tursoExecute(sql, params);
-}
+const tursoQuery = tursoExecute;
+const tursoExec = tursoExecute;
 
 async function initTurso() {
-    console.log('🔌 Inicializando Turso via API HTTP...');
+    console.log('🔌 Inicializando Turso...');
     try {
-        // Testa a conexão
-        const testResult = await tursoExecute('SELECT 1 as test');
-        if (testResult && testResult.length > 0) {
-            console.log('✅ Turso conectado com sucesso!');
-            return true;
-        }
-        console.warn('⚠️ Teste retornou vazio');
-        return false;
+        await tursoExecute('SELECT 1 as test');
+        console.log('✅ Turso conectado!');
+        return true;
     } catch (error) {
-        console.error('❌ Erro ao conectar Turso:', error);
+        console.error('❌ Turso erro:', error);
         return false;
     }
 }
 
-// Wrappers para compatibilidade com o código existente
-async function tursoQuery(sql, params = []) {
-    return await tursoExecute(sql, params);
-}
-
-async function tursoExec(sql, params = []) {
-    return await tursoExecute(sql, params);
-}
-
-async function tursoQuery(sql, args = []) {
-  return await _tursoFetch(sql, args);
-}
-
-async function tursoExec(sql, args = []) {
-  return await _tursoFetch(sql, args);
-}
-
-async function _tursoFetch(sql, args = []) {
-  const url = `${_TURSO_URL}/v2/pipeline`;
-
-  // Converte args para o formato que a API espera
-  const convertedArgs = args.map(a => {
-    if (a === null || a === undefined) return { type: 'null' };
-    if (typeof a === 'number') return { type: 'float', value: String(a) };
-    if (typeof a === 'boolean') return { type: 'integer', value: a ? '1' : '0' };
-    return { type: 'text', value: String(a) };
-  });
-
-  const body = {
-    requests: [
-      { type: 'execute', stmt: { sql, args: convertedArgs } },
-      { type: 'close' }
-    ]
-  };
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${_TURSO_TOKEN}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Turso HTTP error ${res.status}: ${err}`);
-  }
-
-  const data = await res.json();
-  const result = data.results?.[0];
-
-  if (result?.type === 'error') {
-    throw new Error(result.error?.message || 'Erro Turso');
-  }
-
-  const rows = result?.response?.result?.rows || [];
-  const cols = result?.response?.result?.cols || [];
-
-  return rows.map(row => {
-    const obj = {};
-    cols.forEach((col, i) => {
-      let val = row[i]?.value ?? null;
-      if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
-        try { val = JSON.parse(val); } catch {}
-      }
-      obj[col.name] = val;
-    });
-    return obj;
-  });
-}
-
-
 // ═══════════════════════════════════════════════════════════════
-//  DATABASE LAYER — Turso (COMPLETO)
+//  DATABASE LAYER — Turso
 // ═══════════════════════════════════════════════════════════════
 
 const DB = {
-    // ── AUTH ──
     async loginUser(email, password) {
         const rows = await tursoQuery(
             'SELECT * FROM users WHERE email = ? AND password_hash = ? LIMIT 1',
@@ -715,12 +592,8 @@ const DB = {
             `INSERT INTO users (id, name, email, password_hash, phone, area, setup_done, business, subscription, created_at)
              VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
             [
-                userId,
-                user.name,
-                user.email,
-                btoa(user.password),
-                user.phone || '',
-                user.area || '',
+                userId, user.name, user.email, btoa(user.password),
+                user.phone || '', user.area || '',
                 JSON.stringify({}),
                 JSON.stringify({ status: 'trial', plan: 'trial', expires: new Date(Date.now() + 7 * 86400000).toISOString() }),
                 now
@@ -729,51 +602,38 @@ const DB = {
         return await this.getUser(userId);
     },
 
-    // ── USERS ──
     async getUser(userId) {
         const rows = await tursoQuery('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
-        if (!rows || rows.length === 0) return null;
+        if (!rows?.length) return null;
         
         const u = rows[0];
-        
-        // Parse JSON fields
         if (typeof u.business === 'string') {
             try { u.business = JSON.parse(u.business); } catch { u.business = {}; }
         }
         if (typeof u.subscription === 'string') {
             try { u.subscription = JSON.parse(u.subscription); } catch { u.subscription = {}; }
         }
-        
         u.setup_done = !!u.setup_done;
         return u;
     },
     
     async saveUser(user) {
-        const now = user.created_at || new Date().toISOString();
         await tursoExec(
             `INSERT OR REPLACE INTO users (id, name, email, phone, area, setup_done, business, subscription, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                user.id,
-                user.name,
-                user.email,
-                user.phone || '',
-                user.area || '',
+                user.id, user.name, user.email, user.phone || '', user.area || '',
                 user.setup_done ? 1 : 0,
                 JSON.stringify(user.business || {}),
                 JSON.stringify(user.subscription || {}),
-                now
+                user.created_at || new Date().toISOString()
             ]
         );
         return await this.getUser(user.id);
     },
 
-    // ── APPOINTMENTS ──
     async getAppointments(userId) {
-        return await tursoQuery(
-            'SELECT * FROM appointments WHERE user_id = ? ORDER BY date DESC, time DESC',
-            [userId]
-        );
+        return await tursoQuery('SELECT * FROM appointments WHERE user_id = ? ORDER BY date DESC, time DESC', [userId]);
     },
     
     async saveAppointment(appt) {
@@ -803,12 +663,8 @@ const DB = {
         await tursoExec(`UPDATE appointments SET status = 'cancelado' WHERE id = ?`, [id]);
     },
 
-    // ── CLIENTS ──
     async getClients(userId) {
-        return await tursoQuery(
-            'SELECT * FROM clients WHERE user_id = ? ORDER BY name',
-            [userId]
-        );
+        return await tursoQuery('SELECT * FROM clients WHERE user_id = ? ORDER BY name', [userId]);
     },
     
     async saveClient(client) {
@@ -824,12 +680,8 @@ const DB = {
         return client;
     },
 
-    // ── PROFESSIONALS ──
     async getProfessionals(userId) {
-        const rows = await tursoQuery(
-            'SELECT * FROM professionals WHERE user_id = ? ORDER BY name',
-            [userId]
-        );
+        const rows = await tursoQuery('SELECT * FROM professionals WHERE user_id = ? ORDER BY name', [userId]);
         return rows.map(p => ({ ...p, active: !!p.active }));
     },
     
@@ -849,22 +701,14 @@ const DB = {
     
     async updateProfessional(id, updates) {
         const fields = Object.keys(updates);
-        const values = Object.values(updates);
-        // Converte active para inteiro se existir
-        const finalValues = values.map(v => {
-            if (typeof v === 'boolean') return v ? 1 : 0;
-            return v;
-        });
+        let values = Object.values(updates);
+        values = values.map(v => typeof v === 'boolean' ? (v ? 1 : 0) : v);
         const setClause = fields.map(f => `${f} = ?`).join(', ');
-        await tursoExec(`UPDATE professionals SET ${setClause} WHERE id = ?`, [...finalValues, id]);
+        await tursoExec(`UPDATE professionals SET ${setClause} WHERE id = ?`, [...values, id]);
     },
 
-    // ── SERVICES ──
     async getServices(userId) {
-        const rows = await tursoQuery(
-            'SELECT * FROM services WHERE user_id = ? ORDER BY name',
-            [userId]
-        );
+        const rows = await tursoQuery('SELECT * FROM services WHERE user_id = ? ORDER BY name', [userId]);
         return rows.map(s => ({ ...s, active: !!s.active }));
     },
     
@@ -884,30 +728,19 @@ const DB = {
         await tursoExec('DELETE FROM services WHERE id = ?', [id]);
     },
 
-    // ── FOLGAS ──
     async getFolgas(userId) {
-        const rows = await tursoQuery(
-            'SELECT date FROM folgas WHERE user_id = ?',
-            [userId]
-        );
+        const rows = await tursoQuery('SELECT date FROM folgas WHERE user_id = ?', [userId]);
         return rows.map(r => r.date);
     },
     
     async addFolga(userId, date) {
-        await tursoExec(
-            'INSERT OR IGNORE INTO folgas (id, user_id, date) VALUES (?, ?, ?)',
-            [uid(), userId, date]
-        );
+        await tursoExec('INSERT OR IGNORE INTO folgas (id, user_id, date) VALUES (?, ?, ?)', [uid(), userId, date]);
     },
     
     async removeFolga(userId, date) {
-        await tursoExec(
-            'DELETE FROM folgas WHERE user_id = ? AND date = ?',
-            [userId, date]
-        );
+        await tursoExec('DELETE FROM folgas WHERE user_id = ? AND date = ?', [userId, date]);
     },
 
-    // ── ADMIN ──
     async getAllUsers() {
         const rows = await tursoQuery('SELECT * FROM users ORDER BY created_at DESC', []);
         return rows.map(u => {
@@ -923,54 +756,59 @@ const DB = {
     },
     
     async updateUserSubscription(userId, subscription) {
-        await tursoExec(
-            'UPDATE users SET subscription = ? WHERE id = ?',
-            [JSON.stringify(subscription), userId]
-        );
+        await tursoExec('UPDATE users SET subscription = ? WHERE id = ?', [JSON.stringify(subscription), userId]);
     }
 };
+
 // ═══════════════════════════════════════════════════════════════
 //  UTILS
 // ═══════════════════════════════════════════════════════════════
 
-function uid() { return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2); }
+function uid() { return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
-function toast(msg, type='success', duration=3500) {
-  const c = document.getElementById('toast-container');
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.innerHTML = `<span>${{success:'✓',error:'✗',warning:'⚠'}[type]||'ℹ'}</span><span>${msg}</span>`;
-  c.appendChild(el);
-  setTimeout(() => el.remove(), duration);
+function toast(msg, type = 'success', duration = 3500) {
+    const c = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span>${type === 'success' ? '✓' : type === 'error' ? '✗' : '⚠'}</span><span>${msg}</span>`;
+    c.appendChild(el);
+    setTimeout(() => el.remove(), duration);
 }
 
-function handleSupabaseError(e) {
-  if (e?.status === 429 || e?.message?.includes('429') || e?.message?.includes('rate limit') || e?.message?.includes('Too Many')) {
-    toast('⏳ Muitas requisições. Aguarde alguns segundos e tente novamente.', 'warning', 6000);
-    return true;
-  }
-  return false;
+function initials(name = '') {
+    return name.split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'AP';
 }
 
-function initials(name='') { return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'AP'; }
-function formatDate(d) { if(!d)return''; return new Date(d+'T12:00:00').toLocaleDateString('pt-BR'); }
-function formatCurrency(v) { return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function formatDate(d) {
+    if (!d) return '';
+    return new Date(d + 'T12:00:00').toLocaleDateString('pt-BR');
+}
 
-function showLoading(msg='Carregando...') {
-  let el = document.getElementById('loading-overlay');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'loading-overlay';
-    el.className = 'loading-overlay';
-    document.body.appendChild(el);
-  }
-  el.innerHTML = `<div class="spinner"></div><p style="font-family:'Syne',sans-serif;font-weight:600;color:var(--text2)">${msg}</p>`;
-  el.style.display = 'flex';
+function formatCurrency(v) {
+    return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function showLoading(msg = 'Carregando...') {
+    let el = document.getElementById('loading-overlay');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'loading-overlay';
+        el.className = 'loading-overlay';
+        document.body.appendChild(el);
+    }
+    el.innerHTML = `<div class="spinner"></div><p style="font-family:'Syne',sans-serif;font-weight:600;color:var(--text2)">${msg}</p>`;
+    el.style.display = 'flex';
 }
 
 function hideLoading() {
-  const el = document.getElementById('loading-overlay');
-  if (el) el.style.display = 'none';
+    const el = document.getElementById('loading-overlay');
+    if (el) el.style.display = 'none';
+}
+
+function statusBadge(s) {
+    const map = { agendado: 'badge-info', compareceu: 'badge-success', 'nao-compareceu': 'badge-danger', cancelado: 'badge-gray' };
+    const labels = { agendado: 'Agendado', compareceu: 'Compareceu', 'nao-compareceu': 'Não compareceu', cancelado: 'Cancelado' };
+    return `<span class="badge ${map[s] || 'badge-gray'}">${labels[s] || s}</span>`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -983,76 +821,87 @@ let currentPage = 'setup';
 let bookingState = {};
 
 function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&tab==='login')||(i===1&&tab==='register')));
-  document.getElementById('login-form').style.display = tab==='login'?'block':'none';
-  document.getElementById('register-form').style.display = tab==='register'?'block':'none';
+    document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register')));
+    document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
 }
 
 async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const pwd = document.getElementById('login-pwd').value;
-  if (!email || !pwd) { toast('Preencha todos os campos', 'error'); return; }
-
-  const btn = document.getElementById('btn-login');
-  btn.disabled = true; btn.textContent = '⏳ Entrando...';
-
-  try {
-    if (email === 'admin@agendapro.com' && pwd === 'admin123') {
-      isAdmin = true;
-      currentUser = { id: 'admin', name: 'Administrador', email: 'admin@agendapro.com' };
-      await initApp(); return;
+    const email = document.getElementById('login-email').value.trim();
+    const pwd = document.getElementById('login-pwd').value;
+    if (!email || !pwd) {
+        toast('Preencha todos os campos', 'error');
+        return;
     }
-    const userData = await DB.loginUser(email, pwd);
-    if (!userData) throw new Error('E-mail ou senha incorretos');
-    currentUser = userData;
-    isAdmin = false;
-    await initApp();
-  } catch(e) {
-    toast(e.message || 'Credenciais inválidas', 'error');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Entrar';
-  }
+
+    const btn = document.getElementById('btn-login');
+    btn.disabled = true;
+    btn.textContent = '⏳ Entrando...';
+
+    try {
+        if (email === 'admin@agendapro.com' && pwd === 'admin123') {
+            isAdmin = true;
+            currentUser = { id: 'admin', name: 'Administrador', email: 'admin@agendapro.com' };
+            await initApp();
+            return;
+        }
+        const userData = await DB.loginUser(email, pwd);
+        if (!userData) throw new Error('E-mail ou senha incorretos');
+        currentUser = userData;
+        isAdmin = false;
+        await initApp();
+    } catch (e) {
+        toast(e.message || 'Credenciais inválidas', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+    }
 }
 
 async function doRegister() {
-  const name = document.getElementById('reg-name').value.trim();
-  const phone = document.getElementById('reg-phone').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const pwd = document.getElementById('reg-pwd').value;
-  const area = document.getElementById('reg-area').value;
-  if (!name || !email || !pwd || !area) { toast('Preencha todos os campos', 'error'); return; }
-  if (pwd.length < 6) { toast('Senha mínimo 6 caracteres', 'error'); return; }
+    const name = document.getElementById('reg-name').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pwd = document.getElementById('reg-pwd').value;
+    const area = document.getElementById('reg-area').value;
+    
+    if (!name || !email || !pwd || !area) {
+        toast('Preencha todos os campos', 'error');
+        return;
+    }
+    if (pwd.length < 6) {
+        toast('Senha mínimo 6 caracteres', 'error');
+        return;
+    }
 
-  const btn = document.getElementById('btn-register');
-  btn.disabled = true; btn.textContent = '⏳ Criando conta...';
+    const btn = document.getElementById('btn-register');
+    btn.disabled = true;
+    btn.textContent = '⏳ Criando conta...';
 
-  try {
-    const existing = await tursoQuery('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
-    if (existing.length > 0) throw new Error('E-mail já cadastrado');
-    const newUser = { id: uid(), name, phone, email, password: pwd, area };
-    await DB.registerUser(newUser);
-    currentUser = await DB.getUser(newUser.id);
+    try {
+        const existing = await tursoQuery('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
+        if (existing.length > 0) throw new Error('E-mail já cadastrado');
+        
+        const newUser = { id: uid(), name, phone, email, password: pwd, area };
+        await DB.registerUser(newUser);
+        currentUser = await DB.getUser(newUser.id);
+        isAdmin = false;
+        await initApp();
+    } catch (e) {
+        toast(e.message || 'Erro ao criar conta', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Criar Conta Grátis';
+    }
+}
+
+async function doLogout() {
+    currentUser = null;
     isAdmin = false;
-    await initApp();
-  } catch(e) {
-    toast(e.message || 'Erro ao criar conta', 'error');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Criar Conta Grátis';
-  }
-}
-
-async function doLogout() {
-  currentUser = null; isAdmin = false;
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth-screen').style.display = 'flex';
-}
-async function doLogout() {
-  showLoading('Saindo...');
-  await _db.auth.signOut();
-  currentUser = null; isAdmin = false;
-  hideLoading();
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth-screen').style.display = 'flex';
+    localStorage.removeItem('current_user_id');
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('booking-screen').style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1060,64 +909,152 @@ async function doLogout() {
 // ═══════════════════════════════════════════════════════════════
 
 async function initApp() {
-  showLoading('Carregando...');
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('booking-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  localStorage.setItem('current_user_id', currentUser.id);
+    showLoading('Carregando...');
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('booking-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    localStorage.setItem('current_user_id', currentUser.id);
 
+    const av = initials(currentUser.name);
+    document.getElementById('sidebar-avatar').textContent = av;
+    document.getElementById('sidebar-name').textContent = currentUser.name;
+    document.getElementById('topbar-avatar').textContent = av;
 
-  const av = initials(currentUser.name);
-  document.getElementById('sidebar-avatar').textContent = av;
-  document.getElementById('sidebar-name').textContent = currentUser.name;
-  document.getElementById('topbar-avatar').textContent = av;
-
-  if (isAdmin) {
-    document.getElementById('sidebar-plan').textContent = '🛡️ Administrador';
-    document.getElementById('topbar-cta').style.display = 'none';
-    buildAdminNav();
-    hideLoading();
-    await navigateTo('admin');
-  } else {
-    const sub = currentUser.subscription || {};
-    document.getElementById('sidebar-plan').textContent =
-      sub.status==='active' ? '✨ Pro Ativo' :
-      sub.status==='trial' ? '⏳ Trial Grátis' : '⚠️ Expirado';
-    buildUserNav();
-    hideLoading();
-    await navigateTo(currentUser.setup_done ? 'dashboard' : 'setup');
-  }
+    if (isAdmin) {
+        document.getElementById('sidebar-plan').textContent = '🛡️ Administrador';
+        document.getElementById('topbar-cta').style.display = 'none';
+        buildAdminNav();
+        hideLoading();
+        await navigateTo('admin');
+    } else {
+        const sub = currentUser.subscription || {};
+        document.getElementById('sidebar-plan').textContent =
+            sub.status === 'active' ? '✨ Pro Ativo' :
+            sub.status === 'trial' ? '⏳ Trial Grátis' : '⚠️ Expirado';
+        buildUserNav();
+        hideLoading();
+        await navigateTo(currentUser.setup_done ? 'dashboard' : 'setup');
+    }
 }
 
 function buildUserNav() {
-  const items = [
-    {page:'dashboard',icon:'📊',label:'Dashboard'},
-    {page:'agenda',icon:'📅',label:'Agenda'},
-    {page:'clientes',icon:'👥',label:'Clientes'},
-    {page:'profissionais',icon:'👔',label:'Profissionais'},
-    {page:'config',icon:'⚙️',label:'Configurações'},
-    {page:'assinatura',icon:'💳',label:'Assinatura'},
-  ];
-  document.getElementById('sidebar-nav').innerHTML = `<div class="nav-section">Menu</div>`+items.map(i=>`<div class="nav-item" id="nav-${i.page}" onclick="navigateTo('${i.page}')"><span class="nav-icon">${i.icon}</span>${i.label}</div>`).join('');
+    const items = [
+        { page: 'dashboard', icon: '📊', label: 'Dashboard' },
+        { page: 'agenda', icon: '📅', label: 'Agenda' },
+        { page: 'clientes', icon: '👥', label: 'Clientes' },
+        { page: 'profissionais', icon: '👔', label: 'Profissionais' },
+        { page: 'config', icon: '⚙️', label: 'Configurações' },
+        { page: 'assinatura', icon: '💳', label: 'Assinatura' },
+    ];
+    document.getElementById('sidebar-nav').innerHTML = `<div class="nav-section">Menu</div>` + items.map(i => `<div class="nav-item" id="nav-${i.page}" onclick="navigateTo('${i.page}')"><span class="nav-icon">${i.icon}</span>${i.label}</div>`).join('');
 }
 
 function buildAdminNav() {
-  document.getElementById('sidebar-nav').innerHTML = `<div class="nav-section">Administração</div><div class="nav-item" id="nav-admin" onclick="navigateTo('admin')"><span class="nav-icon">🛡️</span>Painel Admin</div>`;
+    document.getElementById('sidebar-nav').innerHTML = `<div class="nav-section">Administração</div><div class="nav-item" id="nav-admin" onclick="navigateTo('admin')"><span class="nav-icon">🛡️</span>Painel Admin</div>`;
+}
+
+function closeSidebar() {
+    document.getElementById('sidebar')?.classList.remove('open');
 }
 
 async function navigateTo(page) {
-  currentPage = page;
-  // Fecha sidebar no mobile ao navegar
-  closeSidebar();
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById(`page-${page}`)?.classList.add('active');
-  document.getElementById(`nav-${page}`)?.classList.add('active');
-  const titles = {setup:'⚙️ Primeiras Configurações',dashboard:'📊 Dashboard',agenda:'📅 Agenda',clientes:'👥 Clientes',profissionais:'👔 Profissionais',config:'⚙️ Configurações',assinatura:'💳 Assinatura',admin:'🛡️ Painel Admin'};
-  document.getElementById('page-title').textContent = titles[page]||page;
-  const renders = {setup:renderSetup,dashboard:renderDashboard,agenda:renderAgenda,clientes:renderClientes,profissionais:renderProfissionais,config:renderConfig,assinatura:renderAssinatura,admin:renderAdmin};
-  if (renders[page]) await renders[page]();
+    currentPage = page;
+    closeSidebar();
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(`page-${page}`)?.classList.add('active');
+    document.getElementById(`nav-${page}`)?.classList.add('active');
+    
+    const titles = { setup: '⚙️ Primeiras Configurações', dashboard: '📊 Dashboard', agenda: '📅 Agenda', clientes: '👥 Clientes', profissionais: '👔 Profissionais', config: '⚙️ Configurações', assinatura: '💳 Assinatura', admin: '🛡️ Painel Admin' };
+    document.getElementById('page-title').textContent = titles[page] || page;
+    
+    const renders = { setup: renderSetup, dashboard: renderDashboard, agenda: renderAgenda, clientes: renderClientes, profissionais: renderProfissionais, config: renderConfig, assinatura: renderAssinatura, admin: renderAdmin };
+    if (renders[page]) await renders[page]();
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  INICIALIZAÇÃO
+// ═══════════════════════════════════════════════════════════════
+
+// Funções de recuperação de senha (simplificadas para Turso)
+function showForgotPassword() {
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-form').style.display = 'none';
+    document.getElementById('forgot-form').style.display = 'block';
+}
+
+function showLoginForm() {
+    document.getElementById('forgot-form').style.display = 'none';
+    document.getElementById('login-form').style.display = 'block';
+}
+
+async function doForgotPassword() {
+    const email = document.getElementById('forgot-email').value.trim();
+    if (!email) {
+        toast('Digite seu e-mail', 'error');
+        return;
+    }
+    
+    toast('Função de recuperação de senha: Entre em contato com o suporte.', 'warning');
+    showLoginForm();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INICIALIZAÇÃO PRINCIPAL
+// ═══════════════════════════════════════════════════════════════
+
+(async function init() {
+    console.log('🚀 Iniciando aplicação...');
+    
+    const connected = await initTurso();
+    if (!connected) {
+        document.body.innerHTML = `
+            <div style="text-align:center;padding:60px;font-family:sans-serif">
+                <h2 style="color:#e94560">⚠️ Erro de Conexão</h2>
+                <p>Não foi possível conectar ao banco de dados Turso.</p>
+                <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#e94560;color:#fff;border:none;border-radius:8px;cursor:pointer">Recarregar</button>
+            </div>
+        `;
+        return;
+    }
+    
+    const params = new URLSearchParams(window.location.search);
+    const bookingSlug = params.get('booking');
+    
+    if (bookingSlug) {
+        try {
+            const users = await DB.getAllUsers();
+            const found = users.find(u => {
+                try {
+                    const biz = typeof u.business === 'string' ? JSON.parse(u.business) : u.business;
+                    return biz?.slug === bookingSlug;
+                } catch { return false; }
+            });
+            if (found) {
+                await loadBookingPage(found.id);
+                return;
+            }
+        } catch (e) {
+            console.error('Erro ao carregar booking:', e);
+        }
+    }
+    
+    const savedId = localStorage.getItem('current_user_id');
+    if (savedId) {
+        try {
+            const userData = await DB.getUser(savedId);
+            if (userData) {
+                currentUser = userData;
+                await initApp();
+                return;
+            }
+        } catch (e) {
+            localStorage.removeItem('current_user_id');
+        }
+    }
+    
+    document.getElementById('auth-screen').style.display = 'flex';
+})();
 
 // ═══════════════════════════════════════════════════════════════
 //  SETUP
@@ -2327,26 +2264,14 @@ create trigger on_auth_user_created
 // ═══════════════════════════════════════════════════════════════
 
 (async function init() {
-    console.log('🚀 Iniciando aplicação...');
-    
-    // Primeiro, conecta ao Turso
+    // Aguarda conectar ao Turso
     const connected = await initTurso();
     if (!connected) {
-        console.error('❌ Falha crítica: Não foi possível conectar ao Turso');
-        document.body.innerHTML = `
-            <div style="text-align:center;padding:60px;font-family:sans-serif">
-                <h2 style="color:#e94560">⚠️ Erro de Conexão</h2>
-                <p>Não foi possível conectar ao banco de dados.</p>
-                <p style="font-size:12px;color:#666">Verifique sua conexão com a internet e tente novamente.</p>
-                <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#e94560;color:#fff;border:none;border-radius:8px;cursor:pointer">Recarregar</button>
-            </div>
-        `;
+        console.error('Não foi possível conectar ao Turso');
+        document.body.innerHTML = '<div style="text-align:center;padding:60px"><h2>Erro de conexão com o banco de dados</h2><p>Verifique sua internet e tente novamente</p></div>';
         return;
     }
-    
-    console.log('✅ Banco de dados conectado');
-    
-    // Resto da sua inicialização...
+
     const params = new URLSearchParams(window.location.search);
     const bookingSlug = params.get('booking');
     
@@ -2364,10 +2289,10 @@ create trigger on_auth_user_created
                 return; 
             }
         } catch(e) { 
-            console.error('Erro ao carregar booking:', e);
+            console.error(e);
         }
     }
-    
+
     // Verifica sessão salva
     const savedId = localStorage.getItem('current_user_id');
     if (savedId) {
@@ -2379,82 +2304,67 @@ create trigger on_auth_user_created
                 return; 
             }
         } catch(e) { 
-            console.error('Erro ao carregar usuário salvo:', e);
             localStorage.removeItem('current_user_id');
         }
     }
-    
-    // Mostra tela de autenticação
+
     document.getElementById('auth-screen').style.display = 'flex';
 })();
 
-// ═══════════════════════════════════════════════════════════════
-//  RECUPERAÇÃO DE SENHA
+//  RECUPERAÇÃO DE SENHA (CORRIGIDA - SEM SUPABASE)
 // ═══════════════════════════════════════════════════════════════
 
 function showForgotPassword() {
-  document.getElementById('login-form').style.display = 'none';
-  document.getElementById('register-form').style.display = 'none';
-  document.getElementById('forgot-form').style.display = 'block';
-  const emailVal = document.getElementById('login-email').value;
-  if (emailVal) document.getElementById('forgot-email').value = emailVal;
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-form').style.display = 'none';
+    document.getElementById('forgot-form').style.display = 'block';
+    const emailVal = document.getElementById('login-email').value;
+    if (emailVal) document.getElementById('forgot-email').value = emailVal;
 }
 
 function showLoginForm() {
-  document.getElementById('forgot-form').style.display = 'none';
-  document.getElementById('login-form').style.display = 'block';
+    document.getElementById('forgot-form').style.display = 'none';
+    document.getElementById('login-form').style.display = 'block';
 }
 
 async function doForgotPassword() {
-  const email = document.getElementById('forgot-email').value.trim();
-  if (!email) { toast('Digite seu e-mail', 'error'); return; }
-
-  const btn = document.getElementById('btn-forgot');
-  btn.disabled = true;
-  btn.textContent = 'Enviando...';
-
-  try {
-    const redirectUrl = 'https://agenda-seven-ebon.vercel.app/?reset=true';
-    const { error } = await _db.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
-    if (error) {
-      toast('Erro: ' + error.message, 'error');
-    } else {
-      toast('✅ E-mail enviado! Verifique sua caixa de entrada.', 'success', 7000);
-      showLoginForm();
+    const email = document.getElementById('forgot-email').value.trim();
+    if (!email) {
+        toast('Digite seu e-mail', 'error');
+        return;
     }
-  } catch(e) {
-    toast('Erro ao enviar e-mail: ' + e.message, 'error');
-  }
 
-  btn.disabled = false;
-  btn.innerHTML = '📧 Enviar link de recuperação';
+    const btn = document.getElementById('btn-forgot');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+        // Verifica se o email existe no banco
+        const users = await DB.getAllUsers();
+        const userExists = users.some(u => u.email === email);
+        
+        if (!userExists) {
+            toast('E-mail não encontrado no sistema', 'error');
+            return;
+        }
+        
+        // Aqui você pode implementar o envio de email posteriormente
+        // Por enquanto, apenas informa o usuário
+        toast('🔐 Link de recuperação seria enviado para ' + email + '. Funcionalidade em desenvolvimento.', 'info', 5000);
+        
+        // Mostra instrução para contatar suporte
+        setTimeout(() => {
+            toast('📞 Entre em contato com o suporte para redefinir sua senha.', 'warning', 8000);
+        }, 3000);
+        
+        showLoginForm();
+    } catch (e) {
+        toast('Erro ao processar solicitação: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '📧 Enviar link de recuperação';
+    }
 }
-
-function openResetPasswordModal() {
-  const mc = document.getElementById('modal-container');
-  mc.innerHTML = `<div class="modal-backdrop">
-    <div class="modal" style="max-width:420px">
-      <div class="modal-header">
-        <div class="modal-title">🔒 Criar Nova Senha</div>
-      </div>
-      <div class="modal-body">
-        <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Escolha uma nova senha para sua conta.</p>
-        <div class="form-group">
-          <label>Nova Senha</label>
-          <input type="password" id="new-password" placeholder="Mínimo 6 caracteres">
-        </div>
-        <div class="form-group">
-          <label>Confirmar Nova Senha</label>
-          <input type="password" id="confirm-password" placeholder="Repita a senha">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary btn-full" onclick="doResetPassword()">✅ Salvar Nova Senha</button>
-      </div>
-    </div>
-  </div>`;
-}
-
 async function doResetPassword() {
   const pwd = document.getElementById('new-password').value;
   const confirm = document.getElementById('confirm-password').value;
