@@ -507,38 +507,115 @@
 
 let _db = null;
 
-const TURSO_URL = 'libsql://agendapro-mendes9923.aws-us-east-1.turso.io';
+const TURSO_URL = 'https://agendapro-mendes9923.aws-us-east-1.turso.io';
 const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODAwMTM2ODUsImlkIjoiMDE5ZTcxMTQtOTIwMS03NzJjLTg0M2QtNGQ3MGY1MDdjOTgxIiwicmlkIjoiNGM3MTY5NGYtY2E0MS00NmY4LTkzOWItYmI3OTUxZTAxYjliIn0.PuUu5kM7XBuk4XH0zAQrTPy1CnFP-ZRY8NbhWLKLlRHUVyUSf39nLxy3BgBUh-fldao0SFew6JgD1YfqdAIVBA';
 
 async function initTurso() {
+    console.log('🔌 Inicializando Turso via API HTTP...');
     try {
-        // Criar cliente Turso usando o SDK
-        _db = createClient({
-            url: TURSO_URL,
-            authToken: TURSO_TOKEN
-        });
-        
-        // Testar conexão
-        const result = await _db.execute("SELECT 1 as test");
-        console.log('✅ Turso conectado!', result);
-        return true;
+        // Testa a conexão fazendo uma query simples
+        const testResult = await tursoExecute('SELECT 1 as test');
+        if (testResult && testResult.length > 0) {
+            console.log('✅ Turso conectado com sucesso!');
+            return true;
+        }
+        return false;
     } catch (error) {
         console.error('❌ Erro ao conectar Turso:', error);
         return false;
     }
 }
 
-// Funções auxiliares para queries
+// Função principal para executar queries no Turso
+async function tursoExecute(sql, params = []) {
+    const url = `${TURSO_URL}/v2/pipeline`;
+    
+    // Converte os parâmetros para o formato esperado pela API
+    const args = params.map(param => {
+        if (param === null || param === undefined) {
+            return { type: 'null' };
+        }
+        if (typeof param === 'number') {
+            return { type: 'float', value: param.toString() };
+        }
+        if (typeof param === 'boolean') {
+            return { type: 'integer', value: param ? '1' : '0' };
+        }
+        return { type: 'text', value: param.toString() };
+    });
+    
+    const body = {
+        requests: [
+            {
+                type: 'execute',
+                stmt: {
+                    sql: sql,
+                    args: args
+                }
+            }
+        ]
+    };
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${TURSO_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Verifica se houve erro na resposta
+        if (data.results && data.results[0] && data.results[0].type === 'error') {
+            throw new Error(data.results[0].error.message);
+        }
+        
+        // Extrai as linhas do resultado
+        const result = data.results?.[0]?.response?.result;
+        if (!result) {
+            return [];
+        }
+        
+        const columns = result.cols || [];
+        const rows = result.rows || [];
+        
+        // Converte para array de objetos
+        return rows.map(row => {
+            const obj = {};
+            columns.forEach((col, index) => {
+                let value = row[index]?.value;
+                // Tenta parsear JSON se for string que parece JSON
+                if (typeof value === 'string' && (value.startsWith('{') || value.startsWith('['))) {
+                    try {
+                        value = JSON.parse(value);
+                    } catch(e) {}
+                }
+                obj[col.name] = value;
+            });
+            return obj;
+        });
+        
+    } catch (error) {
+        console.error('Erro na query Turso:', error);
+        throw error;
+    }
+}
+
+// Wrappers para compatibilidade com o código existente
 async function tursoQuery(sql, params = []) {
-    if (!_db) throw new Error('Banco não inicializado');
-    const result = await _db.execute({ sql, args: params });
-    return result.rows;
+    return await tursoExecute(sql, params);
 }
 
 async function tursoExec(sql, params = []) {
-    if (!_db) throw new Error('Banco não inicializado');
-    const result = await _db.execute({ sql, args: params });
-    return result;
+    return await tursoExecute(sql, params);
 }
 
 async function tursoQuery(sql, args = []) {
@@ -617,26 +694,44 @@ const DB = {
       return rows[0] || null;
   },
   async registerUser(user) {
+    const userId = user.id || uid();
+    const now = new Date().toISOString();
+    
     await tursoExec(
-      `INSERT OR IGNORE INTO users (id, name, email, password_hash, phone, area, setup_done, business, subscription, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
-      [user.id, user.name, user.email, btoa(user.password), user.phone || '',
-       user.area || '', '{}',
-       JSON.stringify({ status: 'trial', plan: 'trial', expires: new Date(Date.now() + 7 * 86400000).toISOString() }),
-       new Date().toISOString()]
+        `INSERT OR IGNORE INTO users (id, name, email, password_hash, phone, area, setup_done, business, subscription, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+        [
+            userId,
+            user.name,
+            user.email,
+            btoa(user.password),
+            user.phone || '',
+            user.area || '',
+            '{}',
+            JSON.stringify({ status: 'trial', plan: 'trial', expires: new Date(Date.now() + 7 * 86400000).toISOString() }),
+            now
+        ]
     );
-    return await this.getUser(user.id);
+    return await this.getUser(userId);
   },
 
   // ── USERS ──
   async getUser(userId) {
-    const rows = await tursoQuery('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
-    if (!rows[0]) return null;
-    const u = rows[0];
-    if (typeof u.business === 'string') try { u.business = JSON.parse(u.business); } catch { u.business = {}; }
-    if (typeof u.subscription === 'string') try { u.subscription = JSON.parse(u.subscription); } catch { u.subscription = {}; }
-    u.setup_done = !!u.setup_done;
-    return u;
+      const rows = await tursoQuery('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
+      if (!rows || rows.length === 0) return null;
+      
+      const u = rows[0];
+      
+      // Parse JSON fields
+      if (typeof u.business === 'string') {
+          try { u.business = JSON.parse(u.business); } catch { u.business = {}; }
+      }
+      if (typeof u.subscription === 'string') {
+          try { u.subscription = JSON.parse(u.subscription); } catch { u.subscription = {}; }
+      }
+      
+      u.setup_done = !!u.setup_done;
+      return u;
   },
   async saveUser(user) {
     await tursoExec(
