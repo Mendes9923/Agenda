@@ -505,30 +505,15 @@
 //  TURSO CONFIG
 // ═══════════════════════════════════════════════════════════════
 
+// Definição GLOBAL das variáveis
+const _TURSO_URL = 'https://agendapro-mendes9923.aws-us-east-1.turso.io';
+const _TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODAwMTM2ODUsImlkIjoiMDE5ZTcxMTQtOTIwMS03NzJjLTg0M2QtNGQ3MGY1MDdjOTgxIiwicmlkIjoiNGM3MTY5NGYtY2E0MS00NmY4LTkzOWItYmI3OTUxZTAxYjliIn0.PuUu5kM7XBuk4XH0zAQrTPy1CnFP-ZRY8NbhWLKLlRHUVyUSf39nLxy3BgBUh-fldao0SFew6JgD1YfqdAIVBA';
+
 let _db = null;
-
-const TURSO_URL = 'https://agendapro-mendes9923.aws-us-east-1.turso.io';
-const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODAwMTM2ODUsImlkIjoiMDE5ZTcxMTQtOTIwMS03NzJjLTg0M2QtNGQ3MGY1MDdjOTgxIiwicmlkIjoiNGM3MTY5NGYtY2E0MS00NmY4LTkzOWItYmI3OTUxZTAxYjliIn0.PuUu5kM7XBuk4XH0zAQrTPy1CnFP-ZRY8NbhWLKLlRHUVyUSf39nLxy3BgBUh-fldao0SFew6JgD1YfqdAIVBA';
-
-async function initTurso() {
-    console.log('🔌 Inicializando Turso via API HTTP...');
-    try {
-        // Testa a conexão fazendo uma query simples
-        const testResult = await tursoExecute('SELECT 1 as test');
-        if (testResult && testResult.length > 0) {
-            console.log('✅ Turso conectado com sucesso!');
-            return true;
-        }
-        return false;
-    } catch (error) {
-        console.error('❌ Erro ao conectar Turso:', error);
-        return false;
-    }
-}
 
 // Função principal para executar queries no Turso
 async function tursoExecute(sql, params = []) {
-    const url = `${TURSO_URL}/v2/pipeline`;
+    const url = `${_TURSO_URL}/v2/pipeline`;
     
     // Converte os parâmetros para o formato esperado pela API
     const args = params.map(param => {
@@ -560,7 +545,7 @@ async function tursoExecute(sql, params = []) {
         const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${TURSO_TOKEN}`,
+                'Authorization': `Bearer ${_TURSO_TOKEN}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(body)
@@ -606,6 +591,32 @@ async function tursoExecute(sql, params = []) {
     } catch (error) {
         console.error('Erro na query Turso:', error);
         throw error;
+    }
+}
+
+// Wrappers para compatibilidade
+async function tursoQuery(sql, params = []) {
+    return await tursoExecute(sql, params);
+}
+
+async function tursoExec(sql, params = []) {
+    return await tursoExecute(sql, params);
+}
+
+async function initTurso() {
+    console.log('🔌 Inicializando Turso via API HTTP...');
+    try {
+        // Testa a conexão
+        const testResult = await tursoExecute('SELECT 1 as test');
+        if (testResult && testResult.length > 0) {
+            console.log('✅ Turso conectado com sucesso!');
+            return true;
+        }
+        console.warn('⚠️ Teste retornou vazio');
+        return false;
+    } catch (error) {
+        console.error('❌ Erro ao conectar Turso:', error);
+        return false;
     }
 }
 
@@ -680,9 +691,7 @@ async function _tursoFetch(sql, args = []) {
     return obj;
   });
 }
-// ═══════════════════════════════════════════════════════════════
-//  DATABASE LAYER — Turso
-// ═══════════════════════════════════════════════════════════════
+
 
 // ═══════════════════════════════════════════════════════════════
 //  DATABASE LAYER — Turso (COMPLETO)
@@ -2318,14 +2327,26 @@ create trigger on_auth_user_created
 // ═══════════════════════════════════════════════════════════════
 
 (async function init() {
-    // Aguarda conectar ao Turso
+    console.log('🚀 Iniciando aplicação...');
+    
+    // Primeiro, conecta ao Turso
     const connected = await initTurso();
     if (!connected) {
-        console.error('Não foi possível conectar ao Turso');
-        document.body.innerHTML = '<div style="text-align:center;padding:60px"><h2>Erro de conexão com o banco de dados</h2><p>Verifique sua internet e tente novamente</p></div>';
+        console.error('❌ Falha crítica: Não foi possível conectar ao Turso');
+        document.body.innerHTML = `
+            <div style="text-align:center;padding:60px;font-family:sans-serif">
+                <h2 style="color:#e94560">⚠️ Erro de Conexão</h2>
+                <p>Não foi possível conectar ao banco de dados.</p>
+                <p style="font-size:12px;color:#666">Verifique sua conexão com a internet e tente novamente.</p>
+                <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#e94560;color:#fff;border:none;border-radius:8px;cursor:pointer">Recarregar</button>
+            </div>
+        `;
         return;
     }
-
+    
+    console.log('✅ Banco de dados conectado');
+    
+    // Resto da sua inicialização...
     const params = new URLSearchParams(window.location.search);
     const bookingSlug = params.get('booking');
     
@@ -2343,10 +2364,10 @@ create trigger on_auth_user_created
                 return; 
             }
         } catch(e) { 
-            console.error(e);
+            console.error('Erro ao carregar booking:', e);
         }
     }
-
+    
     // Verifica sessão salva
     const savedId = localStorage.getItem('current_user_id');
     if (savedId) {
@@ -2358,10 +2379,12 @@ create trigger on_auth_user_created
                 return; 
             }
         } catch(e) { 
+            console.error('Erro ao carregar usuário salvo:', e);
             localStorage.removeItem('current_user_id');
         }
     }
-
+    
+    // Mostra tela de autenticação
     document.getElementById('auth-screen').style.display = 'flex';
 })();
 
