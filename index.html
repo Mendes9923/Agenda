@@ -611,33 +611,121 @@ const DB = {
     },
 
     async getUser(userId) {
+        console.log('🔍 Buscando usuário:', userId);
         const rows = await tursoQuery('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
         if (!rows?.length) return null;
         
         const u = rows[0];
-        if (typeof u.business === 'string') {
-            try { u.business = JSON.parse(u.business); } catch { u.business = {}; }
+        console.log('📦 Dados brutos do usuário:', u);
+        
+        // Parse business
+        if (u.business) {
+            try {
+                u.business = typeof u.business === 'string' ? JSON.parse(u.business) : u.business;
+            } catch(e) {
+                console.error('Erro ao parse business:', e);
+                u.business = {};
+            }
+        } else {
+            u.business = {};
         }
-        if (typeof u.subscription === 'string') {
-            try { u.subscription = JSON.parse(u.subscription); } catch { u.subscription = {}; }
+        
+        // Parse subscription
+        if (u.subscription) {
+            try {
+                u.subscription = typeof u.subscription === 'string' ? JSON.parse(u.subscription) : u.subscription;
+            } catch(e) {
+                console.error('Erro ao parse subscription:', e);
+                u.subscription = {};
+            }
+        } else {
+            u.subscription = {};
         }
+        
         u.setup_done = !!u.setup_done;
+        console.log('✅ Usuário processado:', { id: u.id, name: u.name, business: u.business, setup_done: u.setup_done });
         return u;
     },
     
     async saveUser(user) {
-        await tursoExec(
-            `INSERT OR REPLACE INTO users (id, name, email, phone, area, setup_done, business, subscription, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                user.id, user.name, user.email, user.phone || '', user.area || '',
-                user.setup_done ? 1 : 0,
-                JSON.stringify(user.business || {}),
-                JSON.stringify(user.subscription || {}),
-                user.created_at || new Date().toISOString()
-            ]
-        );
-        return await this.getUser(user.id);
+        console.log('💾 Salvando usuário:', user);
+        
+        // Garantir que business seja uma string JSON válida
+        let businessJson = '{}';
+        if (user.business) {
+            try {
+                businessJson = typeof user.business === 'string' ? user.business : JSON.stringify(user.business);
+            } catch(e) {
+                console.error('Erro ao converter business:', e);
+                businessJson = '{}';
+            }
+        }
+        
+        // Garantir que subscription seja uma string JSON válida
+        let subscriptionJson = '{}';
+        if (user.subscription) {
+            try {
+                subscriptionJson = typeof user.subscription === 'string' ? user.subscription : JSON.stringify(user.subscription);
+            } catch(e) {
+                console.error('Erro ao converter subscription:', e);
+                subscriptionJson = '{}';
+            }
+        }
+        
+        const now = user.created_at || new Date().toISOString();
+        
+        try {
+            // Primeiro verifica se o usuário já existe
+            const existing = await tursoQuery('SELECT id FROM users WHERE id = ?', [user.id]);
+            
+            if (existing && existing.length > 0) {
+                // Atualiza usuário existente
+                await tursoExec(
+                    `UPDATE users 
+                    SET name = ?, email = ?, phone = ?, area = ?, setup_done = ?, business = ?, subscription = ?, created_at = ?
+                    WHERE id = ?`,
+                    [
+                        user.name,
+                        user.email,
+                        user.phone || '',
+                        user.area || '',
+                        user.setup_done ? 1 : 0,
+                        businessJson,
+                        subscriptionJson,
+                        now,
+                        user.id
+                    ]
+                );
+                console.log('✅ Usuário atualizado com sucesso');
+            } else {
+                // Insere novo usuário
+                await tursoExec(
+                    `INSERT INTO users (id, name, email, phone, area, setup_done, business, subscription, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        user.id,
+                        user.name,
+                        user.email,
+                        user.phone || '',
+                        user.area || '',
+                        user.setup_done ? 1 : 0,
+                        businessJson,
+                        subscriptionJson,
+                        now
+                    ]
+                );
+                console.log('✅ Usuário inserido com sucesso');
+            }
+            
+            // Verifica se salvou corretamente
+            const saved = await this.getUser(user.id);
+            console.log('📋 Usuário após salvar:', saved);
+            
+            return saved;
+        } catch(e) {
+            console.error('❌ Erro ao salvar usuário:', e);
+            throw e;
+        }
     },
 
     async getAppointments(userId) {
@@ -1269,34 +1357,82 @@ function toggleDay(i, el) {
 }
 
 async function saveSetupStep(step) {
-  const biz = currentUser.business || {};
-  if (step===1) {
-    biz.name = document.getElementById('s-biz-name').value.trim();
-    biz.area = document.getElementById('s-biz-area').value;
-    biz.desc = document.getElementById('s-biz-desc').value.trim();
-    biz.phone = document.getElementById('s-biz-phone').value.trim();
-    biz.email = document.getElementById('s-biz-email').value.trim();
-    if (!biz.name) { toast('Informe o nome do negócio','error'); return; }
-  } else if (step===2) {
-    biz.address = document.getElementById('s-addr').value.trim();
-    biz.number = document.getElementById('s-num').value.trim();
-    biz.neighborhood = document.getElementById('s-bairro').value.trim();
-    biz.city = document.getElementById('s-city').value.trim();
-    biz.uf = document.getElementById('s-uf').value;
-  } else if (step===3) {
-    biz.working_hours = { start:document.getElementById('s-start').value, end:document.getElementById('s-end').value, interval:parseInt(document.getElementById('s-interval').value) };
-    biz.days = [...selectedDays];
-  } else if (step===4) {
-    biz.slug = document.getElementById('s-slug').value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-    if (!biz.slug) { toast('Defina um slug','error'); return; }
-    currentUser.setup_done = true;
-  }
-  currentUser.business = biz;
-  try {
-    await DB.saveUser({ id: currentUser.id, name: currentUser.name, email: currentUser.email, business: biz, setup_done: currentUser.setup_done });
-    if (step < 4) renderSetupStep(step+1);
-    else { toast('Configuração concluída! Bem-vindo!'); await navigateTo('dashboard'); }
-  } catch(e) { toast('Erro ao salvar: '+e.message,'error'); }
+    console.log('💾 Salvando passo:', step);
+    const biz = currentUser.business || {};
+    
+    if (step === 1) {
+        biz.name = document.getElementById('s-biz-name').value.trim();
+        biz.area = document.getElementById('s-biz-area').value;
+        biz.desc = document.getElementById('s-biz-desc').value.trim();
+        biz.phone = document.getElementById('s-biz-phone').value.trim();
+        biz.email = document.getElementById('s-biz-email').value.trim();
+        if (!biz.name) { 
+            toast('Informe o nome do negócio', 'error'); 
+            return; 
+        }
+        console.log('📝 Dados do negócio:', biz);
+        
+    } else if (step === 2) {
+        biz.address = document.getElementById('s-addr').value.trim();
+        biz.number = document.getElementById('s-num').value.trim();
+        biz.neighborhood = document.getElementById('s-bairro').value.trim();
+        biz.city = document.getElementById('s-city').value.trim();
+        biz.uf = document.getElementById('s-uf').value;
+        console.log('📝 Endereço salvo:', { address: biz.address, city: biz.city });
+        
+    } else if (step === 3) {
+        biz.working_hours = { 
+            start: document.getElementById('s-start').value, 
+            end: document.getElementById('s-end').value, 
+            interval: parseInt(document.getElementById('s-interval').value) 
+        };
+        biz.days = [...selectedDays];
+        console.log('📝 Horários salvos:', biz.working_hours);
+        
+    } else if (step === 4) {
+        biz.slug = document.getElementById('s-slug').value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        if (!biz.slug) { 
+            toast('Defina um slug', 'error'); 
+            return; 
+        }
+        currentUser.setup_done = true;
+        console.log('📝 Slug salvo:', biz.slug);
+    }
+    
+    currentUser.business = biz;
+    
+    try {
+        // Salvar no banco com logs detalhados
+        console.log('💾 Enviando para o banco:', {
+            id: currentUser.id,
+            name: currentUser.name,
+            email: currentUser.email,
+            business: biz,
+            setup_done: currentUser.setup_done
+        });
+        
+        const savedUser = await DB.saveUser({ 
+            id: currentUser.id, 
+            name: currentUser.name, 
+            email: currentUser.email,
+            phone: currentUser.phone || '',
+            area: currentUser.area || '',
+            business: biz, 
+            setup_done: currentUser.setup_done 
+        });
+        
+        console.log('✅ Resposta do banco:', savedUser);
+        
+        if (step < 4) {
+            renderSetupStep(step + 1);
+        } else {
+            toast('Configuração concluída! Bem-vindo!');
+            await navigateTo('dashboard');
+        }
+    } catch(e) {
+        console.error('❌ Erro ao salvar:', e);
+        toast('Erro ao salvar: ' + e.message, 'error');
+    }
 }
 
 function copyLink() {

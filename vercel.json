@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "api/turso.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/turso.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
