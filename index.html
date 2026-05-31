@@ -4,12 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AgendaPro - Sistema de Agendamento</title>
-
-<script src="https://unpkg.com/@libsql/client/web@0.3.0/dist/web/index.js"></script>
-
-<!-- SUPABASE SDK -->
-<!-- supabase UMD loads as window.supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -36,21 +30,6 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; }
   h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
-
-  /* ── SUPABASE CONFIG SCREEN ── */
-  #config-screen {
-    min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 20px;
-  }
-  .config-box {
-    background: #fff; border-radius: 20px; padding: 40px; width: 100%; max-width: 480px;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.3);
-  }
-  .config-logo { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
-  .config-logo span { color: var(--accent); }
-  .config-step { background: var(--bg); border-radius: 10px; padding: 16px; margin: 16px 0; border-left: 4px solid var(--accent); font-size: 13px; line-height: 1.8; }
-  .config-step code { background: #1a1a2e; color: #e94560; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-  .config-step a { color: var(--accent); font-weight: 600; }
 
   /* ── AUTH ── */
   #auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 20px; }
@@ -153,7 +132,6 @@
   .toast.warning { background: var(--warning); }
   @keyframes toastIn { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-  /* ── CALENDAR ── */
   .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
   .cal-header { text-align: center; padding: 8px 4px; font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; }
   .cal-day { min-height: 80px; padding: 6px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; transition: all .15s; background: var(--bg); }
@@ -168,32 +146,26 @@
   .cal-event.nao-compareceu { background: #fee2e2; color: #991b1b; }
   .cal-event.cancelado { background: #f3f4f6; color: #374151; }
 
-  /* ── TIME SLOTS ── */
   .time-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
   .time-slot { padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 500; transition: all .15s; background: #fff; }
   .time-slot:hover { border-color: var(--accent); color: var(--accent); }
   .time-slot.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
   .time-slot.taken { opacity: 0.35; cursor: not-allowed; background: var(--bg); }
 
-  /* ── SUBSCRIPTION ── */
   .plan-card { border: 2px solid var(--border); border-radius: 16px; padding: 28px; position: relative; transition: all .2s; }
   .plan-card.highlighted { border-color: var(--accent); }
   .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: 'Syne', sans-serif; white-space: nowrap; }
   .plan-price { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; }
   .plan-price span { font-size: 16px; font-weight: 500; color: var(--text2); }
 
-  /* ── BOOKING ── */
   #booking-screen { display: none; }
   .booking-header { background: var(--primary); color: #fff; padding: 28px; text-align: center; }
   .booking-content { max-width: 560px; margin: 0 auto; padding: 28px 20px; }
 
-  /* ── ADMIN ── */
   .admin-stat { background: linear-gradient(135deg, var(--primary) 0%, var(--teal) 100%); color: #fff; border-radius: var(--radius); padding: 20px; }
   .admin-stat .stat-value { color: #fff; }
   .admin-stat .stat-label { color: rgba(255,255,255,0.7); }
 
-  /* ── MISC ── */
-  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
   .empty-state { text-align: center; padding: 48px 20px; color: var(--text2); }
   .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
   .empty-state h3 { font-family: 'Syne', sans-serif; margin-bottom: 8px; }
@@ -201,8 +173,6 @@
   .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s; }
   .chip:hover { border-color: var(--accent); color: var(--accent); }
   .chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .upload-area { border: 2px dashed var(--border); border-radius: 10px; padding: 32px; text-align: center; cursor: pointer; transition: all .2s; }
-  .upload-area:hover { border-color: var(--accent); background: #fff3f5; }
   .link-box { background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .link-box code { font-size: 13px; color: var(--accent); font-weight: 600; }
   .setup-steps { display: flex; gap: 0; margin-bottom: 28px; }
@@ -210,7 +180,6 @@
   .setup-step.active { color: var(--accent); border-bottom-color: var(--accent); }
   .setup-step.done { color: var(--success); border-bottom-color: var(--success); }
 
-  /* ── LOADING ── */
   .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.85); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
   .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -219,136 +188,45 @@
   .sidebar-close-btn { display: none; }
   .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99; }
 
-  /* ── RESPONSIVO TABLET (≤ 768px) ── */
   @media (max-width: 768px) {
-    /* Sidebar deslizante */
     .sidebar { transform: translateX(-100%); }
     .sidebar.open { transform: none; }
     .main-content { margin-left: 0; }
     .sidebar-toggle { display: block; }
-    .sidebar-close-btn {
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-      margin: 10px 16px 4px; padding: 8px 14px; border-radius: 8px;
-      background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);
-      border: 1px solid rgba(255,255,255,0.12); cursor: pointer;
-      font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
-      transition: all .2s;
-    }
+    .sidebar-close-btn { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 10px 16px 4px; padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.12); cursor: pointer; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; transition: all .2s; }
     .sidebar-close-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
     .sidebar.open ~ .sidebar-overlay { display: block; }
-
-    /* Topbar */
     .topbar { padding: 10px 14px; }
     .topbar-title { font-size: 16px; }
-    #topbar-cta { font-size: 12px; padding: 8px 12px; }
-
-    /* Conteúdo principal */
     .page-content { padding: 14px; }
-
-    /* Grids */
-    .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
     .form-row { grid-template-columns: 1fr; }
-
-    /* Cards */
     .card { padding: 14px; }
-    .stat-card { padding: 14px; }
-    .stat-value { font-size: 22px; }
-
-    /* Modais */
     .modal-backdrop { padding: 10px; align-items: flex-end; }
     .modal { border-radius: 16px 16px 0 0; max-height: 95vh; }
-    .modal-body { padding: 16px; }
-    .modal-header { padding: 14px 16px; }
-    .modal-footer { padding: 12px 16px; flex-wrap: wrap; }
-    .modal-footer .btn { flex: 1; min-width: 120px; }
-
-    /* Calendário */
     .cal-day { min-height: 52px; padding: 4px; }
-    .cal-day-num { font-size: 11px; }
-    .cal-event { font-size: 9px; padding: 1px 4px; }
-    .cal-header { font-size: 9px; padding: 4px 2px; }
-
-    /* Tabelas */
     .table-wrap { -webkit-overflow-scrolling: touch; }
-    table { font-size: 12px; }
-    th, td { padding: 8px 10px; }
-
-    /* Toast */
     #toast-container { bottom: 12px; right: 12px; left: 12px; }
     .toast { min-width: unset; width: 100%; }
-
-    /* Booking */
-    .booking-header { padding: 20px 16px; }
-    .booking-content { padding: 16px; }
-
-    /* Planos */
-    .plan-price { font-size: 28px; }
-
-    /* Tabs */
-    .tab-btn { padding: 8px 12px; font-size: 12px; }
   }
 
-  /* ── RESPONSIVO CELULAR (≤ 480px) ── */
   @media (max-width: 480px) {
-    /* Topbar compacto */
     .topbar { padding: 8px 10px; }
     .topbar-title { font-size: 14px; }
-    #topbar-cta span { display: none; }
-    #topbar-cta::after { content: '+'; }
-    #topbar-cta { padding: 7px 11px; font-size: 16px; }
-    .topbar-actions { gap: 6px; }
-
-    /* Página com padding mínimo */
     .page-content { padding: 10px; }
-
-    /* Stats em coluna única em telas muito pequenas */
     .stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
     .stat-value { font-size: 20px; }
-    .stat-label { font-size: 10px; }
-
-    /* Formulário */
-    .form-group input, .form-group select, .form-group textarea {
-      font-size: 16px; /* evita zoom automático no iOS */
-      padding: 10px 12px;
-    }
-    .btn { font-size: 13px; padding: 10px 14px; }
-    .btn-sm { padding: 7px 10px; font-size: 11px; }
-
-    /* Calendário ainda menor */
+    .form-group input, .form-group select, .form-group textarea { font-size: 16px; }
     .cal-day { min-height: 42px; padding: 3px; }
     .cal-day-num { font-size: 10px; }
-    .cal-event { display: none; } /* oculta eventos no mini-calendário */
-    .cal-day.has-event::after { content: '●'; display: block; font-size: 8px; color: var(--accent); text-align: center; }
-
-    /* Abas */
-    .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
-    .tab-btn { white-space: nowrap; flex-shrink: 0; font-size: 12px; padding: 8px 10px; }
-
-    /* Modal ocupa toda a tela */
+    .cal-event { display: none; }
+    .tabs { overflow-x: auto; flex-wrap: nowrap; }
+    .tab-btn { white-space: nowrap; }
     .modal-backdrop { padding: 0; }
     .modal { border-radius: 16px 16px 0 0; max-height: 98vh; }
-    .modal-body { padding: 12px; }
-
-    /* Booking */
-    .booking-header { padding: 16px 12px; }
-    .booking-header h2 { font-size: 20px; }
-    .booking-content { padding: 10px; }
-
-    /* Chips e badges */
-    .chip { font-size: 11px; padding: 4px 10px; }
-    .badge { font-size: 10px; }
-
-    /* Link box */
-    .link-box { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .time-slots { grid-template-columns: repeat(3, 1fr); }
+    .link-box { flex-direction: column; align-items: flex-start; }
     .link-box .btn { width: 100%; }
-
-    /* Time slots */
-    .time-slots { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    .time-slot { padding: 7px 8px; font-size: 12px; }
-
-    /* Setup steps */
-    .setup-steps { overflow-x: auto; }
-    .setup-step { font-size: 10px; padding: 8px 6px; white-space: nowrap; }
   }
 
   .page { display: none; }
@@ -377,17 +255,10 @@
       </p>
     </div>
     <div id="forgot-form" style="display:none">
-      <p style="color:var(--text2);font-size:13px;margin-bottom:16px">
-        Digite seu e-mail e enviaremos um link para redefinir sua senha.
-      </p>
-      <div class="form-group">
-        <label>E-mail</label>
-        <input type="email" id="forgot-email" placeholder="seu@email.com">
-      </div>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Digite seu e-mail e enviaremos um link para redefinir sua senha.</p>
+      <div class="form-group"><label>E-mail</label><input type="email" id="forgot-email" placeholder="seu@email.com"></div>
       <button class="btn btn-primary btn-full" id="btn-forgot" onclick="doForgotPassword()">📧 Enviar link de recuperação</button>
-      <p style="text-align:center;margin-top:12px;font-size:13px">
-        <a href="#" onclick="showLoginForm();return false;" style="color:var(--accent);font-weight:600">← Voltar para o login</a>
-      </p>
+      <p style="text-align:center;margin-top:12px;font-size:13px"><a href="#" onclick="showLoginForm();return false;" style="color:var(--accent);font-weight:600">← Voltar para o login</a></p>
     </div>
     <div id="register-form" style="display:none">
       <div class="form-row">
@@ -423,18 +294,12 @@
     <div id="booking-step-1">
       <div class="card" style="margin-bottom:16px"><div class="card-title">📋 Escolha o Profissional</div><div id="booking-professionals"></div></div>
       <div class="card" style="margin-bottom:16px;display:none" id="booking-services-card"><div class="card-title">✂️ Escolha o Serviço</div><div id="booking-services"></div></div>
-      <div class="card" style="margin-bottom:16px;display:none" id="booking-date-card">
-        <div class="card-title">📅 Escolha a Data</div>
-        <input type="date" id="booking-date" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px">
-      </div>
+      <div class="card" style="margin-bottom:16px;display:none" id="booking-date-card"><div class="card-title">📅 Escolha a Data</div><input type="date" id="booking-date" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"></div>
       <div class="card" style="margin-bottom:16px;display:none" id="booking-slots-card"><div class="card-title">🕐 Horários Disponíveis</div><div class="time-slots" id="booking-time-slots"></div></div>
       <div class="card" style="display:none" id="booking-client-card">
         <div class="card-title">👤 Seus Dados</div>
         <div class="form-group"><label>Nome Completo</label><input type="text" id="bk-client-name" placeholder="Seu nome"></div>
-        <div class="form-row">
-          <div class="form-group"><label>E-mail</label><input type="email" id="bk-client-email" placeholder="seu@email.com"></div>
-          <div class="form-group"><label>Telefone</label><input type="text" id="bk-client-phone" placeholder="(44) 99999-9999"></div>
-        </div>
+        <div class="form-row"><div class="form-group"><label>E-mail</label><input type="email" id="bk-client-email" placeholder="seu@email.com"></div><div class="form-group"><label>Telefone</label><input type="text" id="bk-client-phone" placeholder="(44) 99999-9999"></div></div>
         <div class="form-group"><label>Observações</label><textarea id="bk-notes" rows="2" placeholder="Alguma observação?"></textarea></div>
         <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="confirmBooking()">✅ Confirmar Agendamento</button>
       </div>
@@ -498,10 +363,9 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  API CLIENT - Chama o proxy Vercel
+//  API CLIENT - Chama o proxy Vercel (NÃO chama Turso diretamente)
 // ═══════════════════════════════════════════════════════════════
 
-// Função genérica para chamar o proxy
 async function apiCall(action, method = 'GET', data = null, userId = null, id = null) {
     let url = `/api/turso?action=${action}`;
     if (userId) url += `&userId=${userId}`;
@@ -509,28 +373,21 @@ async function apiCall(action, method = 'GET', data = null, userId = null, id = 
     
     const options = {
         method: method,
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
     };
     
     if (data && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
         options.body = JSON.stringify(data);
     }
     
-    try {
-        const response = await fetch(url, options);
-        const result = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(result.error || 'Erro na requisição');
-        }
-        
-        return result;
-    } catch (error) {
-        console.error('API Error:', error);
-        throw error;
+    const response = await fetch(url, options);
+    const result = await response.json();
+    
+    if (!response.ok) {
+        throw new Error(result.error || 'Erro na requisição');
     }
+    
+    return result;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -538,7 +395,6 @@ async function apiCall(action, method = 'GET', data = null, userId = null, id = 
 // ═══════════════════════════════════════════════════════════════
 
 const DB = {
-    // ── AUTH ──
     async loginUser(email, password) {
         const result = await apiCall('login', 'POST', { email, password: btoa(password) });
         return result.user || null;
@@ -546,136 +402,103 @@ const DB = {
     
     async registerUser(user) {
         await apiCall('register', 'POST', {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            area: user.area,
-            password: btoa(user.password)
+            id: user.id, name: user.name, email: user.email,
+            phone: user.phone || '', area: user.area || '', password: btoa(user.password)
         });
         return await this.getUser(user.id);
     },
 
-    // ── USERS ──
     async getUser(userId) {
         const result = await apiCall('user', 'GET', null, userId);
         if (!result) return null;
-        
-        // Parse JSON fields
         if (typeof result.business === 'string') {
             try { result.business = JSON.parse(result.business); } catch { result.business = {}; }
-        } else if (!result.business) {
-            result.business = {};
-        }
-        
+        } else if (!result.business) result.business = {};
         if (typeof result.subscription === 'string') {
             try { result.subscription = JSON.parse(result.subscription); } catch { result.subscription = {}; }
-        } else if (!result.subscription) {
-            result.subscription = {};
-        }
-        
+        } else if (!result.subscription) result.subscription = {};
         result.setup_done = !!result.setup_done;
         return result;
     },
     
     async saveUser(user) {
-        const result = await apiCall('user', 'POST', {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            phone: user.phone || '',
-            area: user.area || '',
-            business: user.business || {},
-            setup_done: user.setup_done ? 1 : 0,
+        await apiCall('user', 'POST', {
+            id: user.id, name: user.name, email: user.email, phone: user.phone || '',
+            area: user.area || '', business: user.business || {}, setup_done: user.setup_done ? 1 : 0,
             subscription: user.subscription || {}
         });
-        return result;
+        return await this.getUser(user.id);
     },
 
-    // ── APPOINTMENTS ──
     async getAppointments(userId) {
-        const result = await apiCall('appointments', 'GET', null, userId);
-        return result || [];
+        return await apiCall('appointments', 'GET', null, userId) || [];
     },
     
     async saveAppointment(appt) {
-        const result = await apiCall('appointment', 'POST', appt);
+        await apiCall('appointment', 'POST', appt);
         return appt;
     },
     
     async updateAppointment(id, updates) {
-        const result = await apiCall('appointment', 'PUT', { ...updates, id });
-        return result;
+        await apiCall('appointment', 'PUT', { ...updates, id });
     },
     
     async deleteAppointment(id) {
-        const result = await apiCall('appointment', 'PUT', { id, status: 'cancelado' });
-        return result;
+        await apiCall('appointment', 'PUT', { id, status: 'cancelado' });
     },
 
-    // ── CLIENTS ──
     async getClients(userId) {
-        const result = await apiCall('clients', 'GET', null, userId);
-        return result || [];
+        return await apiCall('clients', 'GET', null, userId) || [];
     },
     
     async saveClient(client) {
-        const result = await apiCall('client', 'POST', client);
+        await apiCall('client', 'POST', client);
         return client;
     },
 
-    // ── PROFESSIONALS ──
     async getProfessionals(userId) {
-        const result = await apiCall('professionals', 'GET', null, userId);
-        return (result || []).map(p => ({ ...p, active: !!p.active }));
+        const result = await apiCall('professionals', 'GET', null, userId) || [];
+        return result.map(p => ({ ...p, active: !!p.active }));
     },
     
     async saveProfessional(prof) {
-        const result = await apiCall('professional', 'POST', prof);
+        await apiCall('professional', 'POST', prof);
         return prof;
     },
     
     async updateProfessional(id, updates) {
-        const result = await apiCall('professional', 'PUT', { ...updates, id });
-        return result;
+        await apiCall('professional', 'PUT', { ...updates, id });
     },
 
-    // ── SERVICES ──
     async getServices(userId) {
-        const result = await apiCall('services', 'GET', null, userId);
-        return (result || []).map(s => ({ ...s, active: !!s.active }));
+        const result = await apiCall('services', 'GET', null, userId) || [];
+        return result.map(s => ({ ...s, active: !!s.active }));
     },
     
     async saveService(svc) {
-        const result = await apiCall('service', 'POST', svc);
+        await apiCall('service', 'POST', svc);
         return svc;
     },
     
     async deleteService(id) {
-        const result = await apiCall('service', 'DELETE', { id });
-        return result;
+        await apiCall('service', 'DELETE', { id });
     },
 
-    // ── FOLGAS ──
     async getFolgas(userId) {
-        const result = await apiCall('folgas', 'GET', null, userId);
-        return result || [];
+        return await apiCall('folgas', 'GET', null, userId) || [];
     },
     
     async addFolga(userId, date) {
-        const result = await apiCall('folga', 'POST', { id: uid(), user_id: userId, date });
-        return result;
+        await apiCall('folga', 'POST', { id: uid(), user_id: userId, date });
     },
     
     async removeFolga(userId, date) {
-        const result = await apiCall('folga', 'DELETE', { user_id: userId, date });
-        return result;
+        await apiCall('folga', 'DELETE', { user_id: userId, date });
     },
 
-    // ── ADMIN ──
     async getAllUsers() {
-        const result = await apiCall('all-users', 'GET');
-        return (result || []).map(u => {
+        const result = await apiCall('all-users', 'GET') || [];
+        return result.map(u => {
             if (typeof u.business === 'string') {
                 try { u.business = JSON.parse(u.business); } catch { u.business = {}; }
             }
@@ -688,10 +511,10 @@ const DB = {
     },
     
     async updateUserSubscription(userId, subscription) {
-        const result = await apiCall('subscription', 'PUT', { userId, subscription });
-        return result;
+        await apiCall('subscription', 'PUT', { userId, subscription });
     }
 };
+
 // ═══════════════════════════════════════════════════════════════
 //  UTILS
 // ═══════════════════════════════════════════════════════════════
@@ -761,21 +584,16 @@ function switchAuthTab(tab) {
 async function doLogin() {
     const email = document.getElementById('login-email').value.trim();
     const pwd = document.getElementById('login-pwd').value;
-    if (!email || !pwd) {
-        toast('Preencha todos os campos', 'error');
-        return;
-    }
+    if (!email || !pwd) { toast('Preencha todos os campos', 'error'); return; }
 
     const btn = document.getElementById('btn-login');
-    btn.disabled = true;
-    btn.textContent = '⏳ Entrando...';
+    btn.disabled = true; btn.textContent = '⏳ Entrando...';
 
     try {
         if (email === 'admin@agendapro.com' && pwd === 'admin123') {
             isAdmin = true;
             currentUser = { id: 'admin', name: 'Administrador', email: 'admin@agendapro.com' };
-            await initApp();
-            return;
+            await initApp(); return;
         }
         const userData = await DB.loginUser(email, pwd);
         if (!userData) throw new Error('E-mail ou senha incorretos');
@@ -785,8 +603,7 @@ async function doLogin() {
     } catch (e) {
         toast(e.message || 'Credenciais inválidas', 'error');
     } finally {
-        btn.disabled = false;
-        btn.textContent = 'Entrar';
+        btn.disabled = false; btn.textContent = 'Entrar';
     }
 }
 
@@ -797,23 +614,13 @@ async function doRegister() {
     const pwd = document.getElementById('reg-pwd').value;
     const area = document.getElementById('reg-area').value;
     
-    if (!name || !email || !pwd || !area) {
-        toast('Preencha todos os campos', 'error');
-        return;
-    }
-    if (pwd.length < 6) {
-        toast('Senha mínimo 6 caracteres', 'error');
-        return;
-    }
+    if (!name || !email || !pwd || !area) { toast('Preencha todos os campos', 'error'); return; }
+    if (pwd.length < 6) { toast('Senha mínimo 6 caracteres', 'error'); return; }
 
     const btn = document.getElementById('btn-register');
-    btn.disabled = true;
-    btn.textContent = '⏳ Criando conta...';
+    btn.disabled = true; btn.textContent = '⏳ Criando conta...';
 
     try {
-        const existing = await tursoQuery('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
-        if (existing.length > 0) throw new Error('E-mail já cadastrado');
-        
         const newUser = { id: uid(), name, phone, email, password: pwd, area };
         await DB.registerUser(newUser);
         currentUser = await DB.getUser(newUser.id);
@@ -822,8 +629,7 @@ async function doRegister() {
     } catch (e) {
         toast(e.message || 'Erro ao criar conta', 'error');
     } finally {
-        btn.disabled = false;
-        btn.textContent = 'Criar Conta Grátis';
+        btn.disabled = false; btn.textContent = 'Criar Conta Grátis';
     }
 }
 
@@ -905,10 +711,9 @@ async function navigateTo(page) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  INICIALIZAÇÃO
+//  RECUPERAÇÃO DE SENHA
 // ═══════════════════════════════════════════════════════════════
 
-// Funções de recuperação de senha (simplificadas para Turso)
 function showForgotPassword() {
     document.getElementById('login-form').style.display = 'none';
     document.getElementById('register-form').style.display = 'none';
@@ -922,12 +727,18 @@ function showLoginForm() {
 
 async function doForgotPassword() {
     const email = document.getElementById('forgot-email').value.trim();
-    if (!email) {
-        toast('Digite seu e-mail', 'error');
+    if (!email) { toast('Digite seu e-mail', 'error'); return; }
+    
+    const users = await DB.getAllUsers();
+    const userExists = users.some(u => u.email === email);
+    
+    if (!userExists) {
+        toast('E-mail não encontrado no sistema', 'error');
         return;
     }
     
-    toast('Função de recuperação de senha: Entre em contato com o suporte.', 'warning');
+    toast('🔐 Link de recuperação seria enviado para ' + email + '. Funcionalidade em desenvolvimento.', 'info', 5000);
+    setTimeout(() => { toast('📞 Entre em contato com o suporte para redefinir sua senha.', 'warning', 8000); }, 3000);
     showLoginForm();
 }
 
@@ -935,14 +746,8 @@ async function doForgotPassword() {
 //  INICIALIZAÇÃO PRINCIPAL
 // ═══════════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════════════
-//  INICIALIZAÇÃO PRINCIPAL (sem initTurso)
-// ═══════════════════════════════════════════════════════════════
-
 (async function init() {
     console.log('🚀 Iniciando aplicação...');
-    
-    // NÃO precisa mais de initTurso()
     
     const params = new URLSearchParams(window.location.search);
     const bookingSlug = params.get('booking');
@@ -956,28 +761,16 @@ async function doForgotPassword() {
                     return biz?.slug === bookingSlug;
                 } catch { return false; }
             });
-            if (found) {
-                await loadBookingPage(found.id);
-                return;
-            }
-        } catch (e) {
-            console.error('Erro ao carregar booking:', e);
-        }
+            if (found) { await loadBookingPage(found.id); return; }
+        } catch (e) { console.error('Erro ao carregar booking:', e); }
     }
     
     const savedId = localStorage.getItem('current_user_id');
     if (savedId) {
         try {
             const userData = await DB.getUser(savedId);
-            if (userData) {
-                currentUser = userData;
-                await initApp();
-                return;
-            }
-        } catch (e) {
-            console.error('Erro ao carregar usuário salvo:', e);
-            localStorage.removeItem('current_user_id');
-        }
+            if (userData) { currentUser = userData; await initApp(); return; }
+        } catch (e) { localStorage.removeItem('current_user_id'); }
     }
     
     document.getElementById('auth-screen').style.display = 'flex';
@@ -1082,10 +875,6 @@ function renderSetupStep(step) {
   }
 }
 
-function closeSidebar() {
-  document.getElementById('sidebar')?.classList.remove('open');
-}
-
 function toggleDay(i, el) {
   el.classList.toggle('selected');
   if (selectedDays.includes(i)) selectedDays = selectedDays.filter(d=>d!==i);
@@ -1093,7 +882,6 @@ function toggleDay(i, el) {
 }
 
 async function saveSetupStep(step) {
-    console.log('💾 Salvando passo:', step);
     const biz = currentUser.business || {};
     
     if (step === 1) {
@@ -1102,78 +890,33 @@ async function saveSetupStep(step) {
         biz.desc = document.getElementById('s-biz-desc').value.trim();
         biz.phone = document.getElementById('s-biz-phone').value.trim();
         biz.email = document.getElementById('s-biz-email').value.trim();
-        if (!biz.name) { 
-            toast('Informe o nome do negócio', 'error'); 
-            return; 
-        }
-        console.log('📝 Dados do negócio:', biz);
-        
+        if (!biz.name) { toast('Informe o nome do negócio','error'); return; }
     } else if (step === 2) {
         biz.address = document.getElementById('s-addr').value.trim();
         biz.number = document.getElementById('s-num').value.trim();
         biz.neighborhood = document.getElementById('s-bairro').value.trim();
         biz.city = document.getElementById('s-city').value.trim();
         biz.uf = document.getElementById('s-uf').value;
-        console.log('📝 Endereço salvo:', { address: biz.address, city: biz.city });
-        
     } else if (step === 3) {
-        biz.working_hours = { 
-            start: document.getElementById('s-start').value, 
-            end: document.getElementById('s-end').value, 
-            interval: parseInt(document.getElementById('s-interval').value) 
-        };
+        biz.working_hours = { start:document.getElementById('s-start').value, end:document.getElementById('s-end').value, interval:parseInt(document.getElementById('s-interval').value) };
         biz.days = [...selectedDays];
-        console.log('📝 Horários salvos:', biz.working_hours);
-        
     } else if (step === 4) {
-        biz.slug = document.getElementById('s-slug').value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        if (!biz.slug) { 
-            toast('Defina um slug', 'error'); 
-            return; 
-        }
+        biz.slug = document.getElementById('s-slug').value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+        if (!biz.slug) { toast('Defina um slug','error'); return; }
         currentUser.setup_done = true;
-        console.log('📝 Slug salvo:', biz.slug);
     }
-    
     currentUser.business = biz;
     
     try {
-        // Salvar no banco com logs detalhados
-        console.log('💾 Enviando para o banco:', {
-            id: currentUser.id,
-            name: currentUser.name,
-            email: currentUser.email,
-            business: biz,
-            setup_done: currentUser.setup_done
-        });
-        
-        const savedUser = await DB.saveUser({ 
-            id: currentUser.id, 
-            name: currentUser.name, 
-            email: currentUser.email,
-            phone: currentUser.phone || '',
-            area: currentUser.area || '',
-            business: biz, 
-            setup_done: currentUser.setup_done 
-        });
-        
-        console.log('✅ Resposta do banco:', savedUser);
-        
-        if (step < 4) {
-            renderSetupStep(step + 1);
-        } else {
-            toast('Configuração concluída! Bem-vindo!');
-            await navigateTo('dashboard');
-        }
-    } catch(e) {
-        console.error('❌ Erro ao salvar:', e);
-        toast('Erro ao salvar: ' + e.message, 'error');
-    }
+        await DB.saveUser({ id: currentUser.id, name: currentUser.name, email: currentUser.email, business: biz, setup_done: currentUser.setup_done });
+        if (step < 4) renderSetupStep(step+1);
+        else { toast('Configuração concluída! Bem-vindo!'); await navigateTo('dashboard'); }
+    } catch(e) { toast('Erro ao salvar: '+e.message,'error'); }
 }
 
 function copyLink() {
-  const slug = currentUser.business?.slug||'';
-  navigator.clipboard.writeText('https://agenda-seven-ebon.vercel.app/?booking='+slug).then(()=>toast('Link copiado!')).catch(()=>{});
+    const slug = currentUser.business?.slug||'';
+    navigator.clipboard.writeText('https://agenda-seven-ebon.vercel.app/?booking='+slug).then(()=>toast('Link copiado!')).catch(()=>{});
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1203,15 +946,11 @@ async function renderDashboard() {
     <div class="card">
       <div class="card-title">📅 Agenda de Hoje</div>
       ${todayAppts.length===0?'<div class="empty-state"><div class="empty-icon">📭</div><h3>Sem agendamentos</h3></div>':
-      `<div class="table-wrap"><table>
-        <thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Status</th><th></th></tr></thead>
-        <tbody>${todayAppts.sort((a,b)=>a.time.localeCompare(b.time)).map(a=>`
-        <tr>
-          <td><strong>${a.time}</strong></td><td>${a.client_name}</td><td>${a.service_name}</td>
-          <td>${statusBadge(a.status)}</td>
-          <td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}')">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}')">✗</button>`:''}</td>
-        </tr>`).join('')}</tbody>
-      </table></div>`}
+      `<div class="table-wrap"><table><thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Status</th><th></th></tr></thead>
+      <tbody>${todayAppts.sort((a,b)=>a.time.localeCompare(b.time)).map(a=>`
+        <tr><td><strong>${a.time}</strong></td><td>${a.client_name}</td><td>${a.service_name}</td>
+        <td>${statusBadge(a.status)}</td><td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}')">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}')">✗</button>`:''}</td></tr>`).join('')}
+      </tbody></table></div>`}
     </div>
     <div class="card">
       <div class="card-title">📈 Receita — Últimos 7 dias</div>
@@ -1233,7 +972,6 @@ async function renderDashboard() {
     </div>
   </div>`;
 
-  // Charts
   const last7 = [];
   for(let i=6;i>=0;i--) {
     const d = new Date(Date.now()-i*86400000).toISOString().split('T')[0];
@@ -1248,12 +986,6 @@ async function renderDashboard() {
     const ctx2 = document.getElementById('services-chart');
     if (ctx2&&Object.keys(svcCount).length>0) new Chart(ctx2,{type:'doughnut',data:{labels:Object.keys(svcCount),datasets:[{data:Object.values(svcCount),backgroundColor:['#e94560','#3b82f6','#10b981','#f59e0b','#8b5cf6']}]},options:{plugins:{legend:{position:'bottom'}}}});
   },100);
-}
-
-function statusBadge(s) {
-  const map={agendado:'badge-info',compareceu:'badge-success','nao-compareceu':'badge-danger',cancelado:'badge-gray'};
-  const labels={agendado:'Agendado',compareceu:'Compareceu','nao-compareceu':'Não compareceu',cancelado:'Cancelado'};
-  return `<span class="badge ${map[s]||'badge-gray'}">${labels[s]||s}</span>`;
 }
 
 async function markPresent(id) { await updateApptStatus(id,'compareceu'); }
@@ -1327,16 +1059,15 @@ async function renderAgendaView() {
   } else {
     const all=appts.filter(a=>a.date>=new Date().toISOString().split('T')[0]).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
     content.innerHTML=all.length===0?`<div class="empty-state"><div class="empty-icon">📭</div><h3>Nenhum agendamento</h3></div>`:
-    `<div class="table-wrap"><table>
-      <thead><tr><th>Data</th><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
-      <tbody>${all.map(a=>`<tr>
-        <td>${formatDate(a.date)}</td><td><strong>${a.time}</strong></td><td>${a.client_name}</td>
-        <td>${a.service_name}</td><td>${a.prof_name||'-'}</td><td>${formatCurrency(a.price)}</td>
-        <td>${statusBadge(a.status)}</td>
-        <td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}')">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}')">✗</button>`:''}
-        <button class="btn btn-sm btn-secondary" onclick="deleteAppt('${a.id}')">🗑</button></td>
-      </tr>`).join('')}</tbody>
-    </table></div>`;
+    `<div class="table-wrap"><table><thead><tr><th>Data</th><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+    <tbody>${all.map(a=>`<tr>
+      <td>${formatDate(a.date)}</td><td><strong>${a.time}</strong></td><td>${a.client_name}</td>
+      <td>${a.service_name}</td><td>${a.prof_name||'-'}</td><td>${formatCurrency(a.price)}</td>
+      <td>${statusBadge(a.status)}</td>
+      <td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}')">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}')">✗</button>`:''}
+      <button class="btn btn-sm btn-secondary" onclick="deleteAppt('${a.id}')">🗑</button> </td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
   }
 }
 
@@ -1348,7 +1079,7 @@ async function openDayView(dateStr) {
     da.length===0?'<div class="empty-state"><div class="empty-icon">🕐</div><h3>Sem agendamentos</h3></div>':
     `<div class="table-wrap"><table><thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Status</th><th></th></tr></thead><tbody>${da.map(a=>`<tr>
       <td><strong>${a.time}</strong></td><td>${a.client_name}</td><td>${a.service_name}</td><td>${statusBadge(a.status)}</td>
-      <td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}');closeModal()">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}');closeModal()">✗</button>`:''}</td>
+      <td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}');closeModal()">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}');closeModal()">✗</button>`:''} </td>
     </tr>`).join('')}</tbody></table></div>`,
     `<button class="btn btn-primary" onclick="closeModal();openModal('new-appointment','${dateStr}')">+ Agendar neste dia</button>`
   );
@@ -1381,7 +1112,7 @@ async function renderClientes() {
     <button class="btn btn-primary btn-sm" onclick="openModal('new-client')">+ Novo Cliente</button>
   </div>
   <div class="card">
-    <div class="table-wrap"><table>
+    <div class="table-wrap"><tr>
       <thead><tr><th>Cliente</th><th>Telefone</th><th>E-mail</th><th>Visitas</th><th>Última Visita</th><th>Total Gasto</th><th>Ações</th></tr></thead>
       <tbody id="clients-tbody">
         ${enriched.length===0?`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👥</div><h3>Nenhum cliente</h3></div></td></tr>`
@@ -1390,10 +1121,8 @@ async function renderClientes() {
           <td>${c.phone||'-'}</td><td>${c.email||'-'}</td>
           <td><span class="badge badge-info">${c.total_visits}</span></td>
           <td>${formatDate(c.last_visit)||'-'}</td><td>${formatCurrency(c.total_spent)}</td>
-          <td>
-            <button class="btn btn-sm btn-secondary" onclick="viewClientHistory('${c.id}')">📋</button>
-            <button class="btn btn-sm btn-primary" onclick="openModal('new-appointment',null,'${c.id}')">+ Agendar</button>
-          </td>
+          <td><button class="btn btn-sm btn-secondary" onclick="viewClientHistory('${c.id}')">📋</button>
+          <button class="btn btn-sm btn-primary" onclick="openModal('new-appointment',null,'${c.id}')">+ Agendar</button></td>
         </tr>`).join('')}
       </tbody>
     </table></div>
@@ -1435,10 +1164,7 @@ async function renderProfissionais() {
     profs.map(p=>`<div class="card" style="border-left:4px solid ${p.color||'var(--accent)'}">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
         <div class="avatar-circle" style="background:${p.color||'var(--accent)'}">${initials(p.name)}</div>
-        <div>
-          <div style="font-weight:700;font-family:'Syne',sans-serif">${p.name}</div>
-          <div style="font-size:12px;color:var(--text2)">${p.specialty||''}</div>
-        </div>
+        <div><div style="font-weight:700;font-family:'Syne',sans-serif">${p.name}</div><div style="font-size:12px;color:var(--text2)">${p.specialty||''}</div></div>
         <span class="badge ${p.active?'badge-success':'badge-gray'}" style="margin-left:auto">${p.active?'Ativo':'Inativo'}</span>
       </div>
       <div style="font-size:12px;color:var(--text2);display:flex;flex-direction:column;gap:4px">
@@ -1491,11 +1217,10 @@ async function renderConfigTab() {
     <div class="card"><div class="table-wrap"><table>
       <thead><tr><th>Serviço</th><th>Duração</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
       <tbody>${svcs.length===0?`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✂️</div><h3>Nenhum serviço</h3></div></td></tr>`
-      :svcs.map(s=>`<tr>
-        <td><strong>${s.name}</strong></td><td>${s.duration} min</td><td>${formatCurrency(s.price)}</td>
+      :svcs.map(s=>`<tr><td><strong>${s.name}</strong></td><td>${s.duration} min</td><td>${formatCurrency(s.price)}</td>
         <td><span class="badge ${s.active?'badge-success':'badge-gray'}">${s.active?'Ativo':'Inativo'}</span></td>
-        <td><button class="btn btn-sm btn-secondary" onclick="editService('${s.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteService('${s.id}')">🗑</button></td>
-      </tr>`).join('')}</tbody>
+        <td><button class="btn btn-sm btn-secondary" onclick="editService('${s.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteService('${s.id}')">🗑</button></td></tr>`).join('')}
+      </tbody>
     </table></div></div>`;
   } else if (configTab==='horarios') {
     const biz = currentUser.business||{};
@@ -1663,11 +1388,9 @@ async function renderAdmin() {
         <td>${u.subscription?.plan==='annual'?'🌟 Anual':u.subscription?.plan==='trial'?'Trial':'Mensal'}</td>
         <td>${statusBadge(u.subscription?.status||'expired')}</td>
         <td>${u.subscription?.expires?new Date(u.subscription.expires).toLocaleDateString('pt-BR'):'-'}</td>
-        <td>
-          <button class="btn btn-sm btn-success" onclick="adminRenew('${u.id}',30,'monthly')">+30d</button>
-          <button class="btn btn-sm btn-warning" onclick="adminRenew('${u.id}',365,'annual')">🌟 Anual</button>
-          <button class="btn btn-sm btn-danger" onclick="adminCancel('${u.id}')">Cancelar</button>
-        </td>
+        <td><button class="btn btn-sm btn-success" onclick="adminRenew('${u.id}',30,'monthly')">+30d</button>
+        <button class="btn btn-sm btn-warning" onclick="adminRenew('${u.id}',365,'annual')">🌟 Anual</button>
+        <button class="btn btn-sm btn-danger" onclick="adminCancel('${u.id}')">Cancelar</button></td>
       </tr>`).join('')}</tbody>
     </table></div>
   </div>`;
@@ -1695,10 +1418,7 @@ function showModal(title, body, footer='') {
   document.getElementById('modal-container').innerHTML = `
   <div class="modal-backdrop" onclick="event.target===this&&closeModal()">
     <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">${title}</div>
-        <button class="modal-close" onclick="closeModal()">✕</button>
-      </div>
+      <div class="modal-header"><div class="modal-title">${title}</div><button class="modal-close" onclick="closeModal()">✕</button></div>
       <div class="modal-body">${body}</div>
       ${footer?`<div class="modal-footer">${footer}</div>`:''}
     </div>
@@ -1723,34 +1443,21 @@ async function showNewApptModal(dateStr=null, clientId=null) {
   showModal('📅 Novo Agendamento',
     `<div class="form-group"><label>Data</label><input type="date" id="na-date" value="${today}" onchange="updateSlots()"></div>
     <div class="form-row">
-      <div class="form-group"><label>Profissional</label>
-        <select id="na-prof" onchange="updateSlots()">
-          <option value="">Selecione...</option>
-          ${profs.filter(p=>p.active).map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}
-        </select></div>
-      <div class="form-group"><label>Serviço</label>
-        <select id="na-svc">
-          <option value="">Selecione...</option>
-          ${svcs.filter(s=>s.active).map(s=>`<option value="${s.id}">${s.name} — ${formatCurrency(s.price)}</option>`).join('')}
-        </select></div>
+      <div class="form-group"><label>Profissional</label><select id="na-prof" onchange="updateSlots()"><option value="">Selecione...</option>${profs.filter(p=>p.active).map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Serviço</label><select id="na-svc"><option value="">Selecione...</option>${svcs.filter(s=>s.active).map(s=>`<option value="${s.id}">${s.name} — ${formatCurrency(s.price)}</option>`).join('')}</select></div>
     </div>
     <div class="form-group"><label>Horário</label><div class="time-slots" id="na-slots"></div></div>
     <div class="form-group"><label>Cliente</label>
       <select id="na-client" onchange="document.getElementById('na-new-client').style.display=this.value==='__new'?'block':'none'">
-        <option value="">Selecione...</option>
-        <option value="__new">+ Novo cliente</option>
+        <option value="">Selecione...</option><option value="__new">+ Novo cliente</option>
         ${clients.map(c=>`<option value="${c.id}" ${clientId===c.id?'selected':''}>${c.name}</option>`).join('')}
       </select></div>
     <div id="na-new-client" style="display:none">
-      <div class="form-row">
-        <div class="form-group"><label>Nome</label><input id="na-nc-name" placeholder="Nome completo"></div>
-        <div class="form-group"><label>Telefone</label><input id="na-nc-phone" placeholder="(44) 99999-9999"></div>
-      </div>
+      <div class="form-row"><div class="form-group"><label>Nome</label><input id="na-nc-name" placeholder="Nome completo"></div><div class="form-group"><label>Telefone</label><input id="na-nc-phone" placeholder="(44) 99999-9999"></div></div>
       <div class="form-group"><label>E-mail</label><input id="na-nc-email" placeholder="email@cliente.com"></div>
     </div>
     <div class="form-group"><label>Observações</label><textarea id="na-notes" rows="2"></textarea></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-     <button class="btn btn-primary" onclick="saveNewAppt()">✅ Agendar</button>`
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewAppt()">✅ Agendar</button>`
   );
   await updateSlots();
 }
@@ -1825,13 +1532,9 @@ async function saveNewAppt() {
 
 function showNewClientModal() {
   showModal('👤 Novo Cliente',
-    `<div class="form-row">
-      <div class="form-group"><label>Nome</label><input id="nc-name" placeholder="Nome completo"></div>
-      <div class="form-group"><label>Telefone</label><input id="nc-phone" placeholder="(44) 99999-9999"></div>
-    </div>
+    `<div class="form-row"><div class="form-group"><label>Nome</label><input id="nc-name" placeholder="Nome completo"></div><div class="form-group"><label>Telefone</label><input id="nc-phone" placeholder="(44) 99999-9999"></div></div>
     <div class="form-group"><label>E-mail</label><input id="nc-email" placeholder="email@cliente.com"></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-     <button class="btn btn-primary" onclick="saveNewClient()">💾 Salvar</button>`
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewClient()">💾 Salvar</button>`
   );
 }
 
@@ -1849,12 +1552,9 @@ async function saveNewClient() {
 function showNewServiceModal() {
   showModal('✂️ Novo Serviço',
     `<div class="form-group"><label>Nome do Serviço</label><input id="svc-name" placeholder="Ex: Corte Masculino"></div>
-    <div class="form-row">
-      <div class="form-group"><label>Duração (min)</label><select id="svc-dur">${[15,20,30,45,60,90,120].map(v=>`<option value="${v}">${v} min</option>`).join('')}</select></div>
-      <div class="form-group"><label>Valor (R$)</label><input type="number" id="svc-price" placeholder="0.00" step="0.01"></div>
-    </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-     <button class="btn btn-primary" onclick="saveNewService()">💾 Salvar</button>`
+    <div class="form-row"><div class="form-group"><label>Duração (min)</label><select id="svc-dur">${[15,20,30,45,60,90,120].map(v=>`<option value="${v}">${v} min</option>`).join('')}</select></div>
+    <div class="form-group"><label>Valor (R$)</label><input type="number" id="svc-price" placeholder="0.00" step="0.01"></div></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewService()">💾 Salvar</button>`
   );
 }
 
@@ -1872,12 +1572,9 @@ async function editService(id) {
   const s=svcs.find(x=>x.id===id); if(!s)return;
   showModal('✏️ Editar Serviço',
     `<div class="form-group"><label>Nome</label><input id="esvc-name" value="${s.name}"></div>
-    <div class="form-row">
-      <div class="form-group"><label>Duração</label><select id="esvc-dur">${[15,20,30,45,60,90,120].map(v=>`<option value="${v}" ${s.duration==v?'selected':''}>${v} min</option>`).join('')}</select></div>
-      <div class="form-group"><label>Valor</label><input type="number" id="esvc-price" value="${s.price}" step="0.01"></div>
-    </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-     <button class="btn btn-primary" onclick="updateService('${id}')">💾 Salvar</button>`
+    <div class="form-row"><div class="form-group"><label>Duração</label><select id="esvc-dur">${[15,20,30,45,60,90,120].map(v=>`<option value="${v}" ${s.duration==v?'selected':''}>${v} min</option>`).join('')}</select></div>
+    <div class="form-group"><label>Valor</label><input type="number" id="esvc-price" value="${s.price}" step="0.01"></div></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="updateService('${id}')">💾 Salvar</button>`
   );
 }
 
@@ -1891,22 +1588,11 @@ async function updateService(id) {
 function showNewProfModal() {
   const colors=['#e94560','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4'];
   showModal('👔 Novo Profissional',
-    `<div class="form-row">
-      <div class="form-group"><label>Nome</label><input id="np-name" placeholder="Nome completo"></div>
-      <div class="form-group"><label>Especialidade</label><input id="np-spec" placeholder="Ex: Barbeiro Sênior"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Telefone</label><input id="np-phone" placeholder="(44) 99999-9999"></div>
-      <div class="form-group"><label>E-mail</label><input id="np-email" placeholder="prof@email.com"></div>
-    </div>
-    <div class="form-group"><label>Cor</label>
-      <div style="display:flex;gap:8px;margin-top:6px" id="prof-colors">
-        ${colors.map((col,i)=>`<div style="width:28px;height:28px;background:${col};border-radius:50%;cursor:pointer;border:3px solid ${i===0?'#1a1a2e':'transparent'}" onclick="selectProfColor('${col}',this)"></div>`).join('')}
-      </div>
-      <input type="hidden" id="np-color" value="${colors[0]}">
-    </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-     <button class="btn btn-primary" onclick="saveNewProf()">💾 Salvar</button>`
+    `<div class="form-row"><div class="form-group"><label>Nome</label><input id="np-name" placeholder="Nome completo"></div><div class="form-group"><label>Especialidade</label><input id="np-spec" placeholder="Ex: Barbeiro Sênior"></div></div>
+    <div class="form-row"><div class="form-group"><label>Telefone</label><input id="np-phone" placeholder="(44) 99999-9999"></div><div class="form-group"><label>E-mail</label><input id="np-email" placeholder="prof@email.com"></div></div>
+    <div class="form-group"><label>Cor</label><div style="display:flex;gap:8px;margin-top:6px" id="prof-colors">${colors.map((col,i)=>`<div style="width:28px;height:28px;background:${col};border-radius:50%;cursor:pointer;border:3px solid ${i===0?'#1a1a2e':'transparent'}" onclick="selectProfColor('${col}',this)"></div>`).join('')}</div>
+    <input type="hidden" id="np-color" value="${colors[0]}"></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewProf()">💾 Salvar</button>`
   );
 }
 
@@ -1925,16 +1611,9 @@ async function editProf(id) {
   const profs=await DB.getProfessionals(currentUser.id);
   const p=profs.find(x=>x.id===id); if(!p)return;
   showModal('✏️ Editar Profissional',
-    `<div class="form-row">
-      <div class="form-group"><label>Nome</label><input id="ep-name" value="${p.name}"></div>
-      <div class="form-group"><label>Especialidade</label><input id="ep-spec" value="${p.specialty||''}"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Telefone</label><input id="ep-phone" value="${p.phone||''}"></div>
-      <div class="form-group"><label>E-mail</label><input id="ep-email" value="${p.email||''}"></div>
-    </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-     <button class="btn btn-primary" onclick="updateProf('${id}')">💾 Salvar</button>`
+    `<div class="form-row"><div class="form-group"><label>Nome</label><input id="ep-name" value="${p.name}"></div><div class="form-group"><label>Especialidade</label><input id="ep-spec" value="${p.specialty||''}"></div></div>
+    <div class="form-row"><div class="form-group"><label>Telefone</label><input id="ep-phone" value="${p.phone||''}"></div><div class="form-group"><label>E-mail</label><input id="ep-email" value="${p.email||''}"></div></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="updateProf('${id}')">💾 Salvar</button>`
   );
 }
 
@@ -1972,10 +1651,8 @@ async function loadBookingPage(userId) {
 
   const activeProfs=profs.filter(p=>p.active);
   document.getElementById('booking-professionals').innerHTML=activeProfs.length===0?'<p>Nenhum profissional disponível</p>':
-    `<div style="display:flex;flex-direction:column;gap:10px">
-    ${activeProfs.map(p=>`<div class="chip" onclick="selectBookingProf('${p.id}',this)" style="padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:10px">
-      <div class="avatar-circle" style="background:${p.color||'var(--accent)'}">${initials(p.name)}</div>
-      <div><div style="font-weight:600">${p.name}</div><div style="font-size:12px;color:var(--text2)">${p.specialty||''}</div></div>
+    `<div style="display:flex;flex-direction:column;gap:10px">${activeProfs.map(p=>`<div class="chip" onclick="selectBookingProf('${p.id}',this)" style="padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:10px">
+      <div class="avatar-circle" style="background:${p.color||'var(--accent)'}">${initials(p.name)}</div><div><div style="font-weight:600">${p.name}</div><div style="font-size:12px;color:var(--text2)">${p.specialty||''}</div></div>
     </div>`).join('')}</div>`;
 
   document.getElementById('booking-step-1').style.display='block';
@@ -1989,11 +1666,9 @@ async function selectBookingProf(profId,el) {
   bookingState.service=null; bookingState.date=null; bookingState.time=null;
   const activeSvcs=Object.values(bookingState.svcs).filter(s=>s.active);
   document.getElementById('booking-services-card').style.display='block';
-  document.getElementById('booking-services').innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">
-    ${activeSvcs.map(s=>`<div class="chip" onclick="selectBookingService('${s.id}',this)" style="padding:12px 16px;border-radius:10px;justify-content:space-between">
-      <div><div style="font-weight:600">${s.name}</div><div style="font-size:12px;color:var(--text2)">${s.duration} min</div></div>
-      <strong style="color:var(--accent)">${formatCurrency(s.price)}</strong>
-    </div>`).join('')}</div>`;
+  document.getElementById('booking-services').innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">${activeSvcs.map(s=>`<div class="chip" onclick="selectBookingService('${s.id}',this)" style="padding:12px 16px;border-radius:10px;justify-content:space-between">
+    <div><div style="font-weight:600">${s.name}</div><div style="font-size:12px;color:var(--text2)">${s.duration} min</div></div><strong style="color:var(--accent)">${formatCurrency(s.price)}</strong>
+  </div>`).join('')}</div>`;
   document.getElementById('booking-date-card').style.display='none';
   document.getElementById('booking-slots-card').style.display='none';
   document.getElementById('booking-client-card').style.display='none';
@@ -2080,280 +1755,6 @@ function newBooking(){
   bookingState.prof=null;bookingState.service=null;bookingState.date=null;bookingState.time=null;
   ['booking-services-card','booking-date-card','booking-slots-card','booking-client-card'].forEach(id=>document.getElementById(id).style.display='none');
   document.querySelectorAll('#booking-step-1 .chip.selected,.time-slot.selected').forEach(c=>c.classList.remove('selected'));
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  SQL SCRIPT MODAL
-// ═══════════════════════════════════════════════════════════════
-
-function showSQLScript() {
-  const sql = `-- ============================================
--- AgendaPro — Script SQL para Supabase
--- Cole este script no SQL Editor do Supabase
--- ============================================
-
--- Habilitar extensão UUID
-create extension if not exists "uuid-ossp";
-
--- Tabela de usuários (perfis)
-create table if not exists public.users (
-  id uuid primary key references auth.users(id) on delete cascade,
-  name text not null,
-  email text not null,
-  phone text,
-  area text,
-  setup_done boolean default false,
-  business jsonb default '{}',
-  subscription jsonb default '{"status":"trial","plan":"trial"}',
-  created_at timestamptz default now()
-);
-
--- Profissionais
-create table if not exists public.professionals (
-  id uuid primary key default uuid_generate_v4(),
-  user_id uuid not null references public.users(id) on delete cascade,
-  name text not null,
-  specialty text,
-  phone text,
-  email text,
-  color text default '#e94560',
-  active boolean default true,
-  created_at timestamptz default now()
-);
-
--- Serviços
-create table if not exists public.services (
-  id uuid primary key default uuid_generate_v4(),
-  user_id uuid not null references public.users(id) on delete cascade,
-  name text not null,
-  duration integer not null default 30,
-  price numeric(10,2) default 0,
-  active boolean default true,
-  created_at timestamptz default now()
-);
-
--- Clientes
-create table if not exists public.clients (
-  id uuid primary key default uuid_generate_v4(),
-  user_id uuid not null references public.users(id) on delete cascade,
-  name text not null,
-  phone text,
-  email text,
-  notes text,
-  created_at timestamptz default now()
-);
-
--- Agendamentos
-create table if not exists public.appointments (
-  id uuid primary key default uuid_generate_v4(),
-  user_id uuid not null references public.users(id) on delete cascade,
-  client_id uuid references public.clients(id),
-  client_name text,
-  prof_id uuid references public.professionals(id),
-  prof_name text,
-  service_id uuid references public.services(id),
-  service_name text,
-  date date not null,
-  time text not null,
-  duration integer default 30,
-  price numeric(10,2) default 0,
-  status text default 'agendado',
-  notes text,
-  created_at timestamptz default now()
-);
-
--- Folgas
-create table if not exists public.folgas (
-  id uuid primary key default uuid_generate_v4(),
-  user_id uuid not null references public.users(id) on delete cascade,
-  date date not null,
-  unique(user_id, date)
-);
-
--- ── RLS (Row Level Security) ──
-alter table public.users enable row level security;
-alter table public.professionals enable row level security;
-alter table public.services enable row level security;
-alter table public.clients enable row level security;
-alter table public.appointments enable row level security;
-alter table public.folgas enable row level security;
-
--- Políticas: usuário acessa apenas seus próprios dados
-create policy "users_own" on public.users for all using (auth.uid() = id);
-create policy "profs_own" on public.professionals for all using (auth.uid() = user_id);
-create policy "svcs_own" on public.services for all using (auth.uid() = user_id);
-create policy "clients_own" on public.clients for all using (auth.uid() = user_id);
-create policy "appts_own" on public.appointments for all using (auth.uid() = user_id);
-create policy "folgas_own" on public.folgas for all using (auth.uid() = user_id);
-
--- Política pública para página de agendamento
-create policy "appts_public_read" on public.appointments for select using (true);
-create policy "appts_public_insert" on public.appointments for insert with check (true);
-create policy "clients_public_insert" on public.clients for insert with check (true);
-create policy "profs_public_read" on public.professionals for select using (true);
-create policy "svcs_public_read" on public.services for select using (true);
-create policy "folgas_public_read" on public.folgas for select using (true);
-create policy "users_public_read" on public.users for select using (true);
-
--- Trigger para criar perfil automaticamente após signup
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer as $$
-begin
-  insert into public.users (id, name, email)
-  values (new.id, coalesce(new.raw_user_meta_data->>'name', split_part(new.email,'@',1)), new.email)
-  on conflict (id) do nothing;
-  return new;
-end;
-$$;
-
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();`;
-
-  const mc = document.getElementById('modal-container');
-  mc.innerHTML = `<div class="modal-backdrop" onclick="event.target===this&&closeModal()">
-    <div class="modal" style="max-width:700px">
-      <div class="modal-header">
-        <div class="modal-title">📄 Script SQL — Cole no Supabase</div>
-        <button class="modal-close" onclick="closeModal()">✕</button>
-      </div>
-      <div class="modal-body">
-        <p style="color:var(--text2);margin-bottom:12px;font-size:13px">
-          1. Acesse seu projeto no Supabase<br>
-          2. Vá em <strong>SQL Editor → New Query</strong><br>
-          3. Cole o script abaixo e clique em <strong>Run</strong>
-        </p>
-        <textarea readonly style="width:100%;height:320px;font-family:monospace;font-size:11px;padding:12px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);resize:vertical">${sql}</textarea>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal()">Fechar</button>
-        <button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.querySelector('.modal textarea').value).then(()=>toast('SQL copiado!'))">📋 Copiar SQL</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  INICIALIZAÇÃO
-// ═══════════════════════════════════════════════════════════════
-
-(async function init() {
-    // Aguarda conectar ao Turso
-    const connected = await initTurso();
-    if (!connected) {
-        console.error('Não foi possível conectar ao Turso');
-        document.body.innerHTML = '<div style="text-align:center;padding:60px"><h2>Erro de conexão com o banco de dados</h2><p>Verifique sua internet e tente novamente</p></div>';
-        return;
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const bookingSlug = params.get('booking');
-    
-    if (bookingSlug) {
-        try {
-            const users = await DB.getAllUsers();
-            const found = users.find(u => {
-                try {
-                    const biz = typeof u.business === 'string' ? JSON.parse(u.business) : u.business;
-                    return biz?.slug === bookingSlug;
-                } catch { return false; }
-            });
-            if (found) { 
-                await loadBookingPage(found.id); 
-                return; 
-            }
-        } catch(e) { 
-            console.error(e);
-        }
-    }
-
-    // Verifica sessão salva
-    const savedId = localStorage.getItem('current_user_id');
-    if (savedId) {
-        try {
-            const userData = await DB.getUser(savedId);
-            if (userData) { 
-                currentUser = userData; 
-                await initApp(); 
-                return; 
-            }
-        } catch(e) { 
-            localStorage.removeItem('current_user_id');
-        }
-    }
-
-    document.getElementById('auth-screen').style.display = 'flex';
-})();
-
-//  RECUPERAÇÃO DE SENHA (CORRIGIDA - SEM SUPABASE)
-// ═══════════════════════════════════════════════════════════════
-
-function showForgotPassword() {
-    document.getElementById('login-form').style.display = 'none';
-    document.getElementById('register-form').style.display = 'none';
-    document.getElementById('forgot-form').style.display = 'block';
-    const emailVal = document.getElementById('login-email').value;
-    if (emailVal) document.getElementById('forgot-email').value = emailVal;
-}
-
-function showLoginForm() {
-    document.getElementById('forgot-form').style.display = 'none';
-    document.getElementById('login-form').style.display = 'block';
-}
-
-async function doForgotPassword() {
-    const email = document.getElementById('forgot-email').value.trim();
-    if (!email) {
-        toast('Digite seu e-mail', 'error');
-        return;
-    }
-
-    const btn = document.getElementById('btn-forgot');
-    btn.disabled = true;
-    btn.textContent = 'Enviando...';
-
-    try {
-        // Verifica se o email existe no banco
-        const users = await DB.getAllUsers();
-        const userExists = users.some(u => u.email === email);
-        
-        if (!userExists) {
-            toast('E-mail não encontrado no sistema', 'error');
-            return;
-        }
-        
-        // Aqui você pode implementar o envio de email posteriormente
-        // Por enquanto, apenas informa o usuário
-        toast('🔐 Link de recuperação seria enviado para ' + email + '. Funcionalidade em desenvolvimento.', 'info', 5000);
-        
-        // Mostra instrução para contatar suporte
-        setTimeout(() => {
-            toast('📞 Entre em contato com o suporte para redefinir sua senha.', 'warning', 8000);
-        }, 3000);
-        
-        showLoginForm();
-    } catch (e) {
-        toast('Erro ao processar solicitação: ' + e.message, 'error');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = '📧 Enviar link de recuperação';
-    }
-}
-async function doResetPassword() {
-  const pwd = document.getElementById('new-password').value;
-  const confirm = document.getElementById('confirm-password').value;
-  if (pwd.length < 6) { toast('A senha precisa ter ao menos 6 caracteres', 'error'); return; }
-  if (pwd !== confirm) { toast('As senhas não coincidem', 'error'); return; }
-
-  const { error } = await _db.auth.updateUser({ password: pwd });
-  if (error) {
-    toast('Erro: ' + error.message, 'error');
-  } else {
-    toast('✅ Senha alterada com sucesso! Faça login.', 'success', 5000);
-    document.getElementById('modal-container').innerHTML = '';
-    window.history.replaceState({}, '', window.location.pathname);
-  }
 }
 </script>
 </body>
