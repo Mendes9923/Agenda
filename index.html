@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AgendaPro - Sistema de Agendamento</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -31,7 +32,6 @@
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; }
   h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
 
-  /* ── AUTH ── */
   #auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 20px; }
   .auth-box { background: #fff; border-radius: 20px; padding: 40px; width: 100%; max-width: 420px; box-shadow: 0 24px 64px rgba(0,0,0,0.3); }
   .auth-logo { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
@@ -40,7 +40,6 @@
   .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .2s; }
   .auth-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-  /* ── FORMS ── */
   .form-group { margin-bottom: 16px; }
   .form-group label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 13px; color: var(--text2); }
   .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--bg); transition: border-color .2s; outline: none; }
@@ -57,9 +56,7 @@
   .btn-warning { background: var(--warning); color: #fff; }
   .btn-full { width: 100%; }
   .btn-sm { padding: 6px 12px; font-size: 12px; }
-  .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
 
-  /* ── APP ── */
   #app { display: none; min-height: 100vh; }
   .app-layout { display: flex; min-height: 100vh; }
   .sidebar { width: var(--sidebar-w); background: var(--primary); min-height: 100vh; position: fixed; left: 0; top: 0; bottom: 0; display: flex; flex-direction: column; z-index: 100; transition: transform .3s; }
@@ -78,12 +75,11 @@
   .nav-item .nav-icon { width: 18px; text-align: center; font-size: 16px; }
   .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.08); }
   .main-content { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
-  .topbar { background: #fff; padding: 14px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .topbar { background: #fff; padding: 14px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
   .topbar-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   .topbar-actions { display: flex; align-items: center; gap: 10px; }
   .page-content { padding: 28px; flex: 1; }
 
-  /* ── CARDS ── */
   .card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; box-shadow: var(--shadow); }
   .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
@@ -106,77 +102,65 @@
 
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { text-align: left; padding: 10px 14px; background: var(--bg); font-weight: 600; color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  th { text-align: left; padding: 10px 14px; background: var(--bg); font-weight: 600; color: var(--text2); font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
   td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
-  tr:last-child td { border-bottom: none; }
   tr:hover td { background: #fafafa; }
 
   .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
-  .tab-btn { padding: 10px 20px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .2s; background: none; border-top: none; border-left: none; border-right: none; font-family: 'DM Sans', sans-serif; }
+  .tab-btn { padding: 10px 20px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -2px; background: none; border: none; }
   .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
   .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .modal { background: #fff; border-radius: 16px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,0.25); animation: modalIn .25s ease; }
-  @keyframes modalIn { from { transform: translateY(-20px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
-  .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #fff; z-index: 1; }
+  .modal { background: #fff; border-radius: 16px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
+  .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
   .modal-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
-  .modal-close { cursor: pointer; font-size: 20px; color: var(--text2); background: none; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+  .modal-close { cursor: pointer; font-size: 20px; background: none; border: none; width: 32px; height: 32px; border-radius: 6px; }
   .modal-close:hover { background: var(--bg); }
   .modal-body { padding: 24px; }
   .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
 
   #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
-  .toast { background: var(--primary); color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.2); animation: toastIn .3s ease; min-width: 240px; display: flex; align-items: center; gap: 8px; }
+  .toast { background: var(--primary); color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.2); min-width: 240px; display: flex; align-items: center; gap: 8px; }
   .toast.success { background: var(--success); }
   .toast.error { background: var(--danger); }
   .toast.warning { background: var(--warning); }
-  @keyframes toastIn { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
 
   .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-  .cal-header { text-align: center; padding: 8px 4px; font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; }
-  .cal-day { min-height: 80px; padding: 6px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; transition: all .15s; background: var(--bg); }
+  .cal-header { text-align: center; padding: 8px 4px; font-size: 11px; font-weight: 600; color: var(--text2); }
+  .cal-day { min-height: 80px; padding: 6px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; background: var(--bg); }
   .cal-day:hover { border-color: var(--accent); background: #fff; }
   .cal-day.today { border-color: var(--accent); background: #fff3f5; }
   .cal-day.other-month { opacity: 0.35; }
   .cal-day-num { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 4px; }
-  .cal-day.today .cal-day-num { color: var(--accent); }
-  .cal-event { font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-bottom: 2px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cal-event { font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cal-event.agendado { background: #dbeafe; color: #1e40af; }
   .cal-event.compareceu { background: #d1fae5; color: #065f46; }
-  .cal-event.nao-compareceu { background: #fee2e2; color: #991b1b; }
-  .cal-event.cancelado { background: #f3f4f6; color: #374151; }
 
   .time-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
-  .time-slot { padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 500; transition: all .15s; background: #fff; }
+  .time-slot { padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; text-align: center; cursor: pointer; background: #fff; }
   .time-slot:hover { border-color: var(--accent); color: var(--accent); }
   .time-slot.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
   .time-slot.taken { opacity: 0.35; cursor: not-allowed; background: var(--bg); }
 
-  .plan-card { border: 2px solid var(--border); border-radius: 16px; padding: 28px; position: relative; transition: all .2s; }
+  .plan-card { border: 2px solid var(--border); border-radius: 16px; padding: 28px; position: relative; }
   .plan-card.highlighted { border-color: var(--accent); }
-  .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: 'Syne', sans-serif; white-space: nowrap; }
+  .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
   .plan-price { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; }
-  .plan-price span { font-size: 16px; font-weight: 500; color: var(--text2); }
 
   #booking-screen { display: none; }
   .booking-header { background: var(--primary); color: #fff; padding: 28px; text-align: center; }
   .booking-content { max-width: 560px; margin: 0 auto; padding: 28px 20px; }
 
   .admin-stat { background: linear-gradient(135deg, var(--primary) 0%, var(--teal) 100%); color: #fff; border-radius: var(--radius); padding: 20px; }
-  .admin-stat .stat-value { color: #fff; }
-  .admin-stat .stat-label { color: rgba(255,255,255,0.7); }
-
   .empty-state { text-align: center; padding: 48px 20px; color: var(--text2); }
   .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
-  .empty-state h3 { font-family: 'Syne', sans-serif; margin-bottom: 8px; }
-  .avatar-circle { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
-  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s; }
+  .avatar-circle { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; }
   .chip:hover { border-color: var(--accent); color: var(--accent); }
   .chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
   .link-box { background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .link-box code { font-size: 13px; color: var(--accent); font-weight: 600; }
-  .setup-steps { display: flex; gap: 0; margin-bottom: 28px; }
-  .setup-step { flex: 1; text-align: center; padding: 12px; border-bottom: 3px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text2); transition: all .2s; }
+  .setup-steps { display: flex; margin-bottom: 28px; }
+  .setup-step { flex: 1; text-align: center; padding: 12px; border-bottom: 3px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text2); }
   .setup-step.active { color: var(--accent); border-bottom-color: var(--accent); }
   .setup-step.done { color: var(--success); border-bottom-color: var(--success); }
 
@@ -186,47 +170,29 @@
 
   .sidebar-toggle { display: none; }
   .sidebar-close-btn { display: none; }
-  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99; }
+  .sidebar-overlay { display: none; }
 
   @media (max-width: 768px) {
     .sidebar { transform: translateX(-100%); }
     .sidebar.open { transform: none; }
     .main-content { margin-left: 0; }
     .sidebar-toggle { display: block; }
-    .sidebar-close-btn { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 10px 16px 4px; padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.12); cursor: pointer; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; transition: all .2s; }
-    .sidebar-close-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
-    .sidebar.open ~ .sidebar-overlay { display: block; }
+    .sidebar-close-btn { display: flex; margin: 10px 16px 4px; padding: 8px 14px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.12); cursor: pointer; }
+    .sidebar.open ~ .sidebar-overlay { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99; }
     .topbar { padding: 10px 14px; }
-    .topbar-title { font-size: 16px; }
     .page-content { padding: 14px; }
     .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
     .form-row { grid-template-columns: 1fr; }
-    .card { padding: 14px; }
     .modal-backdrop { padding: 10px; align-items: flex-end; }
-    .modal { border-radius: 16px 16px 0 0; max-height: 95vh; }
-    .cal-day { min-height: 52px; padding: 4px; }
-    .table-wrap { -webkit-overflow-scrolling: touch; }
-    #toast-container { bottom: 12px; right: 12px; left: 12px; }
-    .toast { min-width: unset; width: 100%; }
+    .modal { border-radius: 16px 16px 0 0; }
   }
 
   @media (max-width: 480px) {
-    .topbar { padding: 8px 10px; }
-    .topbar-title { font-size: 14px; }
-    .page-content { padding: 10px; }
     .stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
     .stat-value { font-size: 20px; }
-    .form-group input, .form-group select, .form-group textarea { font-size: 16px; }
-    .cal-day { min-height: 42px; padding: 3px; }
-    .cal-day-num { font-size: 10px; }
+    .cal-day { min-height: 42px; }
     .cal-event { display: none; }
-    .tabs { overflow-x: auto; flex-wrap: nowrap; }
-    .tab-btn { white-space: nowrap; }
-    .modal-backdrop { padding: 0; }
-    .modal { border-radius: 16px 16px 0 0; max-height: 98vh; }
     .time-slots { grid-template-columns: repeat(3, 1fr); }
-    .link-box { flex-direction: column; align-items: flex-start; }
-    .link-box .btn { width: 100%; }
   }
 
   .page { display: none; }
@@ -237,7 +203,7 @@
 
 <div id="toast-container"></div>
 
-<!-- AUTH -->
+<!-- AUTH SCREEN -->
 <div id="auth-screen" style="display:none">
   <div class="auth-box">
     <div class="auth-logo">Agenda<span>Pro</span></div>
@@ -249,68 +215,59 @@
     <div id="login-form">
       <div class="form-group"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
       <div class="form-group"><label>Senha</label><input type="password" id="login-pwd" placeholder="••••••••"></div>
-      <button class="btn btn-primary btn-full" id="btn-login" onclick="doLogin()">Entrar</button>
-      <p style="text-align:center;margin-top:12px;font-size:13px">
-        <a href="#" onclick="showForgotPassword();return false;" style="color:var(--accent);font-weight:600">Esqueci minha senha</a>
-      </p>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">Entrar</button>
+      <p style="text-align:center;margin-top:12px"><a href="#" onclick="showForgotPassword();return false;" style="color:var(--accent);font-weight:600">Esqueci minha senha</a></p>
     </div>
     <div id="forgot-form" style="display:none">
-      <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Digite seu e-mail e enviaremos um link para redefinir sua senha.</p>
+      <p style="margin-bottom:16px">Digite seu e-mail para recuperar a senha.</p>
       <div class="form-group"><label>E-mail</label><input type="email" id="forgot-email" placeholder="seu@email.com"></div>
-      <button class="btn btn-primary btn-full" id="btn-forgot" onclick="doForgotPassword()">📧 Enviar link de recuperação</button>
-      <p style="text-align:center;margin-top:12px;font-size:13px"><a href="#" onclick="showLoginForm();return false;" style="color:var(--accent);font-weight:600">← Voltar para o login</a></p>
+      <button class="btn btn-primary btn-full" onclick="doForgotPassword()">📧 Enviar link</button>
+      <p style="text-align:center;margin-top:12px"><a href="#" onclick="showLoginForm();return false;" style="color:var(--accent)">← Voltar</a></p>
     </div>
     <div id="register-form" style="display:none">
       <div class="form-row">
-        <div class="form-group"><label>Nome Completo</label><input type="text" id="reg-name" placeholder="João Silva"></div>
+        <div class="form-group"><label>Nome</label><input type="text" id="reg-name" placeholder="João Silva"></div>
         <div class="form-group"><label>Telefone</label><input type="text" id="reg-phone" placeholder="(44) 99999-9999"></div>
       </div>
       <div class="form-group"><label>E-mail</label><input type="email" id="reg-email" placeholder="seu@email.com"></div>
       <div class="form-group"><label>Senha</label><input type="password" id="reg-pwd" placeholder="Mínimo 6 caracteres"></div>
       <div class="form-group">
-        <label>Área de Atuação</label>
+        <label>Área</label>
         <select id="reg-area">
           <option value="">Selecione...</option>
           <option>Barbearia</option><option>Salão de Beleza</option><option>Estética</option>
-          <option>Odontologia</option><option>Medicina</option><option>Fisioterapia</option>
-          <option>Psicologia</option><option>Personal Trainer</option><option>Nutrição</option>
-          <option>Mecânica Automotiva</option><option>Advocacia</option><option>Outro</option>
+          <option>Odontologia</option><option>Medicina</option><option>Personal Trainer</option>
         </select>
       </div>
-      <button class="btn btn-primary btn-full" id="btn-register" onclick="doRegister()">Criar Conta Grátis</button>
-      <p style="text-align:center;margin-top:12px;font-size:11px;color:var(--text2)">7 dias grátis, sem cartão de crédito</p>
+      <button class="btn btn-primary btn-full" onclick="doRegister()">Criar Conta Grátis</button>
     </div>
   </div>
 </div>
 
-<!-- BOOKING PUBLIC PAGE -->
+<!-- BOOKING SCREEN -->
 <div id="booking-screen">
   <div class="booking-header">
-    <h2 id="booking-biz-name" style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800">AgendaPro</h2>
+    <h2 id="booking-biz-name" style="font-size:26px;font-weight:800">AgendaPro</h2>
     <p id="booking-biz-desc" style="opacity:0.75;margin-top:6px"></p>
-    <div id="booking-biz-info" style="margin-top:10px;font-size:13px;opacity:0.65"></div>
   </div>
   <div class="booking-content">
     <div id="booking-step-1">
-      <div class="card" style="margin-bottom:16px"><div class="card-title">📋 Escolha o Profissional</div><div id="booking-professionals"></div></div>
-      <div class="card" style="margin-bottom:16px;display:none" id="booking-services-card"><div class="card-title">✂️ Escolha o Serviço</div><div id="booking-services"></div></div>
-      <div class="card" style="margin-bottom:16px;display:none" id="booking-date-card"><div class="card-title">📅 Escolha a Data</div><input type="date" id="booking-date" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"></div>
-      <div class="card" style="margin-bottom:16px;display:none" id="booking-slots-card"><div class="card-title">🕐 Horários Disponíveis</div><div class="time-slots" id="booking-time-slots"></div></div>
-      <div class="card" style="display:none" id="booking-client-card">
+      <div class="card"><div class="card-title">📋 Escolha o Profissional</div><div id="booking-professionals"></div></div>
+      <div class="card" style="margin-top:16px;display:none" id="booking-services-card"><div class="card-title">✂️ Escolha o Serviço</div><div id="booking-services"></div></div>
+      <div class="card" style="margin-top:16px;display:none" id="booking-date-card"><div class="card-title">📅 Escolha a Data</div><input type="date" id="booking-date" style="width:100%;padding:10px;border-radius:8px;border:1.5px solid var(--border)"></div>
+      <div class="card" style="margin-top:16px;display:none" id="booking-slots-card"><div class="card-title">🕐 Horários</div><div class="time-slots" id="booking-time-slots"></div></div>
+      <div class="card" style="margin-top:16px;display:none" id="booking-client-card">
         <div class="card-title">👤 Seus Dados</div>
-        <div class="form-group"><label>Nome Completo</label><input type="text" id="bk-client-name" placeholder="Seu nome"></div>
-        <div class="form-row"><div class="form-group"><label>E-mail</label><input type="email" id="bk-client-email" placeholder="seu@email.com"></div><div class="form-group"><label>Telefone</label><input type="text" id="bk-client-phone" placeholder="(44) 99999-9999"></div></div>
-        <div class="form-group"><label>Observações</label><textarea id="bk-notes" rows="2" placeholder="Alguma observação?"></textarea></div>
-        <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="confirmBooking()">✅ Confirmar Agendamento</button>
+        <div class="form-group"><label>Nome</label><input type="text" id="bk-client-name"></div>
+        <div class="form-row"><div class="form-group"><label>E-mail</label><input type="email" id="bk-client-email"></div><div class="form-group"><label>Telefone</label><input type="text" id="bk-client-phone"></div></div>
+        <button class="btn btn-primary btn-full" onclick="confirmBooking()">✅ Confirmar</button>
       </div>
     </div>
-    <div id="booking-success" style="display:none">
-      <div class="card" style="text-align:center;padding:40px">
-        <div style="font-size:56px;margin-bottom:16px">🎉</div>
-        <h2 style="font-family:'Syne',sans-serif;margin-bottom:10px">Agendado com Sucesso!</h2>
-        <p id="booking-confirm-text" style="color:var(--text2);line-height:1.7"></p>
-        <button class="btn btn-secondary" style="margin-top:20px" onclick="newBooking()">Fazer Outro Agendamento</button>
-      </div>
+    <div id="booking-success" style="display:none;text-align:center;padding:40px">
+      <div style="font-size:56px">🎉</div>
+      <h2>Agendado com Sucesso!</h2>
+      <p id="booking-confirm-text"></p>
+      <button class="btn btn-secondary" style="margin-top:20px" onclick="newBooking()">Novo Agendamento</button>
     </div>
   </div>
 </div>
@@ -320,12 +277,12 @@
   <div class="app-layout">
     <nav class="sidebar" id="sidebar">
       <div class="sidebar-logo">Agenda<span>Pro</span></div>
-      <button class="sidebar-close-btn" onclick="closeSidebar()">✕ Fechar menu</button>
+      <button class="sidebar-close-btn" onclick="closeSidebar()">✕ Fechar</button>
       <div class="sidebar-user">
         <div class="sidebar-avatar" id="sidebar-avatar">AP</div>
         <div class="sidebar-user-info">
           <div class="sidebar-user-name" id="sidebar-name">Usuário</div>
-          <div class="sidebar-user-plan" id="sidebar-plan">⏳ Carregando...</div>
+          <div class="sidebar-user-plan" id="sidebar-plan">Carregando...</div>
         </div>
       </div>
       <nav class="sidebar-nav" id="sidebar-nav"></nav>
@@ -341,8 +298,8 @@
           <div class="topbar-title" id="page-title">Dashboard</div>
         </div>
         <div class="topbar-actions">
-          <button class="btn btn-primary btn-sm" id="topbar-cta" onclick="openModal('new-appointment')">+ Novo Agendamento</button>
-          <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;cursor:pointer" id="topbar-avatar">AP</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('new-appointment')">+ Novo</button>
+          <div class="sidebar-avatar" style="width:32px;height:32px;font-size:12px" id="topbar-avatar">AP</div>
         </div>
       </div>
       <div class="page-content">
@@ -363,35 +320,33 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  API CLIENT - Chama o proxy Vercel (NÃO chama Turso diretamente)
+//  CLOUDFLARE WORKER CONFIG
 // ═══════════════════════════════════════════════════════════════
 
+const WORKER_URL = 'https://twilight-credit-c9fd.centralmendes.workers.dev';
+
+// Função para chamar o Worker
 async function apiCall(action, method = 'GET', data = null, userId = null, id = null) {
-    let url = `/api/turso?action=${action}`;
+    let url = `${WORKER_URL}?action=${action}`;
     if (userId) url += `&userId=${userId}`;
     if (id) url += `&id=${id}`;
     
-    const options = {
-        method: method,
-        headers: { 'Content-Type': 'application/json' }
-    };
-    
+    const options = { method, headers: { 'Content-Type': 'application/json' } };
     if (data && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
         options.body = JSON.stringify(data);
     }
     
+    console.log(`📡 ${action}`, { url, method });
+    
     const response = await fetch(url, options);
     const result = await response.json();
     
-    if (!response.ok) {
-        throw new Error(result.error || 'Erro na requisição');
-    }
-    
+    if (!response.ok) throw new Error(result.error || 'Erro');
     return result;
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  DATABASE LAYER - Usando o proxy
+//  DATABASE LAYER
 // ═══════════════════════════════════════════════════════════════
 
 const DB = {
@@ -407,29 +362,34 @@ const DB = {
         });
         return await this.getUser(user.id);
     },
-
+    
     async getUser(userId) {
         const result = await apiCall('user', 'GET', null, userId);
         if (!result) return null;
         if (typeof result.business === 'string') {
             try { result.business = JSON.parse(result.business); } catch { result.business = {}; }
-        } else if (!result.business) result.business = {};
+        }
         if (typeof result.subscription === 'string') {
             try { result.subscription = JSON.parse(result.subscription); } catch { result.subscription = {}; }
-        } else if (!result.subscription) result.subscription = {};
+        }
         result.setup_done = !!result.setup_done;
         return result;
     },
     
     async saveUser(user) {
         await apiCall('user', 'POST', {
-            id: user.id, name: user.name, email: user.email, phone: user.phone || '',
-            area: user.area || '', business: user.business || {}, setup_done: user.setup_done ? 1 : 0,
+            id: user.id, name: user.name, email: user.email,
+            phone: user.phone || '', area: user.area || '',
+            business: user.business || {}, setup_done: user.setup_done ? 1 : 0,
             subscription: user.subscription || {}
         });
         return await this.getUser(user.id);
     },
-
+    
+    async getAllUsers() {
+        return await apiCall('all-users') || [];
+    },
+    
     async getAppointments(userId) {
         return await apiCall('appointments', 'GET', null, userId) || [];
     },
@@ -443,10 +403,6 @@ const DB = {
         await apiCall('appointment', 'PUT', { ...updates, id });
     },
     
-    async deleteAppointment(id) {
-        await apiCall('appointment', 'PUT', { id, status: 'cancelado' });
-    },
-
     async getClients(userId) {
         return await apiCall('clients', 'GET', null, userId) || [];
     },
@@ -455,7 +411,7 @@ const DB = {
         await apiCall('client', 'POST', client);
         return client;
     },
-
+    
     async getProfessionals(userId) {
         const result = await apiCall('professionals', 'GET', null, userId) || [];
         return result.map(p => ({ ...p, active: !!p.active }));
@@ -469,7 +425,7 @@ const DB = {
     async updateProfessional(id, updates) {
         await apiCall('professional', 'PUT', { ...updates, id });
     },
-
+    
     async getServices(userId) {
         const result = await apiCall('services', 'GET', null, userId) || [];
         return result.map(s => ({ ...s, active: !!s.active }));
@@ -483,7 +439,7 @@ const DB = {
     async deleteService(id) {
         await apiCall('service', 'DELETE', { id });
     },
-
+    
     async getFolgas(userId) {
         return await apiCall('folgas', 'GET', null, userId) || [];
     },
@@ -494,20 +450,6 @@ const DB = {
     
     async removeFolga(userId, date) {
         await apiCall('folga', 'DELETE', { user_id: userId, date });
-    },
-
-    async getAllUsers() {
-        const result = await apiCall('all-users', 'GET') || [];
-        return result.map(u => {
-            if (typeof u.business === 'string') {
-                try { u.business = JSON.parse(u.business); } catch { u.business = {}; }
-            }
-            if (typeof u.subscription === 'string') {
-                try { u.subscription = JSON.parse(u.subscription); } catch { u.subscription = {}; }
-            }
-            u.setup_done = !!u.setup_done;
-            return u;
-        });
     },
     
     async updateUserSubscription(userId, subscription) {
@@ -530,35 +472,17 @@ function toast(msg, type = 'success', duration = 3500) {
     setTimeout(() => el.remove(), duration);
 }
 
-function initials(name = '') {
-    return name.split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'AP';
-}
+function initials(name) { return name ? name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : 'AP'; }
+function formatDate(d) { if(!d)return''; return new Date(d+'T12:00:00').toLocaleDateString('pt-BR'); }
+function formatCurrency(v) { return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 
-function formatDate(d) {
-    if (!d) return '';
-    return new Date(d + 'T12:00:00').toLocaleDateString('pt-BR');
-}
-
-function formatCurrency(v) {
-    return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function showLoading(msg = 'Carregando...') {
+function showLoading(msg) {
     let el = document.getElementById('loading-overlay');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'loading-overlay';
-        el.className = 'loading-overlay';
-        document.body.appendChild(el);
-    }
-    el.innerHTML = `<div class="spinner"></div><p style="font-family:'Syne',sans-serif;font-weight:600;color:var(--text2)">${msg}</p>`;
+    if (!el) { el = document.createElement('div'); el.id = 'loading-overlay'; el.className = 'loading-overlay'; document.body.appendChild(el); }
+    el.innerHTML = `<div class="spinner"></div><p>${msg || 'Carregando...'}</p>`;
     el.style.display = 'flex';
 }
-
-function hideLoading() {
-    const el = document.getElementById('loading-overlay');
-    if (el) el.style.display = 'none';
-}
+function hideLoading() { const el = document.getElementById('loading-overlay'); if(el) el.style.display = 'none'; }
 
 function statusBadge(s) {
     const map = { agendado: 'badge-info', compareceu: 'badge-success', 'nao-compareceu': 'badge-danger', cancelado: 'badge-gray' };
@@ -566,8 +490,10 @@ function statusBadge(s) {
     return `<span class="badge ${map[s] || 'badge-gray'}">${labels[s] || s}</span>`;
 }
 
+function closeSidebar() { document.getElementById('sidebar')?.classList.remove('open'); }
+
 // ═══════════════════════════════════════════════════════════════
-//  AUTH
+//  AUTH & APP STATE
 // ═══════════════════════════════════════════════════════════════
 
 let currentUser = null;
@@ -576,143 +502,10 @@ let currentPage = 'setup';
 let bookingState = {};
 
 function switchAuthTab(tab) {
-    document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register')));
-    document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
-    document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+    document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&tab==='login')||(i===1&&tab==='register')));
+    document.getElementById('login-form').style.display = tab==='login'?'block':'none';
+    document.getElementById('register-form').style.display = tab==='register'?'block':'none';
 }
-
-async function doLogin() {
-    const email = document.getElementById('login-email').value.trim();
-    const pwd = document.getElementById('login-pwd').value;
-    if (!email || !pwd) { toast('Preencha todos os campos', 'error'); return; }
-
-    const btn = document.getElementById('btn-login');
-    btn.disabled = true; btn.textContent = '⏳ Entrando...';
-
-    try {
-        if (email === 'admin@agendapro.com' && pwd === 'admin123') {
-            isAdmin = true;
-            currentUser = { id: 'admin', name: 'Administrador', email: 'admin@agendapro.com' };
-            await initApp(); return;
-        }
-        const userData = await DB.loginUser(email, pwd);
-        if (!userData) throw new Error('E-mail ou senha incorretos');
-        currentUser = userData;
-        isAdmin = false;
-        await initApp();
-    } catch (e) {
-        toast(e.message || 'Credenciais inválidas', 'error');
-    } finally {
-        btn.disabled = false; btn.textContent = 'Entrar';
-    }
-}
-
-async function doRegister() {
-    const name = document.getElementById('reg-name').value.trim();
-    const phone = document.getElementById('reg-phone').value.trim();
-    const email = document.getElementById('reg-email').value.trim();
-    const pwd = document.getElementById('reg-pwd').value;
-    const area = document.getElementById('reg-area').value;
-    
-    if (!name || !email || !pwd || !area) { toast('Preencha todos os campos', 'error'); return; }
-    if (pwd.length < 6) { toast('Senha mínimo 6 caracteres', 'error'); return; }
-
-    const btn = document.getElementById('btn-register');
-    btn.disabled = true; btn.textContent = '⏳ Criando conta...';
-
-    try {
-        const newUser = { id: uid(), name, phone, email, password: pwd, area };
-        await DB.registerUser(newUser);
-        currentUser = await DB.getUser(newUser.id);
-        isAdmin = false;
-        await initApp();
-    } catch (e) {
-        toast(e.message || 'Erro ao criar conta', 'error');
-    } finally {
-        btn.disabled = false; btn.textContent = 'Criar Conta Grátis';
-    }
-}
-
-async function doLogout() {
-    currentUser = null;
-    isAdmin = false;
-    localStorage.removeItem('current_user_id');
-    document.getElementById('app').style.display = 'none';
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('booking-screen').style.display = 'none';
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  APP INIT
-// ═══════════════════════════════════════════════════════════════
-
-async function initApp() {
-    showLoading('Carregando...');
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('booking-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    localStorage.setItem('current_user_id', currentUser.id);
-
-    const av = initials(currentUser.name);
-    document.getElementById('sidebar-avatar').textContent = av;
-    document.getElementById('sidebar-name').textContent = currentUser.name;
-    document.getElementById('topbar-avatar').textContent = av;
-
-    if (isAdmin) {
-        document.getElementById('sidebar-plan').textContent = '🛡️ Administrador';
-        document.getElementById('topbar-cta').style.display = 'none';
-        buildAdminNav();
-        hideLoading();
-        await navigateTo('admin');
-    } else {
-        const sub = currentUser.subscription || {};
-        document.getElementById('sidebar-plan').textContent =
-            sub.status === 'active' ? '✨ Pro Ativo' :
-            sub.status === 'trial' ? '⏳ Trial Grátis' : '⚠️ Expirado';
-        buildUserNav();
-        hideLoading();
-        await navigateTo(currentUser.setup_done ? 'dashboard' : 'setup');
-    }
-}
-
-function buildUserNav() {
-    const items = [
-        { page: 'dashboard', icon: '📊', label: 'Dashboard' },
-        { page: 'agenda', icon: '📅', label: 'Agenda' },
-        { page: 'clientes', icon: '👥', label: 'Clientes' },
-        { page: 'profissionais', icon: '👔', label: 'Profissionais' },
-        { page: 'config', icon: '⚙️', label: 'Configurações' },
-        { page: 'assinatura', icon: '💳', label: 'Assinatura' },
-    ];
-    document.getElementById('sidebar-nav').innerHTML = `<div class="nav-section">Menu</div>` + items.map(i => `<div class="nav-item" id="nav-${i.page}" onclick="navigateTo('${i.page}')"><span class="nav-icon">${i.icon}</span>${i.label}</div>`).join('');
-}
-
-function buildAdminNav() {
-    document.getElementById('sidebar-nav').innerHTML = `<div class="nav-section">Administração</div><div class="nav-item" id="nav-admin" onclick="navigateTo('admin')"><span class="nav-icon">🛡️</span>Painel Admin</div>`;
-}
-
-function closeSidebar() {
-    document.getElementById('sidebar')?.classList.remove('open');
-}
-
-async function navigateTo(page) {
-    currentPage = page;
-    closeSidebar();
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById(`page-${page}`)?.classList.add('active');
-    document.getElementById(`nav-${page}`)?.classList.add('active');
-    
-    const titles = { setup: '⚙️ Primeiras Configurações', dashboard: '📊 Dashboard', agenda: '📅 Agenda', clientes: '👥 Clientes', profissionais: '👔 Profissionais', config: '⚙️ Configurações', assinatura: '💳 Assinatura', admin: '🛡️ Painel Admin' };
-    document.getElementById('page-title').textContent = titles[page] || page;
-    
-    const renders = { setup: renderSetup, dashboard: renderDashboard, agenda: renderAgenda, clientes: renderClientes, profissionais: renderProfissionais, config: renderConfig, assinatura: renderAssinatura, admin: renderAdmin };
-    if (renders[page]) await renders[page]();
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  RECUPERAÇÃO DE SENHA
-// ═══════════════════════════════════════════════════════════════
 
 function showForgotPassword() {
     document.getElementById('login-form').style.display = 'none';
@@ -728,53 +521,121 @@ function showLoginForm() {
 async function doForgotPassword() {
     const email = document.getElementById('forgot-email').value.trim();
     if (!email) { toast('Digite seu e-mail', 'error'); return; }
-    
-    const users = await DB.getAllUsers();
-    const userExists = users.some(u => u.email === email);
-    
-    if (!userExists) {
-        toast('E-mail não encontrado no sistema', 'error');
-        return;
-    }
-    
-    toast('🔐 Link de recuperação seria enviado para ' + email + '. Funcionalidade em desenvolvimento.', 'info', 5000);
-    setTimeout(() => { toast('📞 Entre em contato com o suporte para redefinir sua senha.', 'warning', 8000); }, 3000);
+    toast('Função em desenvolvimento. Contate o suporte.', 'warning');
     showLoginForm();
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  INICIALIZAÇÃO PRINCIPAL
-// ═══════════════════════════════════════════════════════════════
+async function doLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const pwd = document.getElementById('login-pwd').value;
+    if (!email || !pwd) { toast('Preencha todos os campos', 'error'); return; }
+    
+    const btn = event.target;
+    btn.disabled = true; btn.textContent = '⏳...';
+    
+    try {
+        if (email === 'admin@agendapro.com' && pwd === 'admin123') {
+            isAdmin = true;
+            currentUser = { id: 'admin', name: 'Administrador', email: 'admin@agendapro.com' };
+            await initApp(); return;
+        }
+        const userData = await DB.loginUser(email, pwd);
+        if (!userData) throw new Error('Credenciais inválidas');
+        currentUser = userData;
+        isAdmin = false;
+        await initApp();
+    } catch(e) { toast(e.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Entrar'; }
+}
 
-(async function init() {
-    console.log('🚀 Iniciando aplicação...');
+async function doRegister() {
+    const name = document.getElementById('reg-name').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pwd = document.getElementById('reg-pwd').value;
+    const area = document.getElementById('reg-area').value;
     
-    const params = new URLSearchParams(window.location.search);
-    const bookingSlug = params.get('booking');
+    if (!name || !email || !pwd || !area) { toast('Preencha todos os campos', 'error'); return; }
+    if (pwd.length < 6) { toast('Senha mínimo 6 caracteres', 'error'); return; }
     
-    if (bookingSlug) {
-        try {
-            const users = await DB.getAllUsers();
-            const found = users.find(u => {
-                try {
-                    const biz = typeof u.business === 'string' ? JSON.parse(u.business) : u.business;
-                    return biz?.slug === bookingSlug;
-                } catch { return false; }
-            });
-            if (found) { await loadBookingPage(found.id); return; }
-        } catch (e) { console.error('Erro ao carregar booking:', e); }
-    }
+    const btn = event.target;
+    btn.disabled = true; btn.textContent = '⏳...';
     
-    const savedId = localStorage.getItem('current_user_id');
-    if (savedId) {
-        try {
-            const userData = await DB.getUser(savedId);
-            if (userData) { currentUser = userData; await initApp(); return; }
-        } catch (e) { localStorage.removeItem('current_user_id'); }
-    }
-    
+    try {
+        const newUser = { id: uid(), name, phone, email, password: pwd, area };
+        await DB.registerUser(newUser);
+        currentUser = await DB.getUser(newUser.id);
+        isAdmin = false;
+        await initApp();
+    } catch(e) { toast(e.message || 'Erro ao criar conta', 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Criar Conta'; }
+}
+
+async function doLogout() {
+    currentUser = null; isAdmin = false;
+    localStorage.removeItem('current_user_id');
+    document.getElementById('app').style.display = 'none';
     document.getElementById('auth-screen').style.display = 'flex';
-})();
+    document.getElementById('booking-screen').style.display = 'none';
+}
+
+async function initApp() {
+    showLoading('Carregando...');
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('booking-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    localStorage.setItem('current_user_id', currentUser.id);
+    
+    const av = initials(currentUser.name);
+    document.getElementById('sidebar-avatar').textContent = av;
+    document.getElementById('sidebar-name').textContent = currentUser.name;
+    document.getElementById('topbar-avatar').textContent = av;
+    
+    if (isAdmin) {
+        document.getElementById('sidebar-plan').textContent = '🛡️ Admin';
+        document.getElementById('topbar-cta').style.display = 'none';
+        buildAdminNav();
+        hideLoading();
+        await navigateTo('admin');
+    } else {
+        const sub = currentUser.subscription || {};
+        document.getElementById('sidebar-plan').textContent = sub.status === 'active' ? '✨ Pro' : sub.status === 'trial' ? '⏳ Trial' : '⚠️ Expirado';
+        buildUserNav();
+        hideLoading();
+        await navigateTo(currentUser.setup_done ? 'dashboard' : 'setup');
+    }
+}
+
+function buildUserNav() {
+    const items = [
+        {page:'dashboard',icon:'📊',label:'Dashboard'},
+        {page:'agenda',icon:'📅',label:'Agenda'},
+        {page:'clientes',icon:'👥',label:'Clientes'},
+        {page:'profissionais',icon:'👔',label:'Profissionais'},
+        {page:'config',icon:'⚙️',label:'Configurações'},
+        {page:'assinatura',icon:'💳',label:'Assinatura'},
+    ];
+    document.getElementById('sidebar-nav').innerHTML = `<div class="nav-section">Menu</div>` + items.map(i => `<div class="nav-item" id="nav-${i.page}" onclick="navigateTo('${i.page}')"><span class="nav-icon">${i.icon}</span>${i.label}</div>`).join('');
+}
+
+function buildAdminNav() {
+    document.getElementById('sidebar-nav').innerHTML = `<div class="nav-section">Admin</div><div class="nav-item" id="nav-admin" onclick="navigateTo('admin')"><span class="nav-icon">🛡️</span>Painel Admin</div>`;
+}
+
+async function navigateTo(page) {
+    currentPage = page;
+    closeSidebar();
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById(`page-${page}`)?.classList.add('active');
+    document.getElementById(`nav-${page}`)?.classList.add('active');
+    
+    const titles = {setup:'Configuração',dashboard:'Dashboard',agenda:'Agenda',clientes:'Clientes',profissionais:'Profissionais',config:'Configurações',assinatura:'Assinatura',admin:'Admin'};
+    document.getElementById('page-title').textContent = titles[page] || page;
+    
+    const renders = {setup:renderSetup,dashboard:renderDashboard,agenda:renderAgenda,clientes:renderClientes,profissionais:renderProfissionais,config:renderConfig,assinatura:renderAssinatura,admin:renderAdmin};
+    if (renders[page]) await renders[page]();
+}
 
 // ═══════════════════════════════════════════════════════════════
 //  SETUP
@@ -784,220 +645,133 @@ let setupStep = 1;
 let selectedDays = [1,2,3,4,5,6];
 
 async function renderSetup() {
-  document.getElementById('page-setup').innerHTML = `
-  <div style="max-width:640px;margin:0 auto">
-    <div class="card" style="margin-bottom:20px;padding:28px">
-      <h2 style="font-family:'Syne',sans-serif;margin-bottom:6px">Bem-vindo ao AgendaPro! 🎉</h2>
-      <p style="color:var(--text2)">Configure seu negócio para começar a receber agendamentos</p>
-    </div>
-    <div class="setup-steps">
-      ${[1,2,3,4].map(i=>`<div class="setup-step" id="step-tab-${i}">${i}. ${['Negócio','Endereço','Horários','Link'][i-1]}</div>`).join('')}
-    </div>
-    <div id="setup-content"></div>
-  </div>`;
-  renderSetupStep(1);
+    document.getElementById('page-setup').innerHTML = `
+    <div style="max-width:640px;margin:0 auto">
+        <div class="card" style="margin-bottom:20px"><h2 style="font-family:Syne">Bem-vindo! 🎉</h2><p>Configure seu negócio</p></div>
+        <div class="setup-steps">${[1,2,3,4].map(i=>`<div class="setup-step" id="step-tab-${i}">${i}. ${['Negócio','Endereço','Horários','Link'][i-1]}</div>`).join('')}</div>
+        <div id="setup-content"></div>
+    </div>`;
+    renderSetupStep(1);
 }
 
 function renderSetupStep(step) {
-  setupStep = step;
-  for(let i=1;i<=4;i++) { const el=document.getElementById(`step-tab-${i}`); if(el) el.className='setup-step'+(i===step?' active':i<step?' done':''); }
-  const c = document.getElementById('setup-content');
-  const biz = currentUser.business || {};
-
-  if (step===1) {
-    c.innerHTML = `<div class="card">
-      <div class="card-title">🏢 Informações do Negócio</div>
-      <div class="form-group"><label>Nome do Negócio</label><input id="s-biz-name" value="${biz.name||''}" placeholder="Ex: Barbearia do João"></div>
-      <div class="form-group"><label>Área de Atuação</label>
-        <select id="s-biz-area">${['Barbearia','Salão de Beleza','Estética','Odontologia','Medicina','Fisioterapia','Psicologia','Personal Trainer','Nutrição','Mecânica Automotiva','Advocacia','Outro'].map(a=>`<option ${(biz.area||currentUser.area)===a?'selected':''}>${a}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Descrição</label><textarea id="s-biz-desc" rows="3">${biz.desc||''}</textarea></div>
-      <div class="form-row">
-        <div class="form-group"><label>Telefone</label><input id="s-biz-phone" value="${biz.phone||currentUser.phone||''}"></div>
-        <div class="form-group"><label>E-mail de Contato</label><input id="s-biz-email" value="${biz.email||currentUser.email||''}"></div>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:20px">
-        <button class="btn btn-primary" onclick="saveSetupStep(1)">Próximo →</button>
-      </div>
-    </div>`;
-  } else if (step===2) {
-    c.innerHTML = `<div class="card">
-      <div class="card-title">📍 Endereço</div>
-      <div class="form-row">
-        <div class="form-group"><label>Rua / Av.</label><input id="s-addr" value="${biz.address||''}" placeholder="Rua das Flores"></div>
-        <div class="form-group"><label>Número</label><input id="s-num" value="${biz.number||''}" placeholder="123"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Bairro</label><input id="s-bairro" value="${biz.neighborhood||''}" placeholder="Centro"></div>
-        <div class="form-group"><label>Cidade</label><input id="s-city" value="${biz.city||''}" placeholder="Maringá"></div>
-      </div>
-      <div class="form-group"><label>UF</label>
-        <select id="s-uf">${['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(u=>`<option ${biz.uf===u?'selected':''}>${u}</option>`).join('')}</select></div>
-      <div style="display:flex;justify-content:space-between;margin-top:20px">
-        <button class="btn btn-secondary" onclick="renderSetupStep(1)">← Voltar</button>
-        <button class="btn btn-primary" onclick="saveSetupStep(2)">Próximo →</button>
-      </div>
-    </div>`;
-  } else if (step===3) {
-    const wh = biz.working_hours||{start:'08:00',end:'18:00',interval:30};
-    const days = biz.days||[1,2,3,4,5,6];
-    selectedDays = [...days];
-    c.innerHTML = `<div class="card">
-      <div class="card-title">🕐 Horários de Atendimento</div>
-      <div class="form-row">
-        <div class="form-group"><label>Início</label><input type="time" id="s-start" value="${wh.start}"></div>
-        <div class="form-group"><label>Término</label><input type="time" id="s-end" value="${wh.end}"></div>
-      </div>
-      <div class="form-group"><label>Intervalo (min)</label>
-        <select id="s-interval">${[15,20,30,45,60].map(v=>`<option value="${v}" ${wh.interval==v?'selected':''}>${v} min</option>`).join('')}</select></div>
-      <div class="form-group"><label>Dias de Atendimento</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-          ${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>`<div class="chip ${days.includes(i)?'selected':''}" onclick="toggleDay(${i},this)">${d}</div>`).join('')}
-        </div></div>
-      <div style="display:flex;justify-content:space-between;margin-top:20px">
-        <button class="btn btn-secondary" onclick="renderSetupStep(2)">← Voltar</button>
-        <button class="btn btn-primary" onclick="saveSetupStep(3)">Próximo →</button>
-      </div>
-    </div>`;
-  } else if (step===4) {
-    const slug = biz.slug||(currentUser.name||'').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-    c.innerHTML = `<div class="card">
-      <div class="card-title">🔗 Seu Link de Agendamento</div>
-      <div class="form-group"><label>Slug (nome no link)</label><input id="s-slug" value="${slug}" oninput="document.getElementById('slug-preview').textContent='https://agenda-seven-ebon.vercel.app/?booking='+this.value"></div>
-      <div class="link-box" style="margin-bottom:20px">
-        <code id="slug-preview">https://agenda-seven-ebon.vercel.app/?booking=${slug}</code>
-        <button class="btn btn-sm btn-secondary" onclick="copyLink()">📋 Copiar</button>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:20px">
-        <button class="btn btn-secondary" onclick="renderSetupStep(3)">← Voltar</button>
-        <button class="btn btn-primary btn-success" onclick="saveSetupStep(4)">✅ Concluir</button>
-      </div>
-    </div>`;
-  }
+    setupStep = step;
+    for(let i=1;i<=4;i++) { const el=document.getElementById(`step-tab-${i}`); if(el) el.className='setup-step'+(i===step?' active':i<step?' done':''); }
+    const c = document.getElementById('setup-content');
+    const biz = currentUser.business || {};
+    
+    if (step===1) {
+        c.innerHTML = `<div class="card"><div class="card-title">🏢 Negócio</div>
+            <div class="form-group"><label>Nome</label><input id="s-biz-name" value="${biz.name||''}"></div>
+            <div class="form-group"><label>Área</label><select id="s-biz-area">${['Barbearia','Salão','Estética','Odontologia'].map(a=>`<option ${biz.area===a?'selected':''}>${a}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Descrição</label><textarea id="s-biz-desc" rows="3">${biz.desc||''}</textarea></div>
+            <div class="form-row"><div class="form-group"><label>Telefone</label><input id="s-biz-phone" value="${biz.phone||''}"></div><div class="form-group"><label>E-mail</label><input id="s-biz-email" value="${biz.email||''}"></div></div>
+            <button class="btn btn-primary" onclick="saveSetupStep(1)">Próximo →</button>
+        </div>`;
+    } else if (step===2) {
+        c.innerHTML = `<div class="card"><div class="card-title">📍 Endereço</div>
+            <div class="form-row"><div class="form-group"><label>Rua</label><input id="s-addr" value="${biz.address||''}"></div><div class="form-group"><label>Número</label><input id="s-num" value="${biz.number||''}"></div></div>
+            <div class="form-row"><div class="form-group"><label>Bairro</label><input id="s-bairro" value="${biz.neighborhood||''}"></div><div class="form-group"><label>Cidade</label><input id="s-city" value="${biz.city||''}"></div></div>
+            <div style="display:flex;gap:10px"><button class="btn btn-secondary" onclick="renderSetupStep(1)">←</button><button class="btn btn-primary" onclick="saveSetupStep(2)">Próximo →</button></div>
+        </div>`;
+    } else if (step===3) {
+        const wh = biz.working_hours||{start:'08:00',end:'18:00',interval:30};
+        const days = biz.days||[1,2,3,4,5,6];
+        selectedDays = [...days];
+        c.innerHTML = `<div class="card"><div class="card-title">🕐 Horários</div>
+            <div class="form-row"><div class="form-group"><label>Início</label><input type="time" id="s-start" value="${wh.start}"></div><div class="form-group"><label>Término</label><input type="time" id="s-end" value="${wh.end}"></div></div>
+            <div class="form-group"><label>Intervalo</label><select id="s-interval">${[15,20,30,45,60].map(v=>`<option ${wh.interval==v?'selected':''}>${v}min</option>`).join('')}</select></div>
+            <div class="form-group"><label>Dias</label><div style="display:flex;gap:8px;flex-wrap:wrap">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>`<div class="chip ${days.includes(i)?'selected':''}" onclick="toggleDay(${i},this)">${d}</div>`).join('')}</div></div>
+            <div style="display:flex;gap:10px"><button class="btn btn-secondary" onclick="renderSetupStep(2)">←</button><button class="btn btn-primary" onclick="saveSetupStep(3)">Próximo →</button></div>
+        </div>`;
+    } else if (step===4) {
+        const slug = biz.slug||currentUser.name?.toLowerCase().replace(/\s+/g,'-')||'meu-negocio';
+        c.innerHTML = `<div class="card"><div class="card-title">🔗 Seu Link</div>
+            <div class="form-group"><label>Slug</label><input id="s-slug" value="${slug}" oninput="document.getElementById('slug-preview').textContent='https://agenda-seven-ebon.vercel.app/?booking='+this.value"></div>
+            <div class="link-box"><code id="slug-preview">https://agenda-seven-ebon.vercel.app/?booking=${slug}</code><button class="btn btn-sm btn-secondary" onclick="copyLink()">📋</button></div>
+            <div style="display:flex;gap:10px"><button class="btn btn-secondary" onclick="renderSetupStep(3)">←</button><button class="btn btn-primary btn-success" onclick="saveSetupStep(4)">✅ Concluir</button></div>
+        </div>`;
+    }
 }
 
-function toggleDay(i, el) {
-  el.classList.toggle('selected');
-  if (selectedDays.includes(i)) selectedDays = selectedDays.filter(d=>d!==i);
-  else selectedDays.push(i);
-}
+function toggleDay(i, el) { el.classList.toggle('selected'); if(selectedDays.includes(i)) selectedDays=selectedDays.filter(d=>d!==i); else selectedDays.push(i); }
 
 async function saveSetupStep(step) {
     const biz = currentUser.business || {};
-    
-    if (step === 1) {
+    if (step===1) {
         biz.name = document.getElementById('s-biz-name').value.trim();
         biz.area = document.getElementById('s-biz-area').value;
         biz.desc = document.getElementById('s-biz-desc').value.trim();
         biz.phone = document.getElementById('s-biz-phone').value.trim();
         biz.email = document.getElementById('s-biz-email').value.trim();
-        if (!biz.name) { toast('Informe o nome do negócio','error'); return; }
-    } else if (step === 2) {
+        if (!biz.name) { toast('Informe o nome', 'error'); return; }
+    } else if (step===2) {
         biz.address = document.getElementById('s-addr').value.trim();
         biz.number = document.getElementById('s-num').value.trim();
         biz.neighborhood = document.getElementById('s-bairro').value.trim();
         biz.city = document.getElementById('s-city').value.trim();
-        biz.uf = document.getElementById('s-uf').value;
-    } else if (step === 3) {
+    } else if (step===3) {
         biz.working_hours = { start:document.getElementById('s-start').value, end:document.getElementById('s-end').value, interval:parseInt(document.getElementById('s-interval').value) };
         biz.days = [...selectedDays];
-    } else if (step === 4) {
-        biz.slug = document.getElementById('s-slug').value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-        if (!biz.slug) { toast('Defina um slug','error'); return; }
+    } else if (step===4) {
+        biz.slug = document.getElementById('s-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
+        if (!biz.slug) { toast('Defina um slug', 'error'); return; }
         currentUser.setup_done = true;
     }
     currentUser.business = biz;
-    
     try {
-        await DB.saveUser({ id: currentUser.id, name: currentUser.name, email: currentUser.email, business: biz, setup_done: currentUser.setup_done });
+        await DB.saveUser({ id:currentUser.id, name:currentUser.name, email:currentUser.email, business:biz, setup_done:currentUser.setup_done });
         if (step < 4) renderSetupStep(step+1);
-        else { toast('Configuração concluída! Bem-vindo!'); await navigateTo('dashboard'); }
-    } catch(e) { toast('Erro ao salvar: '+e.message,'error'); }
+        else { toast('Configuração concluída!'); await navigateTo('dashboard'); }
+    } catch(e) { toast('Erro: '+e.message, 'error'); }
 }
 
-function copyLink() {
-    const slug = currentUser.business?.slug||'';
-    navigator.clipboard.writeText('https://agenda-seven-ebon.vercel.app/?booking='+slug).then(()=>toast('Link copiado!')).catch(()=>{});
-}
+function copyLink() { navigator.clipboard.writeText(`https://agenda-seven-ebon.vercel.app/?booking=${currentUser.business?.slug||''}`).then(()=>toast('Link copiado!')); }
 
 // ═══════════════════════════════════════════════════════════════
 //  DASHBOARD
 // ═══════════════════════════════════════════════════════════════
 
 async function renderDashboard() {
-  const pg = document.getElementById('page-dashboard');
-  pg.innerHTML = `<div class="empty-state"><div class="spinner" style="margin:0 auto"></div><p>Carregando...</p></div>`;
-
-  const appts = await DB.getAppointments(currentUser.id);
-  const today = new Date().toISOString().split('T')[0];
-  const todayAppts = appts.filter(a=>a.date===today);
-  const monthStr = new Date().toISOString().slice(0,7);
-  const totalMonth = appts.filter(a=>a.date?.startsWith(monthStr) && a.status==='compareceu');
-  const revenue = totalMonth.reduce((s,a)=>s+(a.price||0),0);
-  const biz = currentUser.business||{};
-
-  pg.innerHTML = `
-  <div class="stat-grid">
-    <div class="stat-card accent"><div class="stat-label">Hoje</div><div class="stat-value">${todayAppts.length}</div><div class="stat-sub">agendamentos</div></div>
-    <div class="stat-card success"><div class="stat-label">Faturamento Mês</div><div class="stat-value">${formatCurrency(revenue)}</div><div class="stat-sub">realizados</div></div>
-    <div class="stat-card warning"><div class="stat-label">Aguardando Hoje</div><div class="stat-value">${todayAppts.filter(a=>a.status==='agendado').length}</div><div class="stat-sub">confirmados</div></div>
-    <div class="stat-card info"><div class="stat-label">Total do Mês</div><div class="stat-value">${totalMonth.length}</div><div class="stat-sub">atendimentos</div></div>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
-    <div class="card">
-      <div class="card-title">📅 Agenda de Hoje</div>
-      ${todayAppts.length===0?'<div class="empty-state"><div class="empty-icon">📭</div><h3>Sem agendamentos</h3></div>':
-      `<div class="table-wrap"><table><thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Status</th><th></th></tr></thead>
-      <tbody>${todayAppts.sort((a,b)=>a.time.localeCompare(b.time)).map(a=>`
-        <tr><td><strong>${a.time}</strong></td><td>${a.client_name}</td><td>${a.service_name}</td>
-        <td>${statusBadge(a.status)}</td><td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}')">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}')">✗</button>`:''}</td></tr>`).join('')}
-      </tbody></table></div>`}
+    const pg = document.getElementById('page-dashboard');
+    pg.innerHTML = `<div class="empty-state"><div class="spinner"></div></div>`;
+    
+    const appts = await DB.getAppointments(currentUser.id);
+    const today = new Date().toISOString().split('T')[0];
+    const todayAppts = appts.filter(a=>a.date===today);
+    const monthStr = new Date().toISOString().slice(0,7);
+    const totalMonth = appts.filter(a=>a.date?.startsWith(monthStr) && a.status==='compareceu');
+    const revenue = totalMonth.reduce((s,a)=>s+(a.price||0),0);
+    const biz = currentUser.business||{};
+    
+    pg.innerHTML = `
+    <div class="stat-grid">
+        <div class="stat-card accent"><div class="stat-label">Hoje</div><div class="stat-value">${todayAppts.length}</div></div>
+        <div class="stat-card success"><div class="stat-label">Faturamento Mês</div><div class="stat-value">${formatCurrency(revenue)}</div></div>
+        <div class="stat-card warning"><div class="stat-label">Hoje (agendados)</div><div class="stat-value">${todayAppts.filter(a=>a.status==='agendado').length}</div></div>
+        <div class="stat-card info"><div class="stat-label">Atendimentos Mês</div><div class="stat-value">${totalMonth.length}</div></div>
     </div>
-    <div class="card">
-      <div class="card-title">📈 Receita — Últimos 7 dias</div>
-      <canvas id="revenue-chart" height="200"></canvas>
+    <div class="card"><div class="card-title">📅 Agenda de Hoje</div>
+        ${todayAppts.length===0?'<div class="empty-state"><div class="empty-icon">📭</div><p>Sem agendamentos</p></div>':
+        `<div class="table-wrap"><table><thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Status</th><th></th></tr></thead>
+        <tbody>${todayAppts.sort((a,b)=>a.time.localeCompare(b.time)).map(a=>`
+            <tr><td><strong>${a.time}</strong></td><td>${a.client_name}</td><td>${a.service_name}</td>
+            <td>${statusBadge(a.status)}</td>
+            <td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}')">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}')">✗</button>`:''}</td></tr>
+        `).join('')}</tbody></table></div>`}
     </div>
-  </div>
-  <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
-    <div class="card">
-      <div class="card-title">🏆 Serviços Mais Agendados</div>
-      <canvas id="services-chart" height="160"></canvas>
-    </div>
-    <div class="card">
-      <div class="card-title">🔗 Seu Link</div>
-      <div class="link-box" style="margin-bottom:12px">
-        <code style="font-size:12px;word-break:break-all">https://agenda-seven-ebon.vercel.app/?booking=${biz.slug||'seu-negocio'}</code>
-        <button class="btn btn-sm btn-secondary" onclick="copyLink()">📋</button>
-      </div>
-      <button class="btn btn-primary btn-full btn-sm" onclick="previewBooking()">👁️ Visualizar Página</button>
-    </div>
-  </div>`;
-
-  const last7 = [];
-  for(let i=6;i>=0;i--) {
-    const d = new Date(Date.now()-i*86400000).toISOString().split('T')[0];
-    const rev = appts.filter(a=>a.date===d&&a.status==='compareceu').reduce((s,a)=>s+(a.price||0),0);
-    last7.push({d:new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}),rev});
-  }
-  setTimeout(()=>{
-    const ctx1 = document.getElementById('revenue-chart');
-    if (ctx1) new Chart(ctx1,{type:'bar',data:{labels:last7.map(x=>x.d),datasets:[{data:last7.map(x=>x.rev),backgroundColor:'#e9456022',borderColor:'#e94560',borderWidth:2,borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'R$'+v}}}}});
-    const svcCount = {};
-    appts.forEach(a=>{if(a.service_name)svcCount[a.service_name]=(svcCount[a.service_name]||0)+1;});
-    const ctx2 = document.getElementById('services-chart');
-    if (ctx2&&Object.keys(svcCount).length>0) new Chart(ctx2,{type:'doughnut',data:{labels:Object.keys(svcCount),datasets:[{data:Object.values(svcCount),backgroundColor:['#e94560','#3b82f6','#10b981','#f59e0b','#8b5cf6']}]},options:{plugins:{legend:{position:'bottom'}}}});
-  },100);
+    <div class="card" style="margin-top:20px"><div class="card-title">🔗 Seu Link</div>
+        <div class="link-box"><code>https://agenda-seven-ebon.vercel.app/?booking=${biz.slug||'seu-negocio'}</code>
+        <button class="btn btn-sm btn-secondary" onclick="copyLink()">📋</button></div>
+        <button class="btn btn-primary btn-full btn-sm" style="margin-top:12px" onclick="previewBooking()">👁️ Visualizar</button>
+    </div>`;
 }
 
 async function markPresent(id) { await updateApptStatus(id,'compareceu'); }
 async function markAbsent(id) { await updateApptStatus(id,'nao-compareceu'); }
-
 async function updateApptStatus(id, status) {
-  try {
-    await DB.updateAppointment(id, { status });
-    toast(status==='compareceu'?'✅ Marcado como presente':'❌ Não compareceu');
-    if (currentPage==='dashboard') await renderDashboard();
-    else if (currentPage==='agenda') await renderAgendaView();
-  } catch(e) { toast('Erro: '+e.message,'error'); }
+    try { await DB.updateAppointment(id, { status }); toast(status==='compareceu'?'✅ Presente':'❌ Ausente'); await renderDashboard(); }
+    catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1008,22 +782,18 @@ let agendaView = 'month';
 let agendaDate = new Date();
 
 async function renderAgenda() {
-  document.getElementById('page-agenda').innerHTML = `
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn btn-secondary btn-sm" onclick="changeMonth(-1)">‹</button>
-      <strong id="agenda-month-label" style="min-width:160px;text-align:center;font-family:'Syne',sans-serif"></strong>
-      <button class="btn btn-secondary btn-sm" onclick="changeMonth(1)">›</button>
-      <button class="btn btn-secondary btn-sm" onclick="goToday()">Hoje</button>
+    document.getElementById('page-agenda').innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div><button class="btn btn-secondary btn-sm" onclick="changeMonth(-1)">‹</button>
+        <strong id="agenda-month-label" style="min-width:160px;display:inline-block;text-align:center"></strong>
+        <button class="btn btn-secondary btn-sm" onclick="changeMonth(1)">›</button>
+        <button class="btn btn-secondary btn-sm" onclick="goToday()">Hoje</button></div>
+        <div><button class="btn btn-secondary btn-sm" onclick="setAgendaView('month')">Mês</button>
+        <button class="btn btn-secondary btn-sm" onclick="setAgendaView('list')">Lista</button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('new-appointment')">+ Agendar</button></div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-secondary btn-sm ${agendaView==='month'?'btn-primary':''}" onclick="setAgendaView('month')">Mês</button>
-      <button class="btn btn-secondary btn-sm ${agendaView==='list'?'btn-primary':''}" onclick="setAgendaView('list')">Lista</button>
-      <button class="btn btn-primary btn-sm" onclick="openModal('new-appointment')">+ Agendar</button>
-    </div>
-  </div>
-  <div class="card" id="agenda-view-content"></div>`;
-  await renderAgendaView();
+    <div class="card" id="agenda-view-content"></div>`;
+    await renderAgendaView();
 }
 
 async function setAgendaView(v) { agendaView=v; await renderAgenda(); }
@@ -1031,64 +801,39 @@ async function changeMonth(d) { agendaDate=new Date(agendaDate.getFullYear(),age
 async function goToday() { agendaDate=new Date(); await renderAgendaView(); }
 
 async function renderAgendaView() {
-  const lbl = document.getElementById('agenda-month-label');
-  if (lbl) lbl.textContent = agendaDate.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-  const appts = await DB.getAppointments(currentUser.id);
-  const content = document.getElementById('agenda-view-content');
-  if (!content) return;
-
-  if (agendaView==='month') {
-    const year=agendaDate.getFullYear(), month=agendaDate.getMonth();
-    const firstDay=new Date(year,month,1).getDay();
-    const daysInMonth=new Date(year,month+1,0).getDate();
-    const today=new Date().toISOString().split('T')[0];
-    let html=`<div class="calendar-grid">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d=>`<div class="cal-header">${d}</div>`).join('')}`;
-    let cell=0;
-    for(let i=0;i<firstDay;i++){html+=`<div class="cal-day other-month"><div class="cal-day-num">${new Date(year,month,1-firstDay+i).getDate()}</div></div>`;cell++;}
-    for(let d=1;d<=daysInMonth;d++){
-      const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const da=appts.filter(a=>a.date===ds).sort((a,b)=>a.time.localeCompare(b.time));
-      html+=`<div class="cal-day${ds===today?' today':''}" onclick="openDayView('${ds}')">
-        <div class="cal-day-num">${d}</div>
-        ${da.slice(0,3).map(a=>`<div class="cal-event ${a.status}">${a.time} ${a.client_name?.split(' ')[0]||''}</div>`).join('')}
-        ${da.length>3?`<div style="font-size:10px;color:var(--text2);padding:2px 4px">+${da.length-3}</div>`:''}
-      </div>`;cell++;
+    const lbl = document.getElementById('agenda-month-label');
+    if(lbl) lbl.textContent = agendaDate.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+    const appts = await DB.getAppointments(currentUser.id);
+    const content = document.getElementById('agenda-view-content');
+    if(!content) return;
+    
+    if(agendaView==='month') {
+        const year=agendaDate.getFullYear(), month=agendaDate.getMonth();
+        const firstDay=new Date(year,month,1).getDay();
+        const daysInMonth=new Date(year,month+1,0).getDate();
+        const today=new Date().toISOString().split('T')[0];
+        let html=`<div class="calendar-grid">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d=>`<div class="cal-header">${d}</div>`).join('')}`;
+        for(let i=0;i<firstDay;i++) html+=`<div class="cal-day other-month"></div>`;
+        for(let d=1;d<=daysInMonth;d++){
+            const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const da=appts.filter(a=>a.date===ds);
+            html+=`<div class="cal-day${ds===today?' today':''}" onclick="openDayView('${ds}')"><div class="cal-day-num">${d}</div>
+            ${da.slice(0,2).map(a=>`<div class="cal-event ${a.status}">${a.time} ${a.client_name?.split(' ')[0]}</div>`).join('')}
+            ${da.length>2?`<div style="font-size:10px">+${da.length-2}</div>`:''}</div>`;
+        }
+        content.innerHTML=html+'</div>';
+    } else {
+        const all=appts.filter(a=>a.date>=new Date().toISOString().split('T')[0]).sort((a,b)=>a.date.localeCompare(b.date));
+        content.innerHTML=all.length===0?'<div class="empty-state"><div class="empty-icon">📭</div><p>Sem agendamentos</p></div>':
+        `<div class="table-wrap"><table><thead><tr><th>Data</th><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Status</th></tr></thead>
+        <tbody>${all.map(a=>`<tr><td>${formatDate(a.date)}</td><td><strong>${a.time}</strong></td><td>${a.client_name}</td><td>${a.service_name}</td><td>${statusBadge(a.status)}</td></tr>`).join('')}</tbody></table></div>`;
     }
-    while(cell%7!==0){html+=`<div class="cal-day other-month"></div>`;cell++;}
-    content.innerHTML=html+'</div>';
-  } else {
-    const all=appts.filter(a=>a.date>=new Date().toISOString().split('T')[0]).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
-    content.innerHTML=all.length===0?`<div class="empty-state"><div class="empty-icon">📭</div><h3>Nenhum agendamento</h3></div>`:
-    `<div class="table-wrap"><table><thead><tr><th>Data</th><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
-    <tbody>${all.map(a=>`<tr>
-      <td>${formatDate(a.date)}</td><td><strong>${a.time}</strong></td><td>${a.client_name}</td>
-      <td>${a.service_name}</td><td>${a.prof_name||'-'}</td><td>${formatCurrency(a.price)}</td>
-      <td>${statusBadge(a.status)}</td>
-      <td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}')">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}')">✗</button>`:''}
-      <button class="btn btn-sm btn-secondary" onclick="deleteAppt('${a.id}')">🗑</button> </td>
-    </tr>`).join('')}</tbody>
-  </table></div>`;
-  }
 }
 
 async function openDayView(dateStr) {
-  const appts = await DB.getAppointments(currentUser.id);
-  const da = appts.filter(a=>a.date===dateStr).sort((a,b)=>a.time.localeCompare(b.time));
-  const label = new Date(dateStr+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  showModal('Agenda — '+label,
-    da.length===0?'<div class="empty-state"><div class="empty-icon">🕐</div><h3>Sem agendamentos</h3></div>':
-    `<div class="table-wrap"><table><thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Status</th><th></th></tr></thead><tbody>${da.map(a=>`<tr>
-      <td><strong>${a.time}</strong></td><td>${a.client_name}</td><td>${a.service_name}</td><td>${statusBadge(a.status)}</td>
-      <td>${a.status==='agendado'?`<button class="btn btn-sm btn-success" onclick="markPresent('${a.id}');closeModal()">✓</button> <button class="btn btn-sm btn-danger" onclick="markAbsent('${a.id}');closeModal()">✗</button>`:''} </td>
-    </tr>`).join('')}</tbody></table></div>`,
-    `<button class="btn btn-primary" onclick="closeModal();openModal('new-appointment','${dateStr}')">+ Agendar neste dia</button>`
-  );
-}
-
-async function deleteAppt(id) {
-  if (!confirm('Cancelar este agendamento?')) return;
-  try { await DB.deleteAppointment(id); toast('Agendamento cancelado'); await renderAgendaView(); }
-  catch(e) { toast('Erro: '+e.message,'error'); }
+    const appts = await DB.getAppointments(currentUser.id);
+    const da = appts.filter(a=>a.date===dateStr);
+    showModal(formatDate(dateStr), da.length===0?'<p>Sem agendamentos</p>':`<div class="table-wrap"><table><thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th></tr></thead><tbody>${da.map(a=>`<tr><td>${a.time}</td><td>${a.client_name}</td><td>${a.service_name}</td></tr>`).join('')}</tbody></table></div>`);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1096,56 +841,21 @@ async function deleteAppt(id) {
 // ═══════════════════════════════════════════════════════════════
 
 async function renderClientes() {
-  const pg = document.getElementById('page-clientes');
-  pg.innerHTML = `<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>`;
-  const clients = await DB.getClients(currentUser.id);
-  const appts = await DB.getAppointments(currentUser.id);
-
-  const enriched = clients.map(c => {
-    const ca = appts.filter(a=>a.client_id===c.id);
-    return {...c, total_visits:ca.filter(a=>a.status==='compareceu').length, total_spent:ca.filter(a=>a.status==='compareceu').reduce((s,a)=>s+(a.price||0),0), last_visit:ca.map(a=>a.date).sort().pop()};
-  });
-
-  pg.innerHTML = `
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-    <input type="text" id="client-search" placeholder="🔍 Pesquisar cliente..." style="max-width:300px;padding:9px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px" oninput="filterClients()">
-    <button class="btn btn-primary btn-sm" onclick="openModal('new-client')">+ Novo Cliente</button>
-  </div>
-  <div class="card">
-    <div class="table-wrap"><tr>
-      <thead><tr><th>Cliente</th><th>Telefone</th><th>E-mail</th><th>Visitas</th><th>Última Visita</th><th>Total Gasto</th><th>Ações</th></tr></thead>
-      <tbody id="clients-tbody">
-        ${enriched.length===0?`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👥</div><h3>Nenhum cliente</h3></div></td></tr>`
-        :enriched.map(c=>`<tr data-search="${(c.name+c.phone+c.email).toLowerCase()}">
-          <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar-circle">${initials(c.name)}</div><strong>${c.name}</strong></div></td>
-          <td>${c.phone||'-'}</td><td>${c.email||'-'}</td>
-          <td><span class="badge badge-info">${c.total_visits}</span></td>
-          <td>${formatDate(c.last_visit)||'-'}</td><td>${formatCurrency(c.total_spent)}</td>
-          <td><button class="btn btn-sm btn-secondary" onclick="viewClientHistory('${c.id}')">📋</button>
-          <button class="btn btn-sm btn-primary" onclick="openModal('new-appointment',null,'${c.id}')">+ Agendar</button></td>
-        </tr>`).join('')}
-      </tbody>
-    </table></div>
-  </div>`;
+    const clients = await DB.getClients(currentUser.id);
+    document.getElementById('page-clientes').innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:20px"><input type="text" id="client-search" placeholder="🔍 Pesquisar..." style="padding:9px 14px;border:1.5px solid var(--border);border-radius:8px" oninput="filterClients()">
+    <button class="btn btn-primary btn-sm" onclick="openModal('new-client')">+ Novo</button></div>
+    <div class="card"><div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Telefone</th><th>E-mail</th><th>Ações</th></tr></thead>
+    <tbody id="clients-tbody">${clients.map(c=>`<tr data-search="${(c.name+c.phone+c.email).toLowerCase()}">
+        <td><div class="avatar-circle" style="width:32px;height:32px;display:inline-flex;margin-right:10px">${initials(c.name)}</div>${c.name}</td>
+        <td>${c.phone||'-'}</td><td>${c.email||'-'}</td>
+        <td><button class="btn btn-sm btn-secondary" onclick="openModal('new-appointment',null,'${c.id}')">📅 Agendar</button></td>
+    </tr>`).join('')}</tbody></table></div></div>`;
 }
 
 function filterClients() {
-  const q = document.getElementById('client-search').value.toLowerCase();
-  document.querySelectorAll('#clients-tbody tr[data-search]').forEach(tr=>{ tr.style.display=tr.dataset.search.includes(q)?'':'none'; });
-}
-
-async function viewClientHistory(id) {
-  const clients = await DB.getClients(currentUser.id);
-  const appts = await DB.getAppointments(currentUser.id);
-  const c = clients.find(x=>x.id===id); if(!c)return;
-  const ca = appts.filter(a=>a.client_id===id).sort((a,b)=>b.date.localeCompare(a.date));
-  showModal(`📋 Histórico — ${c.name}`,
-    `<p style="margin-bottom:12px;color:var(--text2)">📞 ${c.phone||'-'} &nbsp; ✉️ ${c.email||'-'}</p>
-    ${ca.length===0?'<div class="empty-state"><p>Sem histórico</p></div>':
-    `<div class="table-wrap"><table><thead><tr><th>Data</th><th>Hora</th><th>Serviço</th><th>Valor</th><th>Status</th></tr></thead><tbody>
-    ${ca.map(a=>`<tr><td>${formatDate(a.date)}</td><td>${a.time}</td><td>${a.service_name}</td><td>${formatCurrency(a.price)}</td><td>${statusBadge(a.status)}</td></tr>`).join('')}
-    </tbody></table></div>`}`
-  );
+    const q = document.getElementById('client-search').value.toLowerCase();
+    document.querySelectorAll('#clients-tbody tr[data-search]').forEach(tr=>{ tr.style.display=tr.dataset.search.includes(q)?'':'none'; });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1153,36 +863,19 @@ async function viewClientHistory(id) {
 // ═══════════════════════════════════════════════════════════════
 
 async function renderProfissionais() {
-  const pg = document.getElementById('page-profissionais');
-  const profs = await DB.getProfessionals(currentUser.id);
-  pg.innerHTML = `
-  <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
-    <button class="btn btn-primary" onclick="openModal('new-prof')">+ Novo Profissional</button>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px">
-    ${profs.length===0?`<div class="card"><div class="empty-state"><div class="empty-icon">👔</div><h3>Nenhum profissional</h3></div></div>`:
-    profs.map(p=>`<div class="card" style="border-left:4px solid ${p.color||'var(--accent)'}">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div class="avatar-circle" style="background:${p.color||'var(--accent)'}">${initials(p.name)}</div>
-        <div><div style="font-weight:700;font-family:'Syne',sans-serif">${p.name}</div><div style="font-size:12px;color:var(--text2)">${p.specialty||''}</div></div>
-        <span class="badge ${p.active?'badge-success':'badge-gray'}" style="margin-left:auto">${p.active?'Ativo':'Inativo'}</span>
-      </div>
-      <div style="font-size:12px;color:var(--text2);display:flex;flex-direction:column;gap:4px">
-        ${p.phone?`<div>📞 ${p.phone}</div>`:''}
-        ${p.email?`<div>✉️ ${p.email}</div>`:''}
-      </div>
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <button class="btn btn-sm btn-secondary" onclick="editProf('${p.id}')">✏️ Editar</button>
-        <button class="btn btn-sm btn-danger" onclick="toggleProf('${p.id}',${!p.active})">${p.active?'Desativar':'Ativar'}</button>
-      </div>
-    </div>`).join('')}
-  </div>`;
+    const profs = await DB.getProfessionals(currentUser.id);
+    document.getElementById('page-profissionais').innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:20px"><button class="btn btn-primary" onclick="openModal('new-prof')">+ Novo</button></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+    ${profs.map(p=>`<div class="card"><div class="avatar-circle" style="background:${p.color||'var(--accent)'}">${initials(p.name)}</div>
+        <h3>${p.name}</h3><p>${p.specialty||''}</p>
+        <span class="badge ${p.active?'badge-success':'badge-gray'}">${p.active?'Ativo':'Inativo'}</span>
+        <div><button class="btn btn-sm btn-secondary" onclick="editProf('${p.id}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="toggleProf('${p.id}',${!p.active})">${p.active?'Desativar':'Ativar'}</button></div>
+    </div>`).join('')}</div>`;
 }
 
-async function toggleProf(id, active) {
-  try { await DB.updateProfessional(id, {active}); toast(active?'Ativado':'Desativado'); await renderProfissionais(); }
-  catch(e) { toast('Erro: '+e.message,'error'); }
-}
+async function toggleProf(id, active) { await DB.updateProfessional(id, {active}); await renderProfissionais(); }
 
 // ═══════════════════════════════════════════════════════════════
 //  CONFIGURAÇÕES
@@ -1191,172 +884,109 @@ async function toggleProf(id, active) {
 let configTab = 'servicos';
 
 async function renderConfig() {
-  document.getElementById('page-config').innerHTML = `
-  <div class="tabs">
-    <button class="tab-btn ${configTab==='servicos'?'active':''}" onclick="setConfigTab('servicos')">✂️ Serviços</button>
+    document.getElementById('page-config').innerHTML = `
+    <div class="tabs"><button class="tab-btn ${configTab==='servicos'?'active':''}" onclick="setConfigTab('servicos')">✂️ Serviços</button>
     <button class="tab-btn ${configTab==='horarios'?'active':''}" onclick="setConfigTab('horarios')">🕐 Horários</button>
     <button class="tab-btn ${configTab==='negocio'?'active':''}" onclick="setConfigTab('negocio')">🏢 Negócio</button>
-    <button class="tab-btn ${configTab==='folgas'?'active':''}" onclick="setConfigTab('folgas')">📵 Folgas</button>
-  </div>
-  <div id="config-tab-content"></div>`;
-  await renderConfigTab();
+    <button class="tab-btn ${configTab==='folgas'?'active':''}" onclick="setConfigTab('folgas')">📵 Folgas</button></div>
+    <div id="config-tab-content"></div>`;
+    await renderConfigTab();
 }
 
 async function setConfigTab(tab) { configTab=tab; await renderConfig(); }
 
 async function renderConfigTab() {
-  const c = document.getElementById('config-tab-content');
-  if (!c) return;
-
-  if (configTab==='servicos') {
-    const svcs = await DB.getServices(currentUser.id);
-    c.innerHTML = `
-    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-      <button class="btn btn-primary btn-sm" onclick="openModal('new-service')">+ Novo Serviço</button>
-    </div>
-    <div class="card"><div class="table-wrap"><table>
-      <thead><tr><th>Serviço</th><th>Duração</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
-      <tbody>${svcs.length===0?`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✂️</div><h3>Nenhum serviço</h3></div></td></tr>`
-      :svcs.map(s=>`<tr><td><strong>${s.name}</strong></td><td>${s.duration} min</td><td>${formatCurrency(s.price)}</td>
+    const c = document.getElementById('config-tab-content');
+    if(!c) return;
+    
+    if(configTab==='servicos') {
+        const svcs = await DB.getServices(currentUser.id);
+        c.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="openModal('new-service')">+ Novo</button></div>
+        <div class="card"><div class="table-wrap"><table><thead><tr><th>Serviço</th><th>Duração</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+        <tbody>${svcs.map(s=>`<tr><td>${s.name}</td><td>${s.duration}min</td><td>${formatCurrency(s.price)}</td>
         <td><span class="badge ${s.active?'badge-success':'badge-gray'}">${s.active?'Ativo':'Inativo'}</span></td>
-        <td><button class="btn btn-sm btn-secondary" onclick="editService('${s.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteService('${s.id}')">🗑</button></td></tr>`).join('')}
-      </tbody>
-    </table></div></div>`;
-  } else if (configTab==='horarios') {
-    const biz = currentUser.business||{};
-    const wh = biz.working_hours||{start:'08:00',end:'18:00',interval:30};
-    const days = biz.days||[1,2,3,4,5,6];
-    c.innerHTML = `<div class="card" style="max-width:480px">
-      <div class="card-title">⏰ Horário de Funcionamento</div>
-      <div class="form-row">
-        <div class="form-group"><label>Abertura</label><input type="time" id="cfg-start" value="${wh.start}"></div>
-        <div class="form-group"><label>Fechamento</label><input type="time" id="cfg-end" value="${wh.end}"></div>
-      </div>
-      <div class="form-group"><label>Intervalo (min)</label>
-        <select id="cfg-interval">${[15,20,30,45,60].map(v=>`<option ${wh.interval==v?'selected':''}>${v}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Dias de Atendimento</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-          ${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>`<div class="chip ${days.includes(i)?'selected':''}" onclick="this.classList.toggle('selected')" id="cfgday-${i}">${d}</div>`).join('')}
-        </div></div>
-      <button class="btn btn-primary" onclick="saveHorarios()">💾 Salvar</button>
-    </div>`;
-  } else if (configTab==='negocio') {
-    const biz = currentUser.business||{};
-    c.innerHTML = `<div class="card" style="max-width:560px">
-      <div class="card-title">🏢 Informações do Negócio</div>
-      <div class="form-group"><label>Nome</label><input id="cfg-biz-name" value="${biz.name||''}"></div>
-      <div class="form-group"><label>Descrição</label><textarea id="cfg-biz-desc" rows="3">${biz.desc||''}</textarea></div>
-      <div class="form-row">
-        <div class="form-group"><label>Telefone</label><input id="cfg-biz-phone" value="${biz.phone||''}"></div>
-        <div class="form-group"><label>E-mail</label><input id="cfg-biz-email" value="${biz.email||''}"></div>
-      </div>
-      <div class="form-group"><label>Slug (link)</label><input id="cfg-slug" value="${biz.slug||''}"></div>
-      <button class="btn btn-primary" onclick="saveNegocio()">💾 Salvar</button>
-    </div>`;
-  } else if (configTab==='folgas') {
-    const folgas = await DB.getFolgas(currentUser.id);
-    c.innerHTML = `<div class="card" style="max-width:480px">
-      <div class="card-title">📵 Dias de Folga</div>
-      <div style="display:flex;gap:10px;margin-bottom:16px">
-        <input type="date" id="new-folga-date" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px">
-        <button class="btn btn-primary" onclick="addFolga()">+ Adicionar</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${folgas.length===0?'<p style="color:var(--text2);text-align:center">Nenhuma folga cadastrada</p>'
-        :folgas.sort().map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:8px">
-          <span>${formatDate(f)}</span>
-          <button class="btn btn-sm btn-danger" onclick="removeFolga('${f}')">🗑</button>
-        </div>`).join('')}
-      </div>
-    </div>`;
-  }
+        <td><button class="btn btn-sm btn-secondary" onclick="editService('${s.id}')">✏️</button></td></tr>`).join('')}</tbody></table></div></div>`;
+    } else if(configTab==='horarios') {
+        const biz = currentUser.business||{};
+        const wh = biz.working_hours||{start:'08:00',end:'18:00',interval:30};
+        const days = biz.days||[1,2,3,4,5,6];
+        c.innerHTML = `<div class="card"><div class="card-title">⏰ Horários</div>
+            <div class="form-row"><div class="form-group"><label>Abertura</label><input type="time" id="cfg-start" value="${wh.start}"></div>
+            <div class="form-group"><label>Fechamento</label><input type="time" id="cfg-end" value="${wh.end}"></div></div>
+            <div class="form-group"><label>Intervalo</label><select id="cfg-interval">${[15,20,30,45,60].map(v=>`<option ${wh.interval==v?'selected':''}>${v}min</option>`).join('')}</select></div>
+            <div class="form-group"><label>Dias</label><div style="display:flex;gap:8px;flex-wrap:wrap">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>`<div class="chip ${days.includes(i)?'selected':''}" onclick="this.classList.toggle('selected')" id="cfgday-${i}">${d}</div>`).join('')}</div></div>
+            <button class="btn btn-primary" onclick="saveHorarios()">💾 Salvar</button>
+        </div>`;
+    } else if(configTab==='negocio') {
+        const biz = currentUser.business||{};
+        c.innerHTML = `<div class="card"><div class="card-title">🏢 Negócio</div>
+            <div class="form-group"><label>Nome</label><input id="cfg-biz-name" value="${biz.name||''}"></div>
+            <div class="form-group"><label>Descrição</label><textarea id="cfg-biz-desc" rows="3">${biz.desc||''}</textarea></div>
+            <div class="form-row"><div class="form-group"><label>Telefone</label><input id="cfg-biz-phone" value="${biz.phone||''}"></div>
+            <div class="form-group"><label>E-mail</label><input id="cfg-biz-email" value="${biz.email||''}"></div></div>
+            <div class="form-group"><label>Slug</label><input id="cfg-slug" value="${biz.slug||''}"></div>
+            <button class="btn btn-primary" onclick="saveNegocio()">💾 Salvar</button>
+        </div>`;
+    } else if(configTab==='folgas') {
+        const folgas = await DB.getFolgas(currentUser.id);
+        c.innerHTML = `<div class="card"><div class="card-title">📵 Folgas</div>
+            <div style="display:flex;gap:10px;margin-bottom:16px"><input type="date" id="new-folga-date" style="flex:1"><button class="btn btn-primary" onclick="addFolga()">+</button></div>
+            ${folgas.map(f=>`<div style="display:flex;justify-content:space-between;padding:10px;background:var(--bg);border-radius:8px;margin-bottom:8px"><span>${formatDate(f)}</span><button class="btn btn-sm btn-danger" onclick="removeFolga('${f}')">🗑</button></div>`).join('')}
+        </div>`;
+    }
 }
 
 async function saveHorarios() {
-  const biz = currentUser.business||{};
-  const days = [];
-  for(let i=0;i<7;i++) { if(document.getElementById(`cfgday-${i}`)?.classList.contains('selected')) days.push(i); }
-  biz.working_hours = { start:document.getElementById('cfg-start').value, end:document.getElementById('cfg-end').value, interval:parseInt(document.getElementById('cfg-interval').value) };
-  biz.days = days;
-  currentUser.business = biz;
-  try { await DB.saveUser({id:currentUser.id, name:currentUser.name, email:currentUser.email, business:biz}); toast('Horários salvos!'); }
-  catch(e) { toast('Erro: '+e.message,'error'); }
+    const biz = currentUser.business||{};
+    const days = [];
+    for(let i=0;i<7;i++) if(document.getElementById(`cfgday-${i}`)?.classList.contains('selected')) days.push(i);
+    biz.working_hours = { start:document.getElementById('cfg-start').value, end:document.getElementById('cfg-end').value, interval:parseInt(document.getElementById('cfg-interval').value) };
+    biz.days = days;
+    currentUser.business = biz;
+    try { await DB.saveUser({id:currentUser.id, name:currentUser.name, email:currentUser.email, business:biz}); toast('Salvo!'); }
+    catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
 async function saveNegocio() {
-  const biz = currentUser.business||{};
-  biz.name = document.getElementById('cfg-biz-name').value.trim();
-  biz.desc = document.getElementById('cfg-biz-desc').value.trim();
-  biz.phone = document.getElementById('cfg-biz-phone').value.trim();
-  biz.email = document.getElementById('cfg-biz-email').value.trim();
-  biz.slug = document.getElementById('cfg-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
-  currentUser.business = biz;
-  try { await DB.saveUser({id:currentUser.id, name:currentUser.name, email:currentUser.email, business:biz}); toast('Configurações salvas!'); }
-  catch(e) { toast('Erro: '+e.message,'error'); }
+    const biz = currentUser.business||{};
+    biz.name = document.getElementById('cfg-biz-name').value.trim();
+    biz.desc = document.getElementById('cfg-biz-desc').value.trim();
+    biz.phone = document.getElementById('cfg-biz-phone').value.trim();
+    biz.email = document.getElementById('cfg-biz-email').value.trim();
+    biz.slug = document.getElementById('cfg-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
+    currentUser.business = biz;
+    try { await DB.saveUser({id:currentUser.id, name:currentUser.name, email:currentUser.email, business:biz}); toast('Salvo!'); }
+    catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
 async function addFolga() {
-  const d = document.getElementById('new-folga-date').value;
-  if (!d) { toast('Selecione uma data','error'); return; }
-  try { await DB.addFolga(currentUser.id, d); toast('Folga adicionada'); await renderConfigTab(); }
-  catch(e) { toast('Erro: '+e.message,'error'); }
+    const d = document.getElementById('new-folga-date').value;
+    if(!d) return;
+    await DB.addFolga(currentUser.id, d);
+    await renderConfigTab();
 }
 
-async function removeFolga(d) {
-  try { await DB.removeFolga(currentUser.id, d); toast('Folga removida'); await renderConfigTab(); }
-  catch(e) { toast('Erro: '+e.message,'error'); }
-}
-
-async function deleteService(id) {
-  if (!confirm('Excluir este serviço?')) return;
-  try { await DB.deleteService(id); toast('Serviço excluído'); await renderConfigTab(); }
-  catch(e) { toast('Erro: '+e.message,'error'); }
-}
+async function removeFolga(d) { await DB.removeFolga(currentUser.id, d); await renderConfigTab(); }
 
 // ═══════════════════════════════════════════════════════════════
 //  ASSINATURA
 // ═══════════════════════════════════════════════════════════════
 
 async function renderAssinatura() {
-  const pg = document.getElementById('page-assinatura');
-  const sub = currentUser.subscription||{};
-  const expires = sub.expires ? new Date(sub.expires) : null;
-  const daysLeft = expires ? Math.ceil((expires-Date.now())/86400000) : 0;
-  const st = {active:{label:'Ativo',badge:'badge-success'},trial:{label:'Trial Gratuito',badge:'badge-warning'},expired:{label:'Expirado',badge:'badge-danger'}}[sub.status]||{label:'Expirado',badge:'badge-danger'};
-
-  pg.innerHTML = `
-  <div style="max-width:700px;margin:0 auto">
-    <div class="card" style="margin-bottom:20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <div><div style="font-size:13px;color:var(--text2);margin-bottom:4px">Status</div><span class="badge ${st.badge}" style="font-size:14px;padding:6px 16px">${st.label}</span></div>
-        <div><div style="font-size:13px;color:var(--text2);margin-bottom:4px">Plano</div><strong style="font-family:'Syne',sans-serif;font-size:16px">${sub.plan==='annual'?'Anual':'Mensal'}</strong></div>
-        <div><div style="font-size:13px;color:var(--text2);margin-bottom:4px">Expira em</div><strong>${expires?expires.toLocaleDateString('pt-BR'):'-'}</strong>${daysLeft>0?`<span class="badge badge-info" style="margin-left:8px">${daysLeft} dias</span>`:''}</div>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-      <div class="plan-card highlighted">
-        <div class="plan-badge">Mais Popular</div>
-        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px">Mensal</div>
-        <div class="plan-price">R$&nbsp;49<span>,90/mês</span></div>
-        <ul style="margin:16px 0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:13px">
-          <li>✅ Agendamentos ilimitados</li><li>✅ Múltiplos profissionais</li>
-          <li>✅ Link de agendamento</li><li>✅ Relatórios básicos</li>
-        </ul>
-        <a href="https://buy.stripe.com/3cI8wI9TbfhJ2Jn5Oge3e00" target="_blank" class="btn btn-primary btn-full">💳 Assinar Mensal</a>
-      </div>
-      <div class="plan-card">
-        <div class="plan-badge" style="background:var(--accent2)">2 Meses Grátis</div>
-        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px">Anual</div>
-        <div class="plan-price">R$&nbsp;499<span>/ano</span></div>
-        <div style="font-size:12px;color:var(--success);margin-bottom:8px;font-weight:600">Economia de R$&nbsp;99,80</div>
-        <ul style="margin:16px 0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:13px">
-          <li>✅ Tudo do Mensal</li><li>✅ 2 meses grátis</li>
-          <li>✅ Suporte prioritário</li><li>✅ Relatórios avançados</li>
-        </ul>
-        <a href="https://buy.stripe.com/eVqcMYd5nd9Bdo16Ske3e01" target="_blank" class="btn btn-primary btn-full" style="background:var(--accent2)">💳 Assinar Anual</a>
-      </div>
-    </div>
-  </div>`;
+    document.getElementById('page-assinatura').innerHTML = `
+    <div style="max-width:700px;margin:0 auto">
+        <div class="plan-card highlighted"><div class="plan-badge">Popular</div>
+            <div style="font-size:18px;font-weight:700">Mensal</div>
+            <div class="plan-price">R$49<span>,90</span></div>
+            <ul style="margin:16px 0"><li>✅ Agendamentos ilimitados</li><li>✅ Múltiplos profissionais</li></ul>
+            <a href="https://buy.stripe.com/3cI8wI9TbfhJ2Jn5Oge3e00" target="_blank" class="btn btn-primary btn-full">Assinar</a>
+        </div>
+        <div class="plan-card"><div class="plan-badge" style="background:var(--accent2)">2 meses grátis</div>
+            <div style="font-size:18px;font-weight:700">Anual</div>
+            <div class="plan-price">R$499<span>/ano</span></div>
+            <a href="https://buy.stripe.com/eVqcMYd5nd9Bdo16Ske3e01" target="_blank" class="btn btn-primary btn-full">Assinar Anual</a>
+        </div>
+    </div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1364,398 +994,233 @@ async function renderAssinatura() {
 // ═══════════════════════════════════════════════════════════════
 
 async function renderAdmin() {
-  const pg = document.getElementById('page-admin');
-  pg.innerHTML = `<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>`;
-  const users = await DB.getAllUsers();
-  const active=users.filter(u=>u.subscription?.status==='active');
-  const trial=users.filter(u=>u.subscription?.status==='trial');
-  const revenue=active.filter(u=>u.subscription?.plan==='monthly').length*49.90+active.filter(u=>u.subscription?.plan==='annual').length*(499/12);
-
-  pg.innerHTML = `
-  <div class="stat-grid" style="margin-bottom:20px">
-    <div class="admin-stat"><div class="stat-label">Total Usuários</div><div class="stat-value">${users.length}</div></div>
-    <div class="admin-stat"><div class="stat-label">Ativos</div><div class="stat-value">${active.length}</div></div>
-    <div class="admin-stat"><div class="stat-label">Em Trial</div><div class="stat-value">${trial.length}</div></div>
-    <div class="admin-stat"><div class="stat-label">Receita Est.</div><div class="stat-value">${formatCurrency(revenue)}</div></div>
-  </div>
-  <div class="card">
-    <div class="card-title">👥 Usuários</div>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Nome</th><th>E-mail</th><th>Área</th><th>Plano</th><th>Status</th><th>Expira</th><th>Ações</th></tr></thead>
-      <tbody>${users.map(u=>`<tr>
-        <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-circle" style="width:28px;height:28px;font-size:11px">${initials(u.name)}</div><strong>${u.name}</strong></div></td>
-        <td>${u.email}</td><td>${u.area||'-'}</td>
-        <td>${u.subscription?.plan==='annual'?'🌟 Anual':u.subscription?.plan==='trial'?'Trial':'Mensal'}</td>
-        <td>${statusBadge(u.subscription?.status||'expired')}</td>
-        <td>${u.subscription?.expires?new Date(u.subscription.expires).toLocaleDateString('pt-BR'):'-'}</td>
-        <td><button class="btn btn-sm btn-success" onclick="adminRenew('${u.id}',30,'monthly')">+30d</button>
-        <button class="btn btn-sm btn-warning" onclick="adminRenew('${u.id}',365,'annual')">🌟 Anual</button>
+    const users = await DB.getAllUsers();
+    document.getElementById('page-admin').innerHTML = `
+    <div class="card"><div class="card-title">👥 Usuários</div>
+    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Status</th><th>Ações</th></tr></thead>
+    <tbody>${users.map(u=>`<tr>
+        <td>${u.name}</td><td>${u.email}</td>
+        <td><span class="badge ${u.subscription?.status==='active'?'badge-success':'badge-warning'}">${u.subscription?.status||'trial'}</span></td>
+        <td><button class="btn btn-sm btn-success" onclick="adminRenew('${u.id}',30)">+30d</button>
         <button class="btn btn-sm btn-danger" onclick="adminCancel('${u.id}')">Cancelar</button></td>
-      </tr>`).join('')}</tbody>
-    </table></div>
-  </div>`;
+    </tr>`).join('')}</tbody></table></div></div>`;
 }
 
-async function adminRenew(uid, days, plan='monthly') {
-  const expires = new Date(Date.now()+days*86400000).toISOString();
-  const sub = { status:'active', plan, expires };
-  const label = plan==='annual' ? '1 ano (Anual)' : `${days} dias`;
-  try { await DB.updateUserSubscription(uid, sub); toast(`✅ Renovado: ${label}`); await renderAdmin(); }
-  catch(e) { toast('Erro: '+e.message,'error'); }
-}
-
-async function adminCancel(uid) {
-  if (!confirm('Cancelar assinatura?')) return;
-  try { await DB.updateUserSubscription(uid, {status:'expired'}); toast('Cancelado','warning'); await renderAdmin(); }
-  catch(e) { toast('Erro: '+e.message,'error'); }
-}
+async function adminRenew(uid, days) { await DB.updateUserSubscription(uid, {status:'active', plan:'monthly', expires:new Date(Date.now()+days*86400000).toISOString()}); await renderAdmin(); }
+async function adminCancel(uid) { await DB.updateUserSubscription(uid, {status:'expired'}); await renderAdmin(); }
 
 // ═══════════════════════════════════════════════════════════════
 //  MODALS
 // ═══════════════════════════════════════════════════════════════
 
 function showModal(title, body, footer='') {
-  document.getElementById('modal-container').innerHTML = `
-  <div class="modal-backdrop" onclick="event.target===this&&closeModal()">
-    <div class="modal">
-      <div class="modal-header"><div class="modal-title">${title}</div><button class="modal-close" onclick="closeModal()">✕</button></div>
-      <div class="modal-body">${body}</div>
-      ${footer?`<div class="modal-footer">${footer}</div>`:''}
-    </div>
-  </div>`;
+    document.getElementById('modal-container').innerHTML = `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><div class="modal-header"><div class="modal-title">${title}</div><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body">${body}</div>${footer?`<div class="modal-footer">${footer}</div>`:''}</div></div>`;
 }
-
 function closeModal() { document.getElementById('modal-container').innerHTML=''; }
 
 async function openModal(type, dateStr=null, clientId=null) {
-  if (type==='new-appointment') await showNewApptModal(dateStr, clientId);
-  else if (type==='new-client') showNewClientModal();
-  else if (type==='new-service') showNewServiceModal();
-  else if (type==='new-prof') showNewProfModal();
+    if(type==='new-appointment') await showNewApptModal(dateStr, clientId);
+    else if(type==='new-client') showNewClientModal();
+    else if(type==='new-service') showNewServiceModal();
+    else if(type==='new-prof') showNewProfModal();
 }
 
 async function showNewApptModal(dateStr=null, clientId=null) {
-  const profs = await DB.getProfessionals(currentUser.id);
-  const svcs = await DB.getServices(currentUser.id);
-  const clients = await DB.getClients(currentUser.id);
-  const today = dateStr||new Date().toISOString().split('T')[0];
-
-  showModal('📅 Novo Agendamento',
-    `<div class="form-group"><label>Data</label><input type="date" id="na-date" value="${today}" onchange="updateSlots()"></div>
-    <div class="form-row">
-      <div class="form-group"><label>Profissional</label><select id="na-prof" onchange="updateSlots()"><option value="">Selecione...</option>${profs.filter(p=>p.active).map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Serviço</label><select id="na-svc"><option value="">Selecione...</option>${svcs.filter(s=>s.active).map(s=>`<option value="${s.id}">${s.name} — ${formatCurrency(s.price)}</option>`).join('')}</select></div>
-    </div>
-    <div class="form-group"><label>Horário</label><div class="time-slots" id="na-slots"></div></div>
-    <div class="form-group"><label>Cliente</label>
-      <select id="na-client" onchange="document.getElementById('na-new-client').style.display=this.value==='__new'?'block':'none'">
-        <option value="">Selecione...</option><option value="__new">+ Novo cliente</option>
-        ${clients.map(c=>`<option value="${c.id}" ${clientId===c.id?'selected':''}>${c.name}</option>`).join('')}
-      </select></div>
-    <div id="na-new-client" style="display:none">
-      <div class="form-row"><div class="form-group"><label>Nome</label><input id="na-nc-name" placeholder="Nome completo"></div><div class="form-group"><label>Telefone</label><input id="na-nc-phone" placeholder="(44) 99999-9999"></div></div>
-      <div class="form-group"><label>E-mail</label><input id="na-nc-email" placeholder="email@cliente.com"></div>
-    </div>
-    <div class="form-group"><label>Observações</label><textarea id="na-notes" rows="2"></textarea></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewAppt()">✅ Agendar</button>`
-  );
-  await updateSlots();
+    const profs = await DB.getProfessionals(currentUser.id);
+    const svcs = await DB.getServices(currentUser.id);
+    const clients = await DB.getClients(currentUser.id);
+    const today = dateStr||new Date().toISOString().split('T')[0];
+    
+    showModal('Novo Agendamento', `
+        <div class="form-group"><label>Data</label><input type="date" id="na-date" value="${today}" onchange="updateSlots()"></div>
+        <div class="form-row"><div class="form-group"><label>Profissional</label><select id="na-prof" onchange="updateSlots()"><option value="">Selecione</option>${profs.filter(p=>p.active).map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Serviço</label><select id="na-svc"><option value="">Selecione</option>${svcs.filter(s=>s.active).map(s=>`<option value="${s.id}">${s.name} - ${formatCurrency(s.price)}</option>`).join('')}</select></div></div>
+        <div class="form-group"><label>Horário</label><div class="time-slots" id="na-slots"></div></div>
+        <div class="form-group"><label>Cliente</label><select id="na-client" onchange="document.getElementById('na-new-client').style.display=this.value==='__new'?'block':'none'"><option value="">Selecione</option><option value="__new">+ Novo cliente</option>${clients.map(c=>`<option value="${c.id}" ${clientId===c.id?'selected':''}>${c.name}</option>`).join('')}</select></div>
+        <div id="na-new-client" style="display:none"><div class="form-row"><div class="form-group"><label>Nome</label><input id="na-nc-name"></div><div class="form-group"><label>Telefone</label><input id="na-nc-phone"></div></div></div>
+    `, `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewAppt()">Agendar</button>`);
+    await updateSlots();
 }
 
 async function updateSlots() {
-  const dateEl=document.getElementById('na-date');
-  const profEl=document.getElementById('na-prof');
-  const slotsEl=document.getElementById('na-slots');
-  if (!dateEl||!profEl||!slotsEl) return;
-  const date=dateEl.value, profId=profEl.value;
-  if (!date||!profId) { slotsEl.innerHTML='<p style="color:var(--text2);font-size:13px">Selecione data e profissional</p>'; return; }
-
-  const biz=currentUser.business||{};
-  const wh=biz.working_hours||{start:'08:00',end:'18:00',interval:30};
-  const appts=await DB.getAppointments(currentUser.id);
-  const takenTimes=new Set(appts.filter(a=>a.date===date&&a.prof_id===profId&&a.status!=='cancelado').map(a=>a.time));
-
-  const slots=[];
-  let cur=parseInt(wh.start.split(':')[0])*60+parseInt(wh.start.split(':')[1]);
-  const end=parseInt(wh.end.split(':')[0])*60+parseInt(wh.end.split(':')[1]);
-  while(cur+wh.interval<=end){
-    slots.push(`${String(Math.floor(cur/60)).padStart(2,'0')}:${String(cur%60).padStart(2,'0')}`);
-    cur+=wh.interval;
-  }
-  slotsEl.innerHTML=slots.map(s=>`<div class="time-slot${takenTimes.has(s)?' taken':''}" onclick="selectSlot('${s}',this)">${s}</div>`).join('');
+    const date=document.getElementById('na-date')?.value, profId=document.getElementById('na-prof')?.value;
+    if(!date||!profId) return;
+    const wh = currentUser.business?.working_hours||{start:'08:00',end:'18:00',interval:30};
+    const appts = await DB.getAppointments(currentUser.id);
+    const taken = new Set(appts.filter(a=>a.date===date&&a.prof_id===profId&&a.status!=='cancelado').map(a=>a.time));
+    const slots = [];
+    let cur = parseInt(wh.start.split(':')[0])*60+parseInt(wh.start.split(':')[1]);
+    const end = parseInt(wh.end.split(':')[0])*60+parseInt(wh.end.split(':')[1]);
+    while(cur+wh.interval<=end){ slots.push(`${Math.floor(cur/60).toString().padStart(2,'0')}:${(cur%60).toString().padStart(2,'0')}`); cur+=wh.interval; }
+    document.getElementById('na-slots').innerHTML = slots.map(s=>`<div class="time-slot${taken.has(s)?' taken':''}" onclick="selectSlot('${s}',this)">${s}</div>`).join('');
 }
 
 let selectedSlot=null;
 function selectSlot(time,el){ if(el.classList.contains('taken'))return; document.querySelectorAll('.time-slot.selected').forEach(e=>e.classList.remove('selected')); el.classList.add('selected'); selectedSlot=time; }
 
 async function saveNewAppt() {
-  const date=document.getElementById('na-date')?.value;
-  const profId=document.getElementById('na-prof')?.value;
-  const svcId=document.getElementById('na-svc')?.value;
-  const clientSel=document.getElementById('na-client')?.value;
-  const notes=document.getElementById('na-notes')?.value||'';
-  if (!date||!profId||!svcId||!selectedSlot) { toast('Preencha todos os campos e selecione um horário','error'); return; }
-
-  const profs=await DB.getProfessionals(currentUser.id);
-  const svcs=await DB.getServices(currentUser.id);
-  const prof=profs.find(p=>p.id===profId);
-  const svc=svcs.find(s=>s.id===svcId);
-
-  let clientId=clientSel, clientName='';
-  if (clientSel==='__new') {
-    const name=document.getElementById('na-nc-name')?.value.trim();
-    const phone=document.getElementById('na-nc-phone')?.value.trim();
-    const email=document.getElementById('na-nc-email')?.value.trim();
-    if (!name) { toast('Informe o nome do cliente','error'); return; }
-    try {
-      const nc = await DB.saveClient({ id:uid(), user_id:currentUser.id, name, phone, email, created_at:new Date().toISOString() });
-      clientId=nc.id; clientName=name;
-    } catch(e) { toast('Erro ao criar cliente: '+e.message,'error'); return; }
-  } else {
-    const clients=await DB.getClients(currentUser.id);
-    clientName=clients.find(c=>c.id===clientSel)?.name||'';
-  }
-  if (!clientId) { toast('Selecione um cliente','error'); return; }
-
-  try {
-    await DB.saveAppointment({
-      id:uid(), user_id:currentUser.id, client_id:clientId, client_name:clientName,
-      prof_id:profId, prof_name:prof?.name||'', service_id:svcId, service_name:svc?.name||'',
-      date, time:selectedSlot, duration:svc?.duration||30, price:svc?.price||0,
-      status:'agendado', notes, created_at:new Date().toISOString()
-    });
-    selectedSlot=null; closeModal(); toast('✅ Agendamento realizado!');
-    if (currentPage==='dashboard') await renderDashboard();
-    else if (currentPage==='agenda') await renderAgendaView();
-  } catch(e) { toast('Erro ao agendar: '+e.message,'error'); }
+    const date=document.getElementById('na-date')?.value, profId=document.getElementById('na-prof')?.value, svcId=document.getElementById('na-svc')?.value, clientSel=document.getElementById('na-client')?.value;
+    if(!date||!profId||!svcId||!selectedSlot) { toast('Preencha tudo','error'); return; }
+    const profs=await DB.getProfessionals(currentUser.id), svcs=await DB.getServices(currentUser.id);
+    const prof=profs.find(p=>p.id===profId), svc=svcs.find(s=>s.id===svcId);
+    let clientId=clientSel, clientName='';
+    if(clientSel==='__new'){
+        const name=document.getElementById('na-nc-name')?.value.trim();
+        if(!name){ toast('Informe o nome','error'); return; }
+        const nc = await DB.saveClient({id:uid(), user_id:currentUser.id, name, phone:document.getElementById('na-nc-phone')?.value||''});
+        clientId=nc.id; clientName=name;
+    } else { const clients=await DB.getClients(currentUser.id); clientName=clients.find(c=>c.id===clientSel)?.name||''; }
+    await DB.saveAppointment({ id:uid(), user_id:currentUser.id, client_id:clientId, client_name:clientName, prof_id:profId, prof_name:prof?.name||'', service_id:svcId, service_name:svc?.name||'', date, time:selectedSlot, duration:svc?.duration||30, price:svc?.price||0, status:'agendado' });
+    closeModal(); toast('Agendado!'); if(currentPage==='dashboard') await renderDashboard(); else if(currentPage==='agenda') await renderAgendaView();
 }
 
 function showNewClientModal() {
-  showModal('👤 Novo Cliente',
-    `<div class="form-row"><div class="form-group"><label>Nome</label><input id="nc-name" placeholder="Nome completo"></div><div class="form-group"><label>Telefone</label><input id="nc-phone" placeholder="(44) 99999-9999"></div></div>
-    <div class="form-group"><label>E-mail</label><input id="nc-email" placeholder="email@cliente.com"></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewClient()">💾 Salvar</button>`
-  );
+    showModal('Novo Cliente', `<div class="form-row"><div class="form-group"><label>Nome</label><input id="nc-name"></div><div class="form-group"><label>Telefone</label><input id="nc-phone"></div></div><div class="form-group"><label>E-mail</label><input id="nc-email"></div>`, `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewClient()">Salvar</button>`);
 }
-
 async function saveNewClient() {
-  const name=document.getElementById('nc-name')?.value.trim();
-  const phone=document.getElementById('nc-phone')?.value.trim();
-  const email=document.getElementById('nc-email')?.value.trim();
-  if (!name) { toast('Informe o nome','error'); return; }
-  try {
-    await DB.saveClient({id:uid(),user_id:currentUser.id,name,phone,email,created_at:new Date().toISOString()});
+    const name=document.getElementById('nc-name')?.value.trim();
+    if(!name){ toast('Informe o nome','error'); return; }
+    await DB.saveClient({id:uid(), user_id:currentUser.id, name, phone:document.getElementById('nc-phone')?.value||'', email:document.getElementById('nc-email')?.value||''});
     closeModal(); toast('Cliente adicionado!'); await renderClientes();
-  } catch(e) { toast('Erro: '+e.message,'error'); }
 }
 
 function showNewServiceModal() {
-  showModal('✂️ Novo Serviço',
-    `<div class="form-group"><label>Nome do Serviço</label><input id="svc-name" placeholder="Ex: Corte Masculino"></div>
-    <div class="form-row"><div class="form-group"><label>Duração (min)</label><select id="svc-dur">${[15,20,30,45,60,90,120].map(v=>`<option value="${v}">${v} min</option>`).join('')}</select></div>
-    <div class="form-group"><label>Valor (R$)</label><input type="number" id="svc-price" placeholder="0.00" step="0.01"></div></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewService()">💾 Salvar</button>`
-  );
+    showModal('Novo Serviço', `<div class="form-group"><label>Nome</label><input id="svc-name"></div><div class="form-row"><div class="form-group"><label>Duração(min)</label><select id="svc-dur">${[15,20,30,45,60,90].map(v=>`<option value="${v}">${v}</option>`).join('')}</select></div><div class="form-group"><label>Valor(R$)</label><input type="number" id="svc-price" step="0.01"></div></div>`, `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewService()">Salvar</button>`);
 }
-
 async function saveNewService() {
-  const name=document.getElementById('svc-name')?.value.trim();
-  if (!name) { toast('Informe o nome','error'); return; }
-  try {
-    await DB.saveService({id:uid(),user_id:currentUser.id,name,duration:parseInt(document.getElementById('svc-dur').value),price:parseFloat(document.getElementById('svc-price').value||'0'),active:true});
+    const name=document.getElementById('svc-name')?.value.trim();
+    if(!name){ toast('Informe o nome','error'); return; }
+    await DB.saveService({id:uid(), user_id:currentUser.id, name, duration:parseInt(document.getElementById('svc-dur').value), price:parseFloat(document.getElementById('svc-price').value||0), active:true});
     closeModal(); toast('Serviço adicionado!'); await renderConfigTab();
-  } catch(e) { toast('Erro: '+e.message,'error'); }
 }
-
 async function editService(id) {
-  const svcs=await DB.getServices(currentUser.id);
-  const s=svcs.find(x=>x.id===id); if(!s)return;
-  showModal('✏️ Editar Serviço',
-    `<div class="form-group"><label>Nome</label><input id="esvc-name" value="${s.name}"></div>
-    <div class="form-row"><div class="form-group"><label>Duração</label><select id="esvc-dur">${[15,20,30,45,60,90,120].map(v=>`<option value="${v}" ${s.duration==v?'selected':''}>${v} min</option>`).join('')}</select></div>
-    <div class="form-group"><label>Valor</label><input type="number" id="esvc-price" value="${s.price}" step="0.01"></div></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="updateService('${id}')">💾 Salvar</button>`
-  );
+    const svcs=await DB.getServices(currentUser.id), s=svcs.find(x=>x.id===id);
+    showModal('Editar Serviço', `<div class="form-group"><label>Nome</label><input id="esvc-name" value="${s.name}"></div><div class="form-row"><div class="form-group"><label>Duração</label><select id="esvc-dur">${[15,20,30,45,60,90].map(v=>`<option value="${v}" ${s.duration==v?'selected':''}>${v}</option>`).join('')}</select></div><div class="form-group"><label>Valor</label><input type="number" id="esvc-price" value="${s.price}" step="0.01"></div></div>`, `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="updateService('${id}')">Salvar</button>`);
 }
-
-async function updateService(id) {
-  try {
-    await DB.saveService({id,user_id:currentUser.id,name:document.getElementById('esvc-name').value.trim(),duration:parseInt(document.getElementById('esvc-dur').value),price:parseFloat(document.getElementById('esvc-price').value),active:true});
-    closeModal(); toast('Atualizado'); await renderConfigTab();
-  } catch(e) { toast('Erro: '+e.message,'error'); }
-}
+async function updateService(id) { await DB.saveService({id, user_id:currentUser.id, name:document.getElementById('esvc-name').value.trim(), duration:parseInt(document.getElementById('esvc-dur').value), price:parseFloat(document.getElementById('esvc-price').value), active:true}); closeModal(); toast('Atualizado'); await renderConfigTab(); }
 
 function showNewProfModal() {
-  const colors=['#e94560','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4'];
-  showModal('👔 Novo Profissional',
-    `<div class="form-row"><div class="form-group"><label>Nome</label><input id="np-name" placeholder="Nome completo"></div><div class="form-group"><label>Especialidade</label><input id="np-spec" placeholder="Ex: Barbeiro Sênior"></div></div>
-    <div class="form-row"><div class="form-group"><label>Telefone</label><input id="np-phone" placeholder="(44) 99999-9999"></div><div class="form-group"><label>E-mail</label><input id="np-email" placeholder="prof@email.com"></div></div>
-    <div class="form-group"><label>Cor</label><div style="display:flex;gap:8px;margin-top:6px" id="prof-colors">${colors.map((col,i)=>`<div style="width:28px;height:28px;background:${col};border-radius:50%;cursor:pointer;border:3px solid ${i===0?'#1a1a2e':'transparent'}" onclick="selectProfColor('${col}',this)"></div>`).join('')}</div>
-    <input type="hidden" id="np-color" value="${colors[0]}"></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewProf()">💾 Salvar</button>`
-  );
+    showModal('Novo Profissional', `<div class="form-row"><div class="form-group"><label>Nome</label><input id="np-name"></div><div class="form-group"><label>Especialidade</label><input id="np-spec"></div></div><div class="form-row"><div class="form-group"><label>Telefone</label><input id="np-phone"></div><div class="form-group"><label>E-mail</label><input id="np-email"></div></div>`, `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewProf()">Salvar</button>`);
 }
-
-function selectProfColor(col,el){ document.getElementById('np-color').value=col; document.querySelectorAll('#prof-colors div').forEach(d=>d.style.border='3px solid transparent'); el.style.border='3px solid #1a1a2e'; }
-
 async function saveNewProf() {
-  const name=document.getElementById('np-name')?.value.trim();
-  if (!name) { toast('Informe o nome','error'); return; }
-  try {
-    await DB.saveProfessional({id:uid(),user_id:currentUser.id,name,specialty:document.getElementById('np-spec').value.trim(),phone:document.getElementById('np-phone').value.trim(),email:document.getElementById('np-email').value.trim(),color:document.getElementById('np-color').value,active:true});
+    const name=document.getElementById('np-name')?.value.trim();
+    if(!name){ toast('Informe o nome','error'); return; }
+    await DB.saveProfessional({id:uid(), user_id:currentUser.id, name, specialty:document.getElementById('np-spec')?.value||'', phone:document.getElementById('np-phone')?.value||'', email:document.getElementById('np-email')?.value||'', active:true});
     closeModal(); toast('Profissional adicionado!'); await renderProfissionais();
-  } catch(e) { toast('Erro: '+e.message,'error'); }
 }
-
 async function editProf(id) {
-  const profs=await DB.getProfessionals(currentUser.id);
-  const p=profs.find(x=>x.id===id); if(!p)return;
-  showModal('✏️ Editar Profissional',
-    `<div class="form-row"><div class="form-group"><label>Nome</label><input id="ep-name" value="${p.name}"></div><div class="form-group"><label>Especialidade</label><input id="ep-spec" value="${p.specialty||''}"></div></div>
-    <div class="form-row"><div class="form-group"><label>Telefone</label><input id="ep-phone" value="${p.phone||''}"></div><div class="form-group"><label>E-mail</label><input id="ep-email" value="${p.email||''}"></div></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="updateProf('${id}')">💾 Salvar</button>`
-  );
+    const profs=await DB.getProfessionals(currentUser.id), p=profs.find(x=>x.id===id);
+    showModal('Editar Profissional', `<div class="form-row"><div class="form-group"><label>Nome</label><input id="ep-name" value="${p.name}"></div><div class="form-group"><label>Especialidade</label><input id="ep-spec" value="${p.specialty||''}"></div></div><div class="form-row"><div class="form-group"><label>Telefone</label><input id="ep-phone" value="${p.phone||''}"></div><div class="form-group"><label>E-mail</label><input id="ep-email" value="${p.email||''}"></div></div>`, `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="updateProf('${id}')">Salvar</button>`);
 }
-
-async function updateProf(id) {
-  try {
-    await DB.updateProfessional(id,{name:document.getElementById('ep-name').value.trim(),specialty:document.getElementById('ep-spec').value.trim(),phone:document.getElementById('ep-phone').value.trim(),email:document.getElementById('ep-email').value.trim()});
-    closeModal(); toast('Atualizado'); await renderProfissionais();
-  } catch(e) { toast('Erro: '+e.message,'error'); }
-}
+async function updateProf(id) { await DB.updateProfessional(id, {name:document.getElementById('ep-name').value.trim(), specialty:document.getElementById('ep-spec').value.trim(), phone:document.getElementById('ep-phone').value.trim(), email:document.getElementById('ep-email').value.trim()}); closeModal(); toast('Atualizado'); await renderProfissionais(); }
 
 // ═══════════════════════════════════════════════════════════════
 //  BOOKING PAGE
 // ═══════════════════════════════════════════════════════════════
 
-async function previewBooking() {
-  await loadBookingPage(currentUser.id);
-}
-
+async function previewBooking() { await loadBookingPage(currentUser.id); }
 async function loadBookingPage(userId) {
-  const userData = await DB.getUser(userId); if(!userData)return;
-  const biz=userData.business||{};
-  const profs=await DB.getProfessionals(userId);
-  const svcs=await DB.getServices(userId);
-
-  document.getElementById('app').style.display='none';
-  document.getElementById('auth-screen').style.display='none';
-  const bs=document.getElementById('booking-screen');
-  bs.style.display='block';
-
-  document.getElementById('booking-biz-name').textContent=biz.name||'Agendamento';
-  document.getElementById('booking-biz-desc').textContent=biz.desc||'';
-  document.getElementById('booking-biz-info').textContent=[biz.city,biz.uf,biz.phone].filter(Boolean).join(' · ');
-
-  bookingState={userId,biz,profs:profs.reduce((o,p)=>({...o,[p.id]:p}),{}),svcs:svcs.reduce((o,s)=>({...o,[s.id]:s}),{}),prof:null,service:null,date:null,time:null};
-
-  const activeProfs=profs.filter(p=>p.active);
-  document.getElementById('booking-professionals').innerHTML=activeProfs.length===0?'<p>Nenhum profissional disponível</p>':
-    `<div style="display:flex;flex-direction:column;gap:10px">${activeProfs.map(p=>`<div class="chip" onclick="selectBookingProf('${p.id}',this)" style="padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:10px">
-      <div class="avatar-circle" style="background:${p.color||'var(--accent)'}">${initials(p.name)}</div><div><div style="font-weight:600">${p.name}</div><div style="font-size:12px;color:var(--text2)">${p.specialty||''}</div></div>
-    </div>`).join('')}</div>`;
-
-  document.getElementById('booking-step-1').style.display='block';
-  document.getElementById('booking-success').style.display='none';
+    const userData = await DB.getUser(userId);
+    if(!userData) return;
+    const biz=userData.business||{}, profs=await DB.getProfessionals(userId), svcs=await DB.getServices(userId);
+    document.getElementById('app').style.display='none';
+    document.getElementById('booking-screen').style.display='block';
+    document.getElementById('booking-biz-name').textContent=biz.name||'Agendamento';
+    document.getElementById('booking-biz-desc').textContent=biz.desc||'';
+    bookingState={userId,biz, profs:profs.reduce((o,p)=>({...o,[p.id]:p}),{}), svcs:svcs.reduce((o,s)=>({...o,[s.id]:s}),{}), prof:null, service:null, date:null, time:null };
+    document.getElementById('booking-professionals').innerHTML = profs.filter(p=>p.active).map(p=>`<div class="chip" onclick="selectBookingProf('${p.id}',this)" style="padding:12px;margin:4px">${p.name}</div>`).join('');
+    document.getElementById('booking-step-1').style.display='block';
+    document.getElementById('booking-success').style.display='none';
 }
-
 async function selectBookingProf(profId,el) {
-  document.querySelectorAll('#booking-professionals .chip').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  bookingState.prof=bookingState.profs[profId];
-  bookingState.service=null; bookingState.date=null; bookingState.time=null;
-  const activeSvcs=Object.values(bookingState.svcs).filter(s=>s.active);
-  document.getElementById('booking-services-card').style.display='block';
-  document.getElementById('booking-services').innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">${activeSvcs.map(s=>`<div class="chip" onclick="selectBookingService('${s.id}',this)" style="padding:12px 16px;border-radius:10px;justify-content:space-between">
-    <div><div style="font-weight:600">${s.name}</div><div style="font-size:12px;color:var(--text2)">${s.duration} min</div></div><strong style="color:var(--accent)">${formatCurrency(s.price)}</strong>
-  </div>`).join('')}</div>`;
-  document.getElementById('booking-date-card').style.display='none';
-  document.getElementById('booking-slots-card').style.display='none';
-  document.getElementById('booking-client-card').style.display='none';
+    document.querySelectorAll('#booking-professionals .chip').forEach(c=>c.classList.remove('selected'));
+    el.classList.add('selected');
+    bookingState.prof=bookingState.profs[profId];
+    document.getElementById('booking-services-card').style.display='block';
+    document.getElementById('booking-services').innerHTML = Object.values(bookingState.svcs).filter(s=>s.active).map(s=>`<div class="chip" onclick="selectBookingService('${s.id}',this)" style="padding:12px;margin:4px">${s.name} - ${formatCurrency(s.price)}</div>`).join('');
+    document.getElementById('booking-date-card').style.display='none';
+    document.getElementById('booking-slots-card').style.display='none';
+    document.getElementById('booking-client-card').style.display='none';
 }
-
 async function selectBookingService(svcId,el) {
-  document.querySelectorAll('#booking-services .chip').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  bookingState.service=bookingState.svcs[svcId];
-  document.getElementById('booking-date-card').style.display='block';
-  const di=document.getElementById('booking-date');
-  di.min=new Date().toISOString().split('T')[0];
-  di.value=new Date().toISOString().split('T')[0];
-  di.onchange=loadBookingSlots;
-  document.getElementById('booking-slots-card').style.display='none';
-  document.getElementById('booking-client-card').style.display='none';
-  await loadBookingSlots();
+    document.querySelectorAll('#booking-services .chip').forEach(c=>c.classList.remove('selected'));
+    el.classList.add('selected');
+    bookingState.service=bookingState.svcs[svcId];
+    document.getElementById('booking-date-card').style.display='block';
+    document.getElementById('booking-date').min=new Date().toISOString().split('T')[0];
+    document.getElementById('booking-date').value=new Date().toISOString().split('T')[0];
+    document.getElementById('booking-date').onchange=loadBookingSlots;
+    await loadBookingSlots();
 }
-
 async function loadBookingSlots() {
-  const date=document.getElementById('booking-date').value;
-  bookingState.date=date; bookingState.time=null;
-  const biz=bookingState.biz||{};
-  const wh=biz.working_hours||{start:'08:00',end:'18:00',interval:30};
-  const appts=await DB.getAppointments(bookingState.userId);
-  const takenTimes=new Set(appts.filter(a=>a.date===date&&a.prof_id===bookingState.prof?.id&&a.status!=='cancelado').map(a=>a.time));
-  const folgas=await DB.getFolgas(bookingState.userId);
-  const slotsEl=document.getElementById('booking-time-slots');
-  document.getElementById('booking-slots-card').style.display='block';
-  if (folgas.includes(date)){slotsEl.innerHTML='<p style="color:var(--danger);font-weight:500">⚠️ Dia indisponível (folga)</p>';return;}
-  const dayOfWeek=new Date(date+'T12:00:00').getDay();
-  if (!(biz.days||[1,2,3,4,5,6]).includes(dayOfWeek)){slotsEl.innerHTML='<p style="color:var(--danger);font-weight:500">⚠️ Sem atendimento neste dia</p>';return;}
-  const slots=[];
-  let cur=parseInt(wh.start.split(':')[0])*60+parseInt(wh.start.split(':')[1]);
-  const end=parseInt(wh.end.split(':')[0])*60+parseInt(wh.end.split(':')[1]);
-  while(cur+wh.interval<=end){slots.push(`${String(Math.floor(cur/60)).padStart(2,'0')}:${String(cur%60).padStart(2,'0')}`);cur+=wh.interval;}
-  slotsEl.innerHTML=slots.map(s=>`<div class="time-slot${takenTimes.has(s)?' taken':''}" onclick="selectBookingSlot('${s}',this)">${s}</div>`).join('');
-  document.getElementById('booking-client-card').style.display='none';
+    const date=document.getElementById('booking-date').value;
+    bookingState.date=date;
+    const wh=bookingState.biz.working_hours||{start:'08:00',end:'18:00',interval:30};
+    const appts=await DB.getAppointments(bookingState.userId);
+    const taken=new Set(appts.filter(a=>a.date===date&&a.prof_id===bookingState.prof?.id&&a.status!=='cancelado').map(a=>a.time));
+    const folgas=await DB.getFolgas(bookingState.userId);
+    document.getElementById('booking-slots-card').style.display='block';
+    if(folgas.includes(date)){ document.getElementById('booking-time-slots').innerHTML='<p>Dia indisponível</p>'; return; }
+    const slots=[];
+    let cur=parseInt(wh.start.split(':')[0])*60+parseInt(wh.start.split(':')[1]);
+    const end=parseInt(wh.end.split(':')[0])*60+parseInt(wh.end.split(':')[1]);
+    while(cur+wh.interval<=end){ slots.push(`${Math.floor(cur/60).toString().padStart(2,'0')}:${(cur%60).toString().padStart(2,'0')}`); cur+=wh.interval; }
+    document.getElementById('booking-time-slots').innerHTML = slots.map(s=>`<div class="time-slot${taken.has(s)?' taken':''}" onclick="selectBookingSlot('${s}',this)">${s}</div>`).join('');
+    document.getElementById('booking-client-card').style.display='none';
 }
-
 function selectBookingSlot(time,el){
-  if(el.classList.contains('taken'))return;
-  document.querySelectorAll('#booking-time-slots .time-slot.selected').forEach(e=>e.classList.remove('selected'));
-  el.classList.add('selected'); bookingState.time=time;
-  document.getElementById('booking-client-card').style.display='block';
-  document.getElementById('booking-client-card').scrollIntoView({behavior:'smooth'});
+    if(el.classList.contains('taken')) return;
+    document.querySelectorAll('#booking-time-slots .time-slot').forEach(e=>e.classList.remove('selected'));
+    el.classList.add('selected');
+    bookingState.time=time;
+    document.getElementById('booking-client-card').style.display='block';
 }
-
 async function confirmBooking() {
-  const name=document.getElementById('bk-client-name').value.trim();
-  const email=document.getElementById('bk-client-email').value.trim();
-  const phone=document.getElementById('bk-client-phone').value.trim();
-  const notes=document.getElementById('bk-notes').value.trim();
-  if (!name||!phone){toast('Informe seu nome e telefone','error');return;}
-  if (!bookingState.prof||!bookingState.service||!bookingState.date||!bookingState.time){toast('Selecione todas as opções','error');return;}
-  try {
+    const name=document.getElementById('bk-client-name').value.trim();
+    const phone=document.getElementById('bk-client-phone').value.trim();
+    if(!name||!phone){ toast('Informe nome e telefone','error'); return; }
     const clients=await DB.getClients(bookingState.userId);
-    let cl=clients.find(c=>c.phone===phone||c.email===email);
-    if (!cl) cl=await DB.saveClient({id:uid(),user_id:bookingState.userId,name,phone,email,created_at:new Date().toISOString()});
-    await DB.saveAppointment({
-      id:uid(),user_id:bookingState.userId,client_id:cl.id,client_name:name,
-      prof_id:bookingState.prof.id,prof_name:bookingState.prof.name,
-      service_id:bookingState.service.id,service_name:bookingState.service.name,
-      date:bookingState.date,time:bookingState.time,duration:bookingState.service.duration,
-      price:bookingState.service.price,status:'agendado',notes,created_at:new Date().toISOString()
-    });
+    let cl=clients.find(c=>c.phone===phone);
+    if(!cl) cl=await DB.saveClient({id:uid(), user_id:bookingState.userId, name, phone, email:document.getElementById('bk-client-email').value||''});
+    await DB.saveAppointment({ id:uid(), user_id:bookingState.userId, client_id:cl.id, client_name:name, prof_id:bookingState.prof.id, prof_name:bookingState.prof.name, service_id:bookingState.service.id, service_name:bookingState.service.name, date:bookingState.date, time:bookingState.time, duration:bookingState.service.duration, price:bookingState.service.price, status:'agendado' });
     document.getElementById('booking-step-1').style.display='none';
     document.getElementById('booking-success').style.display='block';
-    document.getElementById('booking-confirm-text').innerHTML=`
-      Seu agendamento foi confirmado!<br><br>
-      <strong>🏢 ${bookingState.biz.name}</strong><br>
-      <strong>👔 Profissional:</strong> ${bookingState.prof.name}<br>
-      <strong>✂️ Serviço:</strong> ${bookingState.service.name}<br>
-      <strong>📅 Data:</strong> ${formatDate(bookingState.date)}<br>
-      <strong>🕐 Horário:</strong> ${bookingState.time}<br>
-      <strong>💰 Valor:</strong> ${formatCurrency(bookingState.service.price)}`;
-  } catch(e) { toast('Erro ao confirmar: '+e.message,'error'); }
+    document.getElementById('booking-confirm-text').innerHTML = `${bookingState.service.name} - ${formatDate(bookingState.date)} às ${bookingState.time}`;
+}
+function newBooking(){
+    document.getElementById('booking-step-1').style.display='block';
+    document.getElementById('booking-success').style.display='none';
+    bookingState={...bookingState, prof:null, service:null, date:null, time:null};
 }
 
-function newBooking(){
-  document.getElementById('booking-step-1').style.display='block';
-  document.getElementById('booking-success').style.display='none';
-  ['bk-client-name','bk-client-email','bk-client-phone','bk-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  bookingState.prof=null;bookingState.service=null;bookingState.date=null;bookingState.time=null;
-  ['booking-services-card','booking-date-card','booking-slots-card','booking-client-card'].forEach(id=>document.getElementById(id).style.display='none');
-  document.querySelectorAll('#booking-step-1 .chip.selected,.time-slot.selected').forEach(c=>c.classList.remove('selected'));
-}
+// ═══════════════════════════════════════════════════════════════
+//  INITIALIZATION
+// ═══════════════════════════════════════════════════════════════
+
+(async function init() {
+    console.log('🚀 Iniciando com Cloudflare Worker...');
+    
+    const params = new URLSearchParams(window.location.search);
+    const bookingSlug = params.get('booking');
+    
+    if (bookingSlug) {
+        try {
+            const users = await DB.getAllUsers();
+            const found = users.find(u => u.business?.slug === bookingSlug);
+            if (found) { await loadBookingPage(found.id); return; }
+        } catch(e) { console.error(e); }
+    }
+    
+    const savedId = localStorage.getItem('current_user_id');
+    if (savedId) {
+        try {
+            const userData = await DB.getUser(savedId);
+            if (userData) { currentUser = userData; await initApp(); return; }
+        } catch(e) { localStorage.removeItem('current_user_id'); }
+    }
+    
+    document.getElementById('auth-screen').style.display = 'flex';
+})();
 </script>
 </body>
 </html>
