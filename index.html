@@ -498,443 +498,184 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  TURSO CONFIG - VERSÃO CORRIGIDA
+//  API CLIENT - Chama o proxy Vercel
 // ═══════════════════════════════════════════════════════════════
 
-const _TURSO_URL = 'https://agendapro-mendes9923.aws-us-east-1.turso.io';
-const _TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODAwMTM2ODUsImlkIjoiMDE5ZTcxMTQtOTIwMS03NzJjLTg0M2QtNGQ3MGY1MDdjOTgxIiwicmlkIjoiNGM3MTY5NGYtY2E0MS00NmY4LTkzOWItYmI3OTUxZTAxYjliIn0.PuUu5kM7XBuk4XH0zAQrTPy1CnFP-ZRY8NbhWLKLlRHUVyUSf39nLxy3BgBUh-fldao0SFew6JgD1YfqdAIVBA';
-
-async function tursoExecute(sql, params = []) {
-    const url = `${_TURSO_URL}/v2/pipeline`;
+// Função genérica para chamar o proxy
+async function apiCall(action, method = 'GET', data = null, userId = null, id = null) {
+    let url = `/api/turso?action=${action}`;
+    if (userId) url += `&userId=${userId}`;
+    if (id) url += `&id=${id}`;
     
-    const args = params.map(param => {
-        if (param === null || param === undefined) return { type: 'null' };
-        if (typeof param === 'number') return { type: 'float', value: param.toString() };
-        if (typeof param === 'boolean') return { type: 'integer', value: param ? '1' : '0' };
-        return { type: 'text', value: param.toString() };
-    });
-    
-    const body = {
-        requests: [{ type: 'execute', stmt: { sql, args } }]
+    const options = {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json'
+        }
     };
     
-    // Log para debug
-    console.log('📝 Turso SQL:', sql);
-    console.log('📝 Turso Params:', params);
-    console.log('📝 Turso Body:', JSON.stringify(body, null, 2));
-    
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${_TURSO_TOKEN}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-    });
-    
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Turso Error Response:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+    if (data && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
+        options.body = JSON.stringify(data);
     }
     
-    const data = await response.json();
-    console.log('✅ Turso Response:', data);
-    
-    if (data.results?.[0]?.type === 'error') {
-        throw new Error(data.results[0].error.message);
-    }
-    
-    const result = data.results?.[0]?.response?.result;
-    if (!result) return [];
-    
-    const columns = result.cols || [];
-    const rows = result.rows || [];
-    
-    return rows.map(row => {
-        const obj = {};
-        columns.forEach((col, index) => {
-            let value = row[index]?.value;
-            if (typeof value === 'string' && (value.startsWith('{') || value.startsWith('['))) {
-                try { value = JSON.parse(value); } catch(e) {}
-            }
-            obj[col.name] = value;
-        });
-        return obj;
-    });
-}
-
-const tursoQuery = tursoExecute;
-const tursoExec = tursoExecute;
-
-async function initTurso() {
-    console.log('🔌 Inicializando Turso...');
     try {
-        await tursoExecute('SELECT 1 as test');
-        console.log('✅ Turso conectado!');
-        return true;
+        const response = await fetch(url, options);
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.error || 'Erro na requisição');
+        }
+        
+        return result;
     } catch (error) {
-        console.error('❌ Turso erro:', error);
-        return false;
+        console.error('API Error:', error);
+        throw error;
     }
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  DATABASE LAYER — Turso
+//  DATABASE LAYER - Usando o proxy
 // ═══════════════════════════════════════════════════════════════
 
 const DB = {
+    // ── AUTH ──
     async loginUser(email, password) {
-        const rows = await tursoQuery(
-            'SELECT * FROM users WHERE email = ? AND password_hash = ? LIMIT 1',
-            [email, btoa(password)]
-        );
-        return rows[0] || null;
+        const result = await apiCall('login', 'POST', { email, password: btoa(password) });
+        return result.user || null;
     },
     
     async registerUser(user) {
-        const userId = user.id || uid();
-        const now = new Date().toISOString();
-        
-        await tursoExec(
-            `INSERT INTO users (id, name, email, password_hash, phone, area, setup_done, business, subscription, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
-            [
-                userId, user.name, user.email, btoa(user.password),
-                user.phone || '', user.area || '',
-                JSON.stringify({}),
-                JSON.stringify({ status: 'trial', plan: 'trial', expires: new Date(Date.now() + 7 * 86400000).toISOString() }),
-                now
-            ]
-        );
-        return await this.getUser(userId);
+        await apiCall('register', 'POST', {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            area: user.area,
+            password: btoa(user.password)
+        });
+        return await this.getUser(user.id);
     },
 
+    // ── USERS ──
     async getUser(userId) {
-        console.log('🔍 Buscando usuário:', userId);
-        const rows = await tursoQuery('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
-        if (!rows?.length) return null;
+        const result = await apiCall('user', 'GET', null, userId);
+        if (!result) return null;
         
-        const u = rows[0];
-        console.log('📦 Dados brutos do usuário:', u);
-        
-        // Parse business
-        if (u.business) {
-            try {
-                u.business = typeof u.business === 'string' ? JSON.parse(u.business) : u.business;
-            } catch(e) {
-                console.error('Erro ao parse business:', e);
-                u.business = {};
-            }
-        } else {
-            u.business = {};
+        // Parse JSON fields
+        if (typeof result.business === 'string') {
+            try { result.business = JSON.parse(result.business); } catch { result.business = {}; }
+        } else if (!result.business) {
+            result.business = {};
         }
         
-        // Parse subscription
-        if (u.subscription) {
-            try {
-                u.subscription = typeof u.subscription === 'string' ? JSON.parse(u.subscription) : u.subscription;
-            } catch(e) {
-                console.error('Erro ao parse subscription:', e);
-                u.subscription = {};
-            }
-        } else {
-            u.subscription = {};
+        if (typeof result.subscription === 'string') {
+            try { result.subscription = JSON.parse(result.subscription); } catch { result.subscription = {}; }
+        } else if (!result.subscription) {
+            result.subscription = {};
         }
         
-        u.setup_done = !!u.setup_done;
-        console.log('✅ Usuário processado:', { id: u.id, name: u.name, business: u.business, setup_done: u.setup_done });
-        return u;
+        result.setup_done = !!result.setup_done;
+        return result;
     },
     
     async saveUser(user) {
-        console.log('💾 Salvando usuário:', user);
-        
-        // Garantir que business seja uma string JSON válida
-        let businessJson = '{}';
-        if (user.business) {
-            try {
-                businessJson = typeof user.business === 'string' ? user.business : JSON.stringify(user.business);
-            } catch(e) {
-                console.error('Erro ao converter business:', e);
-                businessJson = '{}';
-            }
-        }
-        
-        // Garantir que subscription seja uma string JSON válida
-        let subscriptionJson = '{}';
-        if (user.subscription) {
-            try {
-                subscriptionJson = typeof user.subscription === 'string' ? user.subscription : JSON.stringify(user.subscription);
-            } catch(e) {
-                console.error('Erro ao converter subscription:', e);
-                subscriptionJson = '{}';
-            }
-        }
-        
-        const now = user.created_at || new Date().toISOString();
-        
-        try {
-            // Primeiro verifica se o usuário já existe
-            const existing = await tursoQuery('SELECT id FROM users WHERE id = ?', [user.id]);
-            
-            if (existing && existing.length > 0) {
-                // Atualiza usuário existente
-                await tursoExec(
-                    `UPDATE users 
-                    SET name = ?, email = ?, phone = ?, area = ?, setup_done = ?, business = ?, subscription = ?, created_at = ?
-                    WHERE id = ?`,
-                    [
-                        user.name,
-                        user.email,
-                        user.phone || '',
-                        user.area || '',
-                        user.setup_done ? 1 : 0,
-                        businessJson,
-                        subscriptionJson,
-                        now,
-                        user.id
-                    ]
-                );
-                console.log('✅ Usuário atualizado com sucesso');
-            } else {
-                // Insere novo usuário
-                await tursoExec(
-                    `INSERT INTO users (id, name, email, phone, area, setup_done, business, subscription, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        user.id,
-                        user.name,
-                        user.email,
-                        user.phone || '',
-                        user.area || '',
-                        user.setup_done ? 1 : 0,
-                        businessJson,
-                        subscriptionJson,
-                        now
-                    ]
-                );
-                console.log('✅ Usuário inserido com sucesso');
-            }
-            
-            // Verifica se salvou corretamente
-            const saved = await this.getUser(user.id);
-            console.log('📋 Usuário após salvar:', saved);
-            
-            return saved;
-        } catch(e) {
-            console.error('❌ Erro ao salvar usuário:', e);
-            throw e;
-        }
+        const result = await apiCall('user', 'POST', {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone || '',
+            area: user.area || '',
+            business: user.business || {},
+            setup_done: user.setup_done ? 1 : 0,
+            subscription: user.subscription || {}
+        });
+        return result;
     },
 
+    // ── APPOINTMENTS ──
     async getAppointments(userId) {
-        return await tursoQuery('SELECT * FROM appointments WHERE user_id = ? ORDER BY date DESC, time DESC', [userId]);
+        const result = await apiCall('appointments', 'GET', null, userId);
+        return result || [];
     },
     
     async saveAppointment(appt) {
-        // Primeiro verifica se o agendamento já existe
-        const existing = await tursoQuery('SELECT id FROM appointments WHERE id = ?', [appt.id]);
-        
-        if (existing && existing.length > 0) {
-            // Atualiza agendamento existente
-            await tursoExec(
-                `UPDATE appointments 
-                SET client_id = ?, client_name = ?, prof_id = ?, prof_name = ?,
-                    service_id = ?, service_name = ?, date = ?, time = ?,
-                    duration = ?, price = ?, status = ?, notes = ?, created_at = ?
-                WHERE id = ?`,
-                [
-                    appt.client_id || '',
-                    appt.client_name || '',
-                    appt.prof_id || '',
-                    appt.prof_name || '',
-                    appt.service_id || '',
-                    appt.service_name || '',
-                    appt.date,
-                    appt.time,
-                    appt.duration || 30,
-                    appt.price || 0,
-                    appt.status || 'agendado',
-                    appt.notes || '',
-                    appt.created_at || new Date().toISOString(),
-                    appt.id
-                ]
-            );
-        } else {
-            // Insere novo agendamento
-            await tursoExec(
-                `INSERT INTO appointments 
-                (id, user_id, client_id, client_name, prof_id, prof_name, service_id, service_name, 
-                  date, time, duration, price, status, notes, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    appt.id,
-                    appt.user_id,
-                    appt.client_id || '',
-                    appt.client_name || '',
-                    appt.prof_id || '',
-                    appt.prof_name || '',
-                    appt.service_id || '',
-                    appt.service_name || '',
-                    appt.date,
-                    appt.time,
-                    appt.duration || 30,
-                    appt.price || 0,
-                    appt.status || 'agendado',
-                    appt.notes || '',
-                    appt.created_at || new Date().toISOString()
-                ]
-            );
-        }
+        const result = await apiCall('appointment', 'POST', appt);
         return appt;
     },
     
     async updateAppointment(id, updates) {
-        const fields = Object.keys(updates);
-        const values = Object.values(updates);
-        const setClause = fields.map(f => `${f} = ?`).join(', ');
-        await tursoExec(`UPDATE appointments SET ${setClause} WHERE id = ?`, [...values, id]);
+        const result = await apiCall('appointment', 'PUT', { ...updates, id });
+        return result;
     },
     
     async deleteAppointment(id) {
-        await tursoExec(`UPDATE appointments SET status = 'cancelado' WHERE id = ?`, [id]);
+        const result = await apiCall('appointment', 'PUT', { id, status: 'cancelado' });
+        return result;
     },
 
+    // ── CLIENTS ──
     async getClients(userId) {
-        return await tursoQuery('SELECT * FROM clients WHERE user_id = ? ORDER BY name', [userId]);
+        const result = await apiCall('clients', 'GET', null, userId);
+        return result || [];
     },
     
     async saveClient(client) {
-        await tursoExec(
-            `INSERT OR REPLACE INTO clients (id, user_id, name, phone, email, notes, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [
-                client.id, client.user_id, client.name, 
-                client.phone || '', client.email || '', 
-                client.notes || '', client.created_at || new Date().toISOString()
-            ]
-        );
+        const result = await apiCall('client', 'POST', client);
         return client;
     },
 
+    // ── PROFESSIONALS ──
     async getProfessionals(userId) {
-        const rows = await tursoQuery('SELECT * FROM professionals WHERE user_id = ? ORDER BY name', [userId]);
-        return rows.map(p => ({ ...p, active: !!p.active }));
+        const result = await apiCall('professionals', 'GET', null, userId);
+        return (result || []).map(p => ({ ...p, active: !!p.active }));
     },
     
     async saveProfessional(prof) {
-        // Primeiro verifica se o profissional já existe
-        const existing = await tursoQuery('SELECT id FROM professionals WHERE id = ?', [prof.id]);
-        
-        if (existing && existing.length > 0) {
-            // Atualiza profissional existente
-            await tursoExec(
-                `UPDATE professionals 
-                SET name = ?, specialty = ?, phone = ?, email = ?, color = ?, active = ?, created_at = ?
-                WHERE id = ?`,
-                [
-                    prof.name,
-                    prof.specialty || '',
-                    prof.phone || '',
-                    prof.email || '',
-                    prof.color || '#e94560',
-                    prof.active ? 1 : 0,
-                    prof.created_at || new Date().toISOString(),
-                    prof.id
-                ]
-            );
-        } else {
-            // Insere novo profissional
-            await tursoExec(
-                `INSERT INTO professionals (id, user_id, name, specialty, phone, email, color, active, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    prof.id,
-                    prof.user_id,
-                    prof.name,
-                    prof.specialty || '',
-                    prof.phone || '',
-                    prof.email || '',
-                    prof.color || '#e94560',
-                    prof.active ? 1 : 0,
-                    prof.created_at || new Date().toISOString()
-                ]
-            );
-        }
+        const result = await apiCall('professional', 'POST', prof);
         return prof;
-    },    
+    },
+    
     async updateProfessional(id, updates) {
-        const fields = Object.keys(updates);
-        let values = Object.values(updates);
-        values = values.map(v => typeof v === 'boolean' ? (v ? 1 : 0) : v);
-        const setClause = fields.map(f => `${f} = ?`).join(', ');
-        await tursoExec(`UPDATE professionals SET ${setClause} WHERE id = ?`, [...values, id]);
+        const result = await apiCall('professional', 'PUT', { ...updates, id });
+        return result;
     },
 
+    // ── SERVICES ──
     async getServices(userId) {
-        const rows = await tursoQuery('SELECT * FROM services WHERE user_id = ? ORDER BY name', [userId]);
-        return rows.map(s => ({ ...s, active: !!s.active }));
+        const result = await apiCall('services', 'GET', null, userId);
+        return (result || []).map(s => ({ ...s, active: !!s.active }));
     },
     
     async saveService(svc) {
-        // Primeiro verifica se o serviço já existe
-        const existing = await tursoQuery('SELECT id FROM services WHERE id = ?', [svc.id]);
-        
-        if (existing && existing.length > 0) {
-            // Atualiza serviço existente
-            await tursoExec(
-                `UPDATE services 
-                SET name = ?, duration = ?, price = ?, active = ?, created_at = ?
-                WHERE id = ?`,
-                [
-                    svc.name,
-                    svc.duration || 30,
-                    svc.price || 0,
-                    svc.active ? 1 : 0,
-                    svc.created_at || new Date().toISOString(),
-                    svc.id
-                ]
-            );
-        } else {
-            // Insere novo serviço
-            await tursoExec(
-                `INSERT INTO services (id, user_id, name, duration, price, active, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    svc.id,
-                    svc.user_id,
-                    svc.name,
-                    svc.duration || 30,
-                    svc.price || 0,
-                    svc.active ? 1 : 0,
-                    svc.created_at || new Date().toISOString()
-                ]
-            );
-        }
+        const result = await apiCall('service', 'POST', svc);
         return svc;
     },
     
     async deleteService(id) {
-        await tursoExec('DELETE FROM services WHERE id = ?', [id]);
+        const result = await apiCall('service', 'DELETE', { id });
+        return result;
     },
 
+    // ── FOLGAS ──
     async getFolgas(userId) {
-        const rows = await tursoQuery('SELECT date FROM folgas WHERE user_id = ?', [userId]);
-        return rows.map(r => r.date);
+        const result = await apiCall('folgas', 'GET', null, userId);
+        return result || [];
     },
     
     async addFolga(userId, date) {
-        await tursoExec('INSERT OR IGNORE INTO folgas (id, user_id, date) VALUES (?, ?, ?)', [uid(), userId, date]);
+        const result = await apiCall('folga', 'POST', { id: uid(), user_id: userId, date });
+        return result;
     },
     
     async removeFolga(userId, date) {
-        await tursoExec('DELETE FROM folgas WHERE user_id = ? AND date = ?', [userId, date]);
+        const result = await apiCall('folga', 'DELETE', { user_id: userId, date });
+        return result;
     },
 
+    // ── ADMIN ──
     async getAllUsers() {
-        const rows = await tursoQuery('SELECT * FROM users ORDER BY created_at DESC', []);
-        return rows.map(u => {
+        const result = await apiCall('all-users', 'GET');
+        return (result || []).map(u => {
             if (typeof u.business === 'string') {
                 try { u.business = JSON.parse(u.business); } catch { u.business = {}; }
             }
@@ -947,10 +688,10 @@ const DB = {
     },
     
     async updateUserSubscription(userId, subscription) {
-        await tursoExec('UPDATE users SET subscription = ? WHERE id = ?', [JSON.stringify(subscription), userId]);
+        const result = await apiCall('subscription', 'PUT', { userId, subscription });
+        return result;
     }
 };
-
 // ═══════════════════════════════════════════════════════════════
 //  UTILS
 // ═══════════════════════════════════════════════════════════════
@@ -1194,20 +935,14 @@ async function doForgotPassword() {
 //  INICIALIZAÇÃO PRINCIPAL
 // ═══════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════
+//  INICIALIZAÇÃO PRINCIPAL (sem initTurso)
+// ═══════════════════════════════════════════════════════════════
+
 (async function init() {
     console.log('🚀 Iniciando aplicação...');
     
-    const connected = await initTurso();
-    if (!connected) {
-        document.body.innerHTML = `
-            <div style="text-align:center;padding:60px;font-family:sans-serif">
-                <h2 style="color:#e94560">⚠️ Erro de Conexão</h2>
-                <p>Não foi possível conectar ao banco de dados Turso.</p>
-                <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#e94560;color:#fff;border:none;border-radius:8px;cursor:pointer">Recarregar</button>
-            </div>
-        `;
-        return;
-    }
+    // NÃO precisa mais de initTurso()
     
     const params = new URLSearchParams(window.location.search);
     const bookingSlug = params.get('booking');
@@ -1240,6 +975,7 @@ async function doForgotPassword() {
                 return;
             }
         } catch (e) {
+            console.error('Erro ao carregar usuário salvo:', e);
             localStorage.removeItem('current_user_id');
         }
     }
